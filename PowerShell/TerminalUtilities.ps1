@@ -32,6 +32,21 @@ function rmh() { Remove-Item (Get-PSReadlineOption).HistorySavePath }
 function sha1 { Get-FileHash -Algorithm SHA1 $args }
 function sha256 { Get-FileHash -Algorithm SHA256 $args }
 
+
+# Minecraft coloring (useful for prompt)
+function mccoloring($tmp) {
+    $033 = [char]27
+    $tmp = "$tmp&r"
+    $tmp = $tmp.replace("&lp", "$033[38;5;217m") # Light Pink
+    $tmp = $tmp.replace("&p", "$033[38;5;218m")  # Pink
+    $tmp = $tmp.replace("&l", "$033[38;5;183m")  # Plum
+    $tmp = $tmp.replace("&g", "$033[38;5;135m")  # Medium Purple 2
+    $tmp = $tmp.replace("&b", "$033[38;5;153m")  # Light Sky Blue 1
+    $tmp = $tmp.replace("&r", "$033[0m")
+    $tmp = $tmp.replace("&n", "`r`n")
+    $tmp
+}
+
 #region git
 
 ### Git Aliases/Utilities
