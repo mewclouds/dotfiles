@@ -1,3 +1,7 @@
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    throw "Script must be run as Administrator"
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
