@@ -1,37 +1,41 @@
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "Script must be run as Administrator"
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]$identity
+$adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
+
+if (-not $principal.IsInRole($adminRole)) {
+	throw "Script must be run as Administrator"
 }
 
 function New-RepositorySymlink {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$LinkPath,
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$LinkPath,
 
-        [Parameter(Mandatory = $true)]
-        [string]$TargetPath
-    )
+		[Parameter(Mandatory = $true)]
+		[string]$TargetPath
+	)
 
-    $linkDirectory = Split-Path -Parent $LinkPath
-    if ($linkDirectory) {
-        New-Item -ItemType Directory -Path $linkDirectory -Force | Out-Null
-    }
+	$linkDirectory = Split-Path -Parent $LinkPath
+	if ($linkDirectory) {
+		New-Item -ItemType Directory -Path $linkDirectory -Force | Out-Null
+	}
 
-    if (Test-Path $LinkPath) {
-        $existingLink = Get-Item -Force $LinkPath
-        if ($existingLink.LinkType) {
-            $currentTarget = (Resolve-Path $LinkPath).Path
-            $expectedTarget = (Resolve-Path $TargetPath).Path
-            if ($currentTarget -eq $expectedTarget) {
-                Write-Host "Symlink already exists: $LinkPath -> $TargetPath"
-                return
-            }
-        }
+	if (Test-Path $LinkPath) {
+		$existingLink = Get-Item -Force $LinkPath
+		if ($existingLink.LinkType) {
+			$currentTarget = (Resolve-Path $LinkPath).Path
+			$expectedTarget = (Resolve-Path $TargetPath).Path
+			if ($currentTarget -eq $expectedTarget) {
+				Write-Host "Symlink already exists: $LinkPath -> $TargetPath"
+				return
+			}
+		}
 
-        throw "A path already exists at $LinkPath. Move it aside or delete it before running setup.ps1."
-    }
+		throw "A path already exists at $LinkPath. Move it aside or delete it before running setup.ps1."
+	}
 
-    New-Item -ItemType SymbolicLink -Path $LinkPath -Target $TargetPath | Out-Null
-    Write-Host "Created symlink: $LinkPath -> $TargetPath"
+	New-Item -ItemType SymbolicLink -Path $LinkPath -Target $TargetPath | Out-Null
+	Write-Host "Created symlink: $LinkPath -> $TargetPath"
 }
 
 $repoRoot = $PSScriptRoot
@@ -43,7 +47,7 @@ $fastfetchConfigPath = 'C:\ProgramData\fastfetch\config.jsonc'
 
 New-Item -ItemType Directory -Path (Split-Path -Parent $repoProfilePath) -Force | Out-Null
 if (-not (Test-Path $repoProfilePath)) {
-    New-Item -ItemType File -Path $repoProfilePath -Force | Out-Null
+	New-Item -ItemType File -Path $repoProfilePath -Force | Out-Null
 }
 
 New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
