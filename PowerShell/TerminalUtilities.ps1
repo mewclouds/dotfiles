@@ -10,7 +10,7 @@ function CommandExists {
 
 # Unix-like sudo
 function sudo { 
-    Start-Process wt -Verb runAs
+    Start-Process wt -ArgumentList "-d `"$PWD`"" -Verb RunAs
 }
 
 # Open the current directory in the file explorer
