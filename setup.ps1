@@ -1,3 +1,8 @@
+$requiredPowerShellMajorVersion = 7
+if ($PSVersionTable.PSVersion.Major -lt $requiredPowerShellMajorVersion) {
+	throw "PowerShell $requiredPowerShellMajorVersion or later is required. Run this script with pwsh 7+ instead of Windows PowerShell."
+}
+
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]$identity
 $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
