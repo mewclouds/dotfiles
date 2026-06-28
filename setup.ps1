@@ -57,3 +57,18 @@ if (-not (Test-Path $repoProfilePath)) {
 
 New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
 New-RepositorySymlink -LinkPath $fastfetchConfigPath -TargetPath $repoFastfetchConfigPath
+
+$backupTaskName = 'Backup MR Mods'
+$backupScriptPath = Join-Path $env:USERPROFILE 'dotfiles\PowerShell\BackupMRMods.ps1'
+$backupTaskArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$backupScriptPath`""
+
+if (-not (Test-Path $backupScriptPath)) {
+	throw "Could not find the backup script at $backupScriptPath. Make sure the dotfiles repo is checked out in $env:USERPROFILE\dotfiles."
+}
+
+$backupTaskAction = New-ScheduledTaskAction -Execute $PSHOME\pwsh.exe -Argument $backupTaskArguments
+$backupTaskTrigger = New-ScheduledTaskTrigger -AtStartup
+$backupTaskPrincipal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType S4U -RunLevel Highest
+
+Register-ScheduledTask -TaskName $backupTaskName -Action $backupTaskAction -Trigger $backupTaskTrigger -Principal $backupTaskPrincipal -Description 'Back up MR mods weekly.' -Force | Out-Null
+Write-Host "Registered scheduled task: $backupTaskName" -ForegroundColor Green
