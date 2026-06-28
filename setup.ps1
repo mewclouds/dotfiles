@@ -3,7 +3,7 @@ $principal = [Security.Principal.WindowsPrincipal]$identity
 $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
 
 if (-not $principal.IsInRole($adminRole)) {
-	throw "Script must be run as Administrator"
+	throw "Elevated privileges required. Please run this script as an administrator."
 }
 
 function New-RepositorySymlink {
