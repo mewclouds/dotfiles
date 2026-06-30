@@ -53,14 +53,21 @@ function Initialize-RepositorySymlinks {
 	$repoFastfetchConfigPath = Join-Path $RepoRoot '.config\fastfetch-win.jsonc'
 	$profilePath = $PROFILE
 	$fastfetchConfigPath = 'C:\ProgramData\fastfetch\config.jsonc'
+	$windowsTerminalJsonPath = $env:WT_JSON
+	$repoWindowsTerminalJson = Join-Path $RepoRoot '.config\windows-terminal.json'
 
 	New-Item -ItemType Directory -Path (Split-Path -Parent $repoProfilePath) -Force | Out-Null
 	if (-not (Test-Path $repoProfilePath)) {
 		New-Item -ItemType File -Path $repoProfilePath -Force | Out-Null
 	}
 
+	if ([string]::IsNullOrWhiteSpace($windowsTerminalJsonPath)) {
+		throw 'Windows Terminal settings path is not set in env variables. Set it before proceeding.'
+	}
+
 	New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
 	New-RepositorySymlink -LinkPath $fastfetchConfigPath -TargetPath $repoFastfetchConfigPath
+	New-RepositorySymlink -LinkPath $windowsTerminalJsonPath -TargetPath $repoWindowsTerminalJson
 }
 
 function Register-BackupScheduledTask {
