@@ -60,7 +60,8 @@ $Telemetry_Disable = @(
 	'dmwappushservice',
 	'ESRV_*QUEENCREEK*',
 	'USER_ESRV_*QUEENCREEK*',
-	'SystemUsageReport*'
+	'SystemUsageReport*',
+	'InventorySvc'
 )
 
 $Lenovo_Disable = @(
@@ -79,16 +80,19 @@ $Lenovo_Manual = @(
 	'UDCService'
 )
 
-$Updaters_Disable = @(
+$Updaters_Manual = @(
 	'GoogleUpdaterService*',
 	'GoogleUpdaterInternalService*',
 	'edgeupdate',
-	'edgeupdatem'
+	'edgeupdatem',
+	'brave',
+	'bravem'
 )
 
 $Peripherals_Disable = @(
 	'logi_lamparray_service',
-	'TobiiALENOVOYXX0'
+	'TobiiALENOVOYXX0',
+	'Tobii Service'
 )
 
 $WSA_Disable = @(
@@ -129,7 +133,7 @@ Stop-And-Disable (Resolve-Services $Lenovo_Disable)
 Set-Startup -Services (Resolve-Services $Lenovo_Manual) -Mode Manual
 
 Write-Host "Shifting Third-Party Updaters to Manual..." -ForegroundColor Magenta
-Set-Startup -Services (Resolve-Services $Updaters_Disable) -Mode Manual
+Set-Startup -Services (Resolve-Services $Updaters_Manual) -Mode Manual
 
 Write-Host "Dropping Unused Peripherals..." -ForegroundColor Magenta
 Stop-And-Disable (Resolve-Services $Peripherals_Disable)
