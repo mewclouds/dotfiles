@@ -1,7 +1,8 @@
 # Load utilities script
 if ($env:UTILITIES_PATH) {
 	. $env:UTILITIES_PATH
-} else {
+}
+else {
 	Write-Error "UTILITIES_PATH environment variable is not set. Please run pre-setup.ps1 first."
 }
 
