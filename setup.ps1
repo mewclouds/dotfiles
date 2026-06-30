@@ -114,7 +114,7 @@ function Install-WingetPackages {
 		}
 
 		Write-Host "Installing winget package: $($package.Name) ($($package.Id))" -ForegroundColor Cyan
-		& winget install --id $package.Id
+		& winget install -e --id $package.Id --accept-package-agreements --accept-source-agreements
 		if ($LASTEXITCODE -ne 0) {
 			throw "winget install failed for $($package.Id)."
 		}
