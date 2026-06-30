@@ -29,8 +29,6 @@ if /I "%MODE%"=="quiet" (
 
 echo [%date% %time%] Start %MODE_LABEL% >> "%LOG%"
 
-timeout /t 10 /nobreak >nul
-
 :: LogPixels = 144 (0x90)
 reg query "HKCU\Control Panel\Desktop" /v LogPixels 2>nul | findstr /i "0x90" >nul
 if errorlevel 1 (
