@@ -82,5 +82,9 @@
   {
     "Name": "Oh My Posh",
     "Id": "JanDeDobbeleer.OhMyPosh"
+  },
+  {
+	"Name": "Antigravity CLI",
+	"Id": "Google.AntigravityCLI"
   }
 ]
