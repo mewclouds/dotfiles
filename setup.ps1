@@ -28,7 +28,7 @@ function New-RepositorySymlink {
 	if (Test-Path $LinkPath) {
 		$existingLink = Get-Item -Force $LinkPath
 		if ($existingLink.LinkType) {
-			$currentTarget = (Resolve-Path $LinkPath).Path
+			$currentTarget = (Resolve-Path $existingLink.Target).Path
 			$expectedTarget = (Resolve-Path $TargetPath).Path
 			if ($currentTarget -eq $expectedTarget) {
 				Write-Host "Symlink already exists: $LinkPath -> $TargetPath"
