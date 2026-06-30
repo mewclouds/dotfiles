@@ -1,7 +1,9 @@
-$env:UTILITIES_PATH = $env:USERPROFILE + "\dotfiles\PowerShell\TerminalUtilities.ps1"
-
 # Load utilities script
-.$env:UTILITIES_PATH
+if ($env:UTILITIES_PATH) {
+	. $env:UTILITIES_PATH
+} else {
+	Write-Error "UTILITIES_PATH environment variable is not set. Please run pre-setup.ps1 first."
+}
 
 if (CommandExists fnm) {
 	fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression

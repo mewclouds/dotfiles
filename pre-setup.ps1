@@ -61,12 +61,22 @@ function Get-FileSelection {
 
 Write-Host "Configuring dotfiles environment variables..." -ForegroundColor Cyan
 
+# Automatically set UTILITIES_PATH relative to where we're running
+$utilitiesPath = Join-Path $PSScriptRoot 'PowerShell\TerminalUtilities.ps1'
+if (Test-Path $utilitiesPath) {
+	[Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
+	Write-Host "Set UTILITIES_PATH to $utilitiesPath" -ForegroundColor Green
+}
+else {
+	Write-Host "Warning: Could not find TerminalUtilities.ps1 at $utilitiesPath" -ForegroundColor Yellow
+}
+
 Get-FileSelection -VarName 'WT_JSON' -Prompt 'Select your Windows Terminal settings.json' -Filter 'JSON Files (*.json)|*.json'
 Get-FolderSelection -VarName 'MR_MODS_PATH' -Prompt 'Select your MR Mods directory'
 Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
 
 Write-Host "`nConfiguration state:" -ForegroundColor Cyan
-$vars = @('WT_JSON', 'MR_MODS_PATH', 'MR_MODS_BACKUP')
+$vars = @('UTILITIES_PATH', 'WT_JSON', 'MR_MODS_PATH', 'MR_MODS_BACKUP')
 $allGood = $true
 
 foreach ($v in $vars) {
@@ -74,7 +84,7 @@ foreach ($v in $vars) {
 	if ($val) {
 		Write-Host "  $v = $val"
 	}
- else {
+	else {
 		Write-Host "  $v = NOT SET" -ForegroundColor Red
 		$allGood = $false
 	}
