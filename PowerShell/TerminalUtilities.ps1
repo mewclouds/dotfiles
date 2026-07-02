@@ -144,8 +144,7 @@ function gpsh() { git push origin HEAD }
 function gpl() { git pull --prune }
 
 function gco() {
-	git checkout $args
-	Write-Host "Switched to branch: " -NoNewline; Write-Host $args -ForegroundColor Cyan
+	git switch -c $args 2>$null || git switch $args
 }
 #endregion
 
