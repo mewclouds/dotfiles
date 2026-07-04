@@ -71,7 +71,16 @@ else {
 	Write-Host "Warning: Could not find TerminalUtilities.ps1 at $utilitiesPath" -ForegroundColor Yellow
 }
 
-Get-FileSelection -VarName 'WT_JSON' -Prompt 'Select your Windows Terminal settings.json' -Filter 'JSON Files (*.json)|*.json'
+# Auto-detect Windows Terminal JSON path
+$defaultWtJson = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
+$currentWtJson = [Environment]::GetEnvironmentVariable('WT_JSON', 'User')
+
+if (-not $currentWtJson -and (Test-Path $defaultWtJson)) {
+	[Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'User')
+	Write-Host "Set WT_JSON to $defaultWtJson (auto-detected)" -ForegroundColor Green
+} else {
+	Get-FileSelection -VarName 'WT_JSON' -Prompt 'Select your Windows Terminal settings.json' -Filter 'JSON Files (*.json)|*.json'
+}
 Get-FolderSelection -VarName 'MR_MODS_PATH' -Prompt 'Select your MR Mods directory'
 Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
 
