@@ -51,8 +51,10 @@ function Initialize-RepositorySymlinks {
 
 	$repoProfilePath = Join-Path $RepoRoot 'PowerShell\profile.ps1'
 	$repoFastfetchConfigPath = Join-Path $RepoRoot '.config\fastfetch-win.jsonc'
+	$repoGitConfigPath = Join-Path $RepoRoot '.config\.gitconfig'
 	$profilePath = $PROFILE
 	$fastfetchConfigPath = 'C:\ProgramData\fastfetch\config.jsonc'
+	$gitConfigPath = Join-Path $env:USERPROFILE '.gitconfig'
 	$windowsTerminalJsonPath = $env:WT_JSON
 	$repoWindowsTerminalJson = Join-Path $RepoRoot '.config\windows-terminal.json'
 
@@ -68,6 +70,7 @@ function Initialize-RepositorySymlinks {
 	New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
 	New-RepositorySymlink -LinkPath $fastfetchConfigPath -TargetPath $repoFastfetchConfigPath
 	New-RepositorySymlink -LinkPath $windowsTerminalJsonPath -TargetPath $repoWindowsTerminalJson
+	New-RepositorySymlink -LinkPath $gitConfigPath -TargetPath $repoGitConfigPath
 }
 
 function Register-BackupScheduledTask {
