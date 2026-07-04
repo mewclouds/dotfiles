@@ -1,106 +1,94 @@
 [
-  {
-    "Name": "7-Zip 26.01 (x64 edition)",
-    "Id": "7zip.7zip"
-  },
-  {
-    "Name": "Bitwarden",
-    "Id": "Bitwarden.Bitwarden"
-  },
-  {
-    "Name": "Discord",
-    "Id": "Discord.Discord"
-  },
-  {
-    "Name": "Fast Node Manager",
-    "Id": "Schniz.fnm"
-  },
-  {
-    "Name": "fastfetch",
-    "Id": "Fastfetch-cli.Fastfetch"
-  },
-  {
-    "Name": "Git",
-    "Id": "Git.Git"
-  },
-  {
-    "Name": "GitHub Desktop",
-    "Id": "GitHub.GitHubDesktop"
-  },
-  {
-    "Name": "jq",
-    "Id": "jqlang.jq"
-  },
-  {
-    "Name": "LocalSend version 1.17.0",
-    "Id": "LocalSend.LocalSend"
-  },
-  {
-    "Name": "Microsoft Visual C++ v14 Redistributable (x64) - 14.51.36247",
-    "Id": "Microsoft.VCRedist.2015+.x64"
-  },
-  {
-    "Name": "Microsoft Visual C++ v14 Redistributable (x86) - 14.51.36247",
-    "Id": "Microsoft.VCRedist.2015+.x86"
-  },
-  {
-    "Name": "Mozilla Firefox (x64 en-US)",
-    "Id": "Mozilla.Firefox"
-  },
-  {
-    "Name": "PowerShell",
-    "Id": "Microsoft.PowerShell"
-  },
-  {
-    "Name": "Revo Uninstaller 2.1.7",
-    "Id": "RevoUninstaller.RevoUninstaller"
-  },
-  {
-    "Name": "Rustup: the Rust toolchain installer",
-    "Id": "Rustlang.Rustup"
-  },
-  {
-    "Name": "Steam",
-    "Id": "Valve.Steam"
-  },
-  {
-    "Name": "Visual Studio Community 2026",
-    "Id": "Microsoft.VisualStudio.Community"
-  },
-  {
-    "Name": "WizTree v4.31",
-    "Id": "AntibodySoftware.WizTree"
-  },
-  {
-    "Name": "YogaDNS 1.49",
-    "Id": "Initex.YogaDNS"
-  },
-  {
-    "Id": "Klocman.BulkCrapUninstaller",
-    "Name": "BCUninstaller 6.2.0.0"
-  },
-  {
-    "Id": "Brave.Brave",
-    "Name": "Brave"
-  },
-  {
-    "Id": "sharkdp.bat",
-    "Name": "bat"
-  },
-  {
-    "Id": "Microsoft.VisualStudioCode",
-    "Name": "Microsoft Visual Studio Code (User)"
-  },
-  {
-    "Id": "Microsoft.WindowsTerminal",
-    "Name": "Windows Terminal"
-  },
-  {
-    "Id": "JanDeDobbeleer.OhMyPosh",
-    "Name": "Oh My Posh"
-  },
-  {
-    "Id": "Google.AntigravityCLI",
-    "Name": "Antigravity CLI"
-  }
+	{
+		"Name": "7-Zip 26.01 (x64 edition)",
+		"Id": "7zip.7zip"
+	},
+	{
+		"Name": "Bitwarden",
+		"Id": "Bitwarden.Bitwarden"
+	},
+	{
+		"Name": "Discord",
+		"Id": "Discord.Discord"
+	},
+	{
+		"Name": "Fast Node Manager",
+		"Id": "Schniz.fnm"
+	},
+	{
+		"Name": "fastfetch",
+		"Id": "Fastfetch-cli.Fastfetch"
+	},
+	{
+		"Name": "Git",
+		"Id": "Git.Git"
+	},
+	{
+		"Name": "GitHub Desktop",
+		"Id": "GitHub.GitHubDesktop"
+	},
+	{
+		"Name": "jq",
+		"Id": "jqlang.jq"
+	},
+	{
+		"Name": "LocalSend version 1.17.0",
+		"Id": "LocalSend.LocalSend"
+	},
+	{
+		"Name": "Microsoft Visual C++ v14 Redistributable (x64) - 14.51.36247",
+		"Id": "Microsoft.VCRedist.2015+.x64"
+	},
+	{
+		"Name": "Microsoft Visual C++ v14 Redistributable (x86) - 14.51.36247",
+		"Id": "Microsoft.VCRedist.2015+.x86"
+	},
+	{
+		"Name": "Mozilla Firefox (x64 en-US)",
+		"Id": "Mozilla.Firefox"
+	},
+	{
+		"Name": "PowerShell",
+		"Id": "Microsoft.PowerShell"
+	},
+	{
+		"Name": "Revo Uninstaller 2.1.7",
+		"Id": "RevoUninstaller.RevoUninstaller"
+	},
+	{
+		"Name": "Rustup: the Rust toolchain installer",
+		"Id": "Rustlang.Rustup"
+	},
+	{
+		"Name": "Steam",
+		"Id": "Valve.Steam"
+	},
+	{
+		"Name": "Visual Studio Community 2026",
+		"Id": "Microsoft.VisualStudio.Community"
+	},
+	{
+		"Name": "WizTree v4.31",
+		"Id": "AntibodySoftware.WizTree"
+	},
+	{
+		"Name": "YogaDNS 1.49",
+		"Id": "Initex.YogaDNS"
+	},
+	{
+		"Id": "sharkdp.bat",
+		"Name": "bat"
+	},
+	{
+		"Id": "Microsoft.VisualStudioCode",
+		"Name": "Microsoft Visual Studio Code (User)"
+	},
+	{
+		"Id": "Microsoft.WindowsTerminal",
+		"Name": "Windows Terminal"
+	},
+	{
+		"Id": "Google.AntigravityCLI",
+		"Name": "Antigravity CLI"
+	}
 ]
