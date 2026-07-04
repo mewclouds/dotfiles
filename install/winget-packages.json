@@ -1,43 +1,7 @@
 [
   {
-    "Name": "Git",
-    "Id": "Git.Git"
-  },
-  {
-    "Name": "Mozilla Firefox (x64 en-US)",
-    "Id": "Mozilla.Firefox"
-  },
-  {
-    "Name": "WizTree v4.31",
-    "Id": "AntibodySoftware.WizTree"
-  },
-  {
     "Name": "7-Zip 26.01 (x64 edition)",
     "Id": "7zip.7zip"
-  },
-  {
-    "Name": "BCUninstaller 6.2.0.0",
-    "Id": "Klocman.BulkCrapUninstaller"
-  },
-  {
-    "Name": "Brave",
-    "Id": "Brave.Brave"
-  },
-  {
-    "Name": "Steam",
-    "Id": "Valve.Steam"
-  },
-  {
-    "Name": "Microsoft Visual C++ 2015-2022 Redistributable (x86) - 14.44.35211",
-    "Id": "Microsoft.VCRedist.2015+.x86"
-  },
-  {
-    "Name": "YogaDNS 1.49",
-    "Id": "Initex.YogaDNS"
-  },
-  {
-    "Name": "Microsoft Visual C++ 2015-2022 Redistributable (x64) - 14.44.35211",
-    "Id": "Microsoft.VCRedist.2015+.x64"
   },
   {
     "Name": "Bitwarden",
@@ -48,43 +12,95 @@
     "Id": "Discord.Discord"
   },
   {
+    "Name": "Fast Node Manager",
+    "Id": "Schniz.fnm"
+  },
+  {
     "Name": "fastfetch",
     "Id": "Fastfetch-cli.Fastfetch"
+  },
+  {
+    "Name": "Git",
+    "Id": "Git.Git"
   },
   {
     "Name": "GitHub Desktop",
     "Id": "GitHub.GitHubDesktop"
   },
   {
-    "Name": "Fast Node Manager",
-    "Id": "Schniz.fnm"
-  },
-  {
-    "Name": "bat",
-    "Id": "sharkdp.bat"
+    "Name": "jq",
+    "Id": "jqlang.jq"
   },
   {
     "Name": "LocalSend version 1.17.0",
     "Id": "LocalSend.LocalSend"
   },
   {
-    "Name": "Microsoft Visual Studio Code (User)",
-    "Id": "Microsoft.VisualStudioCode"
+    "Name": "Microsoft Visual C++ v14 Redistributable (x64) - 14.51.36247",
+    "Id": "Microsoft.VCRedist.2015+.x64"
+  },
+  {
+    "Name": "Microsoft Visual C++ v14 Redistributable (x86) - 14.51.36247",
+    "Id": "Microsoft.VCRedist.2015+.x86"
+  },
+  {
+    "Name": "Mozilla Firefox (x64 en-US)",
+    "Id": "Mozilla.Firefox"
   },
   {
     "Name": "PowerShell",
     "Id": "Microsoft.PowerShell"
   },
   {
-    "Name": "Windows Terminal",
-    "Id": "Microsoft.WindowsTerminal"
+    "Name": "Revo Uninstaller 2.1.7",
+    "Id": "RevoUninstaller.RevoUninstaller"
   },
   {
-    "Name": "Oh My Posh",
-    "Id": "JanDeDobbeleer.OhMyPosh"
+    "Name": "Rustup: the Rust toolchain installer",
+    "Id": "Rustlang.Rustup"
   },
   {
-	"Name": "Antigravity CLI",
-	"Id": "Google.AntigravityCLI"
+    "Name": "Steam",
+    "Id": "Valve.Steam"
+  },
+  {
+    "Name": "Visual Studio Community 2026",
+    "Id": "Microsoft.VisualStudio.Community"
+  },
+  {
+    "Name": "WizTree v4.31",
+    "Id": "AntibodySoftware.WizTree"
+  },
+  {
+    "Name": "YogaDNS 1.49",
+    "Id": "Initex.YogaDNS"
+  },
+  {
+    "Id": "Klocman.BulkCrapUninstaller",
+    "Name": "BCUninstaller 6.2.0.0"
+  },
+  {
+    "Id": "Brave.Brave",
+    "Name": "Brave"
+  },
+  {
+    "Id": "sharkdp.bat",
+    "Name": "bat"
+  },
+  {
+    "Id": "Microsoft.VisualStudioCode",
+    "Name": "Microsoft Visual Studio Code (User)"
+  },
+  {
+    "Id": "Microsoft.WindowsTerminal",
+    "Name": "Windows Terminal"
+  },
+  {
+    "Id": "JanDeDobbeleer.OhMyPosh",
+    "Name": "Oh My Posh"
+  },
+  {
+    "Id": "Google.AntigravityCLI",
+    "Name": "Antigravity CLI"
   }
 ]
