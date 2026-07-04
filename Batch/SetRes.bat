@@ -9,7 +9,9 @@
 
 @echo off
 setlocal EnableExtensions
-set "LOG=%~dp0set-display.log"
+set "LOGDIR=%USERPROFILE%\runs\logs"
+if not exist "%LOGDIR%" mkdir "%LOGDIR%"
+set "LOG=%LOGDIR%\set-display.log"
 set "MODE=%~1"
 
 if /I "%MODE%"=="" set "MODE=normal"
