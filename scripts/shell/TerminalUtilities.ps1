@@ -34,6 +34,14 @@ function rmh() { Remove-Item (Get-PSReadlineOption).HistorySavePath }
 function sha1 { Get-FileHash -Algorithm SHA1 $args }
 function sha256 { Get-FileHash -Algorithm SHA256 $args }
 
+function Get-ExePaths {
+	Get-ChildItem -Path $PWD -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue |
+		Where-Object {
+			$_.FullName -notmatch '(?i)^[A-Z]:\\Windows\\' -and
+			$_.FullName -notmatch '(?i)\\System Volume Information\\'
+		} |
+		Select-Object -ExpandProperty FullName
+}
 
 function OrganizeFilesInDir {
 	param(
@@ -151,4 +159,41 @@ function gco() {
 }
 #endregion
 
+function Repair-UserPath {
+	$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+	if ([string]::IsNullOrWhiteSpace($userPath)) { return }
+
+	$paths = $userPath -split ';' | Where-Object { $_ -match '\S' }
+	$validPaths = @()
+	$changed = $false
+
+	foreach ($path in $paths) {
+		$expandedPath = [System.Environment]::ExpandEnvironmentVariables($path)
+
+		if (Test-Path $expandedPath) {
+			$validPaths += $path
+		}
+		else {
+			$response = Read-Host "The path '$path' does not exist. Remove it from User PATH? (y/n)"
+			if ($response -match '^[yY]') {
+				Write-Host "Removing: $path" -ForegroundColor Yellow
+				$changed = $true
+			}
+			else {
+				$validPaths += $path
+			}
+		}
+	}
+
+	if ($changed) {
+		$newPath = $validPaths -join ';'
+		[Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+		Write-Host "User PATH updated successfully. (Please restart your terminal to see the changes)." -ForegroundColor Green
+	}
+ else {
+		Write-Host "No changes were made to User PATH." -ForegroundColor Cyan
+	}
+}
+
 Set-Alias ofid -Value OrganizeFilesInDir
+Set-Alias stexe -Value Get-ExePaths
