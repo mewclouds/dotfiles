@@ -21,6 +21,9 @@ function which($name) { Get-Command $name | Select-Object -ExpandProperty Defini
 # Unix-like touch command
 function touch() { New-Item -ItemType File -Name $args[0] }
 
+# Utility to easily go home
+function ~ { Set-Location $HOME }
+
 # Replace the current directory with the home directory
 function pwdd { $("$PWD".replace($HOME, '~')) }
 

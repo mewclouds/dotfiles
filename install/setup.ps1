@@ -1,3 +1,8 @@
+[CmdletBinding()]
+param(
+	[switch]$Clean
+)
+
 $requiredPowerShellMajorVersion = 7
 if ($PSVersionTable.PSVersion.Major -lt $requiredPowerShellMajorVersion) {
 	throw "PowerShell $requiredPowerShellMajorVersion or later is required. Run this script with pwsh 7+ instead of Windows PowerShell."
@@ -25,18 +30,25 @@ function New-RepositorySymlink {
 		New-Item -ItemType Directory -Path $linkDirectory -Force | Out-Null
 	}
 
-	if (Test-Path $LinkPath) {
-		$existingLink = Get-Item -Force $LinkPath
-		if ($existingLink.LinkType) {
-			$currentTarget = (Resolve-Path $existingLink.Target).Path
+	if ((Test-Path $LinkPath) -or (Get-Item $LinkPath -ErrorAction SilentlyContinue)) {
+		$existingLink = Get-Item -Force $LinkPath -ErrorAction SilentlyContinue
+		if ($existingLink -and $existingLink.LinkType) {
+			$currentTarget = $null
+			try { $currentTarget = (Resolve-Path $existingLink.Target -ErrorAction Stop).Path } catch {}
 			$expectedTarget = (Resolve-Path $TargetPath).Path
+
 			if ($currentTarget -eq $expectedTarget) {
 				Write-Host "Symlink already exists: $LinkPath -> $TargetPath"
 				return
 			}
+			else {
+				Write-Host "Removing incorrect or broken symlink at $LinkPath" -ForegroundColor Yellow
+				Remove-Item -Path $LinkPath -Force
+			}
 		}
-
-		throw "A path already exists at $LinkPath. Move it aside or delete it before running setup.ps1."
+		else {
+			throw "A file already exists at $LinkPath and it is not a symlink. Move it aside or delete it before running setup.ps1."
+		}
 	}
 
 	New-Item -ItemType SymbolicLink -Path $LinkPath -Target $TargetPath | Out-Null
@@ -46,7 +58,9 @@ function New-RepositorySymlink {
 function Initialize-RepositorySymlinks {
 	param(
 		[Parameter(Mandatory = $true)]
-		[string]$RepoRoot
+		[string]$RepoRoot,
+
+		[switch]$Clean
 	)
 
 	$repoProfilePath = Join-Path $RepoRoot 'scripts\shell\profile.ps1'
@@ -57,6 +71,16 @@ function Initialize-RepositorySymlinks {
 	$gitConfigPath = Join-Path $env:USERPROFILE '.gitconfig'
 	$windowsTerminalJsonPath = $env:WT_JSON
 	$repoWindowsTerminalJson = Join-Path $RepoRoot '.config\windows-terminal.json'
+
+	if ($Clean) {
+		Write-Host "`n[Clean] Wiping all known symlinks..." -ForegroundColor Yellow
+		foreach ($path in @($profilePath, $fastfetchConfigPath, $gitConfigPath, $windowsTerminalJsonPath)) {
+			if ($path -and ((Test-Path $path) -or (Get-Item $path -ErrorAction SilentlyContinue))) {
+				Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
+				Write-Host "Removed: $path" -ForegroundColor DarkGray
+			}
+		}
+	}
 
 	New-Item -ItemType Directory -Path (Split-Path -Parent $repoProfilePath) -Force | Out-Null
 	if (-not (Test-Path $repoProfilePath)) {
@@ -127,13 +151,15 @@ function Install-WingetPackages {
 function Invoke-Setup {
 	param(
 		[Parameter(Mandatory = $false)]
-		[string]$RepoRoot = $PSScriptRoot
+		[string]$RepoRoot = $PSScriptRoot,
+
+		[switch]$Clean
 	)
 
-	Initialize-RepositorySymlinks -RepoRoot $RepoRoot
+	Initialize-RepositorySymlinks -RepoRoot $RepoRoot -Clean:$Clean
 	Register-BackupScheduledTask -RepoRoot $RepoRoot
 	Install-WingetPackages -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-Invoke-Setup -RepoRoot $repoRoot
+Invoke-Setup -RepoRoot $repoRoot -Clean:$Clean
