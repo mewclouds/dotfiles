@@ -62,7 +62,7 @@ function Get-FileSelection {
 Write-Host "Configuring dotfiles environment variables..." -ForegroundColor Cyan
 
 # Automatically set UTILITIES_PATH relative to where we're running
-$utilitiesPath = Join-Path $PSScriptRoot 'PowerShell\TerminalUtilities.ps1'
+$utilitiesPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\shell\TerminalUtilities.ps1'
 if (Test-Path $utilitiesPath) {
 	[Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
 	Write-Host "Set UTILITIES_PATH to $utilitiesPath" -ForegroundColor Green

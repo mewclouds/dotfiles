@@ -49,7 +49,7 @@ function Initialize-RepositorySymlinks {
 		[string]$RepoRoot
 	)
 
-	$repoProfilePath = Join-Path $RepoRoot 'PowerShell\profile.ps1'
+	$repoProfilePath = Join-Path $RepoRoot 'scripts\shell\profile.ps1'
 	$repoFastfetchConfigPath = Join-Path $RepoRoot '.config\fastfetch-win.jsonc'
 	$repoGitConfigPath = Join-Path $RepoRoot '.config\.gitconfig'
 	$profilePath = $PROFILE
@@ -80,7 +80,7 @@ function Register-BackupScheduledTask {
 	)
 
 	$backupTaskName = 'Backup MR Mods'
-	$backupScriptPath = Join-Path $RepoRoot 'PowerShell\BackupMRMods.ps1'
+	$backupScriptPath = Join-Path $RepoRoot 'scripts\backup\BackupMRMods.ps1'
 	$backupTaskArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$backupScriptPath`""
 
 	if (-not (Test-Path $backupScriptPath)) {
@@ -132,8 +132,8 @@ function Invoke-Setup {
 
 	Initialize-RepositorySymlinks -RepoRoot $RepoRoot
 	Register-BackupScheduledTask -RepoRoot $RepoRoot
-	Install-WingetPackages -ManifestPath (Join-Path $RepoRoot 'winget-packages.json')
+	Install-WingetPackages -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
 }
 
-$repoRoot = $PSScriptRoot
+$repoRoot = Split-Path -Parent $PSScriptRoot
 Invoke-Setup -RepoRoot $repoRoot

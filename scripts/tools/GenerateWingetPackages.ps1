@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-	[string]$OutputPath = ('winget-packages.json')
+	[string]$OutputPath = (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'install\winget-packages.json')
 )
 
 $ErrorActionPreference = 'Stop'
