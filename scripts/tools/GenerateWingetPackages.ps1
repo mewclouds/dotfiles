@@ -1,3 +1,5 @@
+# TODO IMPLEMENT by category, this means hardcoding instead of automatically fetching information but its easier to manage in the long run
+
 [CmdletBinding()]
 param(
 	[string]$OutputPath = (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'install\winget-packages.json')
@@ -27,7 +29,7 @@ $currentPackage = $null
 
 foreach ($line in ($wingetOutput -split "`r?`n")) {
 	if ($line -match '^\(\d+/\d+\)\s+(?<name>.+?)\s+\[(?<id>.+)\]$') {
-		if ($currentPackage -and $currentPackage.IsWingetSource) {
+		if ($currentPackage) {
 			$packages.Add($currentPackage)
 		}
 
@@ -51,7 +53,7 @@ foreach ($line in ($wingetOutput -split "`r?`n")) {
 	}
 }
 
-if ($currentPackage -and $currentPackage.IsWingetSource) {
+if ($currentPackage) {
 	$packages.Add($currentPackage)
 }
 

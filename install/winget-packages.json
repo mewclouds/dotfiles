@@ -8,6 +8,10 @@
 		"Id": "Bitwarden.Bitwarden"
 	},
 	{
+		"Name": "Deezer 7.1.270",
+		"Id": "Deezer.Deezer"
+	},
+	{
 		"Name": "Discord",
 		"Id": "Discord.Discord"
 	},
@@ -28,10 +32,6 @@
 		"Id": "GitHub.GitHubDesktop"
 	},
 	{
-		"Name": "jq",
-		"Id": "jqlang.jq"
-	},
-	{
 		"Name": "LocalSend version 1.17.0",
 		"Id": "LocalSend.LocalSend"
 	},
@@ -48,12 +48,16 @@
 		"Id": "Mozilla.Firefox"
 	},
 	{
+		"Name": "NordVPN",
+		"Id": "NordSecurity.NordVPN"
+	},
+	{
 		"Name": "PowerShell",
 		"Id": "Microsoft.PowerShell"
 	},
 	{
-		"Name": "Revo Uninstaller 2.1.7",
-		"Id": "RevoUninstaller.RevoUninstaller"
+		"Name": "Revo Uninstaller Pro 5.5.0",
+		"Id": "RevoUninstaller.RevoUninstallerPro"
 	},
 	{
 		"Name": "Rustup: the Rust toolchain installer",
