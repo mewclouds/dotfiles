@@ -3,7 +3,6 @@
 	"$schema": "https://aka.ms/terminal-profiles-schema",
 	"actions": [],
 	"copyFormatting": "none",
-	"copyOnSelect": true,
 	"defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
 	"keybindings": [
 		{
@@ -30,7 +29,7 @@
 	],
 	"profiles": {
 		"defaults": {
-			"colorScheme": "Dracula",
+			"colorScheme": "Apple System Colors",
 			"font": {
 				"face": "FiraCode Nerd Font",
 				"size": 11
@@ -83,6 +82,29 @@
 	},
 	"schemes": [
 		{
+			"background": "#2C2B2B",
+			"black": "#000000",
+			"blue": "#0225C7",
+			"brightBlack": "#686868",
+			"brightBlue": "#6871FF",
+			"brightCyan": "#60FDFF",
+			"brightGreen": "#5FFA68",
+			"brightPurple": "#FF77FF",
+			"brightRed": "#FF6E67",
+			"brightWhite": "#FFFFFF",
+			"brightYellow": "#FFFC67",
+			"cursorColor": "#C7C7C7",
+			"cyan": "#00C5C7",
+			"foreground": "#D5A200",
+			"green": "#00C200",
+			"name": "Apple Classic",
+			"purple": "#CA30C7",
+			"red": "#C91B00",
+			"selectionBackground": "#6B5B02",
+			"white": "#C7C7C7",
+			"yellow": "#C7C400"
+		},
+		{
 			"background": "#282A36",
 			"black": "#21222C",
 			"blue": "#BD93F9",
@@ -104,6 +126,29 @@
 			"selectionBackground": "#44475A",
 			"white": "#F8F8F2",
 			"yellow": "#F1FA8C"
+		},
+		{
+			"name": "Apple System Colors",
+			"black": "#1a1a1a",
+			"red": "#cc372e",
+			"green": "#26a439",
+			"yellow": "#cdac08",
+			"blue": "#0869cb",
+			"purple": "#9647bf",
+			"cyan": "#479ec2",
+			"white": "#98989d",
+			"brightBlack": "#464646",
+			"brightRed": "#ff453a",
+			"brightGreen": "#32d74b",
+			"brightYellow": "#ffd60a",
+			"brightBlue": "#0a84ff",
+			"brightPurple": "#bf5af2",
+			"brightCyan": "#76d6ff",
+			"brightWhite": "#ffffff",
+			"background": "#1e1e1e",
+			"foreground": "#ffffff",
+			"selectionBackground": "#3f638b",
+			"cursorColor": "#98989d"
 		}
 	],
 	"themes": []
