@@ -116,7 +116,7 @@ function Register-BackupScheduledTask {
 		return
 	}
 
-	$backupTaskAction = New-ScheduledTaskAction -Execute $PSHOME\pwsh.exe -Argument $backupTaskArguments
+	$backupTaskAction = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument $backupTaskArguments
 	$backupTaskTrigger = New-ScheduledTaskTrigger -AtStartup
 	$backupTaskPrincipal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType S4U -RunLevel Highest
 
