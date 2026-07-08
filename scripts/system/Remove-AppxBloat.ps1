@@ -1,4 +1,4 @@
-# Run as Administrator
+#Requires -RunAsAdministrator
 
 $Packages = @(
 
@@ -38,7 +38,7 @@ Write-Host ""
 
 # Cache package lists once
 $Installed = Get-AppxPackage
-# $Provisioned = Get-AppxProvisionedPackage -Online
+$Provisioned = Get-AppxProvisionedPackage -Online
 
 foreach ($Package in $Packages) {
     Write-Host "[$Package]" -ForegroundColor Yellow
