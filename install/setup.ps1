@@ -1,21 +1,10 @@
+#Requires -Version 7.0
+#Requires -RunAsAdministrator
+
 [CmdletBinding()]
 param(
     [switch]$Clean
 )
-
-$requiredPowerShellMajorVersion = 7
-if ($PSVersionTable.PSVersion.Major -lt $requiredPowerShellMajorVersion) {
-    throw "PowerShell $requiredPowerShellMajorVersion or later is required. " +
-    "Run this script with pwsh 7+ instead of Windows PowerShell."
-}
-
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = [Security.Principal.WindowsPrincipal]$identity
-$adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
-
-if (-not $principal.IsInRole($adminRole)) {
-    throw "Elevated privileges required. Please run this script as an administrator."
-}
 
 Add-Type -AssemblyName System.Windows.Forms
 

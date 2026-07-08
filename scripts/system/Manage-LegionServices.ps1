@@ -1,8 +1,4 @@
-# Make sure we are running as admin before doing anything else
-$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "Elevated privileges required. Please run this script as an administrator."
-}
+#Requires -RunAsAdministrator
 
 # Dump a backup to the desktop first just in case
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"

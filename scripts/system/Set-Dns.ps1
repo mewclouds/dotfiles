@@ -1,14 +1,7 @@
+#Requires -RunAsAdministrator
+
 [CmdletBinding()]
 param()
-
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = [Security.Principal.WindowsPrincipal]$identity
-$adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
-if (-not $principal.IsInRole($adminRole)) {
-    Write-Host "Elevating privileges to apply DNS settings..." -ForegroundColor Yellow
-    Start-Process pwsh -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
-    exit
-}
 
 Write-Host "Fetching DNS configuration from Bitwarden (MochiDNS)..." -ForegroundColor Cyan
 $bwNote = & bw get notes MochiDNS 2>&1

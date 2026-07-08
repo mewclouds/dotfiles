@@ -1,5 +1,8 @@
 #Requires -RunAsAdministrator
 
+# TODO: This requirement check cannot be refactored to `#Requires -Version 5.1` because that directive
+# only enforces a minimum version (meaning it would still execute on PowerShell 7+, where the DISM COM
+# APIs fail with 'Class not registered'). We must enforce exactly version 5.
 if ($PSVersionTable.PSVersion.Major -ne 5) {
     throw "This script must be run in Windows PowerShell (v5.1) because DISM APIs " +
     "(like Get-AppxProvisionedPackage) fail with 'Class not registered' in PowerShell 7+."

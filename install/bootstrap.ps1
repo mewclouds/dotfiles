@@ -14,6 +14,8 @@ $wingetSettingsJson = Join-Path $wingetSettingsDir 'settings.json'
     }
 }' | Set-Content -Path $wingetSettingsJson -Force
 
+# TODO: This requirement check cannot be refactored to `#Requires -Version 7.0` because this script is
+# designed to run in Windows PowerShell 5.1 and bootstrap/install PowerShell 7 if it is missing.
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     Write-Host "Installing PowerShell 7..." -ForegroundColor Cyan
     winget install --id Microsoft.PowerShell --source winget `
