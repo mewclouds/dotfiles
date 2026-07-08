@@ -21,5 +21,5 @@ The repository is structured logically by purpose:
 If I ever wipe my machine, here is how I get it back:
 
 1. Clone the repository.
-2. Run `install/pre-setup.ps1` to configure environment paths.
+2. Run `install/preSetup.ps1` to configure environment paths.
 3. Run `install/setup.ps1` as Administrator to link configs, install winget apps, and register scheduled tasks.

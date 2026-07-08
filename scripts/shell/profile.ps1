@@ -2,7 +2,7 @@
 if ($env:UTILITIES_PATH) {
     . $env:UTILITIES_PATH
 } else {
-    Write-Error "UTILITIES_PATH environment variable is not set. Please run pre-setup.ps1 first."
+    Write-Error "UTILITIES_PATH environment variable is not set. Please run preSetup.ps1 first."
 }
 
 if (CommandExists fnm) {

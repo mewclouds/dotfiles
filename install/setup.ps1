@@ -67,7 +67,7 @@ function Initialize-RepositorySymlink {
         [switch]$Clean
     )
 
-    $repoProfilePath = Join-Path $RepoRoot 'scripts\shell\profile.ps1'
+    $repoProfilePath = Join-Path $RepoRoot 'scripts\shell\Profile.ps1'
     $repoFastfetchConfigPath = Join-Path $RepoRoot '.config\fastfetch-win.jsonc'
     $repoGitConfigPath = Join-Path $RepoRoot '.config\.gitconfig'
     $profilePath = $PROFILE
@@ -108,7 +108,7 @@ function Register-BackupScheduledTask {
     )
 
     $backupTaskName = 'Backup MR Mods'
-    $backupScriptPath = Join-Path $RepoRoot 'scripts\backup\BackupMRMods.ps1'
+    $backupScriptPath = Join-Path $RepoRoot 'scripts\backup\Backup-MRMods.ps1'
     $backupTaskArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$backupScriptPath`""
 
     if (-not (Test-Path $backupScriptPath)) {
