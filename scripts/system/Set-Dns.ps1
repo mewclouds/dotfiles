@@ -33,7 +33,7 @@ if ($ipv6Match.Success) {
 
 $dohTemplate = $dohMatch.Groups[1].Value.Trim()
 
-Write-Host "Registering ControlD DoH Templates..." -ForegroundColor Cyan
+Write-Host "Registering DoH Templates..." -ForegroundColor Cyan
 foreach ($ip in $ips) {
     try {
         # Check if already exists to prevent duplicate errors
@@ -50,7 +50,7 @@ foreach ($ip in $ips) {
     }
 }
 
-Write-Host "`nApplying ControlD DNS to Wi-Fi adapter..." -ForegroundColor Cyan
+Write-Host "`nApplying DNS to Wi-Fi adapter..." -ForegroundColor Cyan
 $adapters = Get-NetAdapter | Where-Object { $_.Name -match "Wi-Fi|WiFi|Wireless|WLAN" }
 if ($adapters) {
     foreach ($adapter in $adapters) {
