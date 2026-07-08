@@ -25,8 +25,7 @@ function Get-FolderSelection {
     if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         [Environment]::SetEnvironmentVariable($VarName, $browser.SelectedPath, 'User')
         Write-Host "Set $VarName to $($browser.SelectedPath)" -ForegroundColor Green
-    }
-    else {
+    } else {
         Write-Host "Skipped $VarName" -ForegroundColor DarkYellow
     }
 }
@@ -53,8 +52,7 @@ function Get-FileSelection {
     if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         [Environment]::SetEnvironmentVariable($VarName, $browser.FileName, 'User')
         Write-Host "Set $VarName to $($browser.FileName)" -ForegroundColor Green
-    }
-    else {
+    } else {
         Write-Host "Skipped $VarName" -ForegroundColor DarkYellow
     }
 }
@@ -66,8 +64,7 @@ $utilitiesPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\shell\Ter
 if (Test-Path $utilitiesPath) {
     [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
     Write-Host "Set UTILITIES_PATH to $utilitiesPath" -ForegroundColor Green
-}
-else {
+} else {
     Write-Host "Warning: Could not find TerminalUtilities.ps1 at $utilitiesPath" -ForegroundColor Yellow
 }
 
@@ -78,9 +75,10 @@ $currentWtJson = [Environment]::GetEnvironmentVariable('WT_JSON', 'User')
 if (-not $currentWtJson -and (Test-Path $defaultWtJson)) {
     [Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'User')
     Write-Host "Set WT_JSON to $defaultWtJson (auto-detected)" -ForegroundColor Green
-}
-else {
-    Get-FileSelection -VarName 'WT_JSON' -Prompt 'Select your Windows Terminal settings.json' -Filter 'JSON Files (*.json)|*.json'
+} else {
+    Get-FileSelection -VarName 'WT_JSON' `
+        -Prompt 'Select your Windows Terminal settings.json' `
+        -Filter 'JSON Files (*.json)|*.json'
 }
 Get-FolderSelection -VarName 'MR_MODS_PATH' -Prompt 'Select your MR Mods directory'
 Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
@@ -93,8 +91,7 @@ foreach ($v in $vars) {
     $val = [Environment]::GetEnvironmentVariable($v, 'User')
     if ($val) {
         Write-Host "  $v = $val"
-    }
-    else {
+    } else {
         Write-Host "  $v = NOT SET" -ForegroundColor Red
         $allGood = $false
     }
@@ -102,7 +99,7 @@ foreach ($v in $vars) {
 
 if ($allGood) {
     Write-Host "`nReady to run setup.ps1." -ForegroundColor Green
-}
-else {
-    Write-Host "`nMissing environment variables. Please configure all variables before running setup.ps1." -ForegroundColor Yellow
+} else {
+    Write-Host "`nMissing environment variables. Please configure all variables before running setup.ps1." `
+        -ForegroundColor Yellow
 }

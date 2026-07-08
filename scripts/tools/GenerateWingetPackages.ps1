@@ -1,8 +1,10 @@
-# TODO IMPLEMENT by category, this means hardcoding instead of automatically fetching information but its easier to manage in the long run
+# TODO IMPLEMENT by category - hardcoding instead of auto-fetching is easier to manage long-term
 
 [CmdletBinding()]
 param(
-    [string]$OutputPath = (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'install\winget-packages.json')
+    [string]$OutputPath = (Join-Path `
+            -Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) `
+            -ChildPath 'install\winget-packages.json')
 )
 
 $ErrorActionPreference = 'Stop'

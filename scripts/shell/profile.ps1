@@ -16,6 +16,7 @@ if (CommandExists fastfetch) {
 # Set the prompt to my liking
 function prompt {
     mccoloring ("&n" +
-        "&su3&su3$(Get-Date -UFormat "%a %m-%d %H:%M") &su1$($env:computername)&su2@&su2$($env:USERNAME) &su1$(pwdd)&n" +
+        "&su3&su3$(Get-Date -UFormat "%a %m-%d %H:%M") &su1$($env:computername)" +
+        "&su2@&su2$($env:USERNAME) &su1$(pwdd)&n" +
         "&su2> &r")
 }

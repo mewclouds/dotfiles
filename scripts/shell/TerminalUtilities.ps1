@@ -31,16 +31,15 @@ function pwdd { $("$PWD".replace($HOME, '~')) }
 function rmh() { Remove-Item (Get-PSReadLineOption).HistorySavePath }
 
 # Compute file hashes
-function sha1 { Get-FileHash -Algorithm SHA1 $args }
 function sha256 { Get-FileHash -Algorithm SHA256 $args }
 
-function Get-ExePaths {
+function Get-ExePath {
     Get-ChildItem -Path $PWD -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue |
-    Where-Object {
-        $_.FullName -notmatch '(?i)^[A-Z]:\\Windows\\' -and
-        $_.FullName -notmatch '(?i)\\System Volume Information\\'
-    } |
-    Select-Object -ExpandProperty FullName
+        Where-Object {
+            $_.FullName -notmatch '(?i)^[A-Z]:\\Windows\\' -and
+            $_.FullName -notmatch '(?i)\\System Volume Information\\'
+        } |
+        Select-Object -ExpandProperty FullName
 }
 
 # Minecraft coloring (useful for prompt)
@@ -69,7 +68,7 @@ function PSLint {
 
     $settingsPath = Join-Path $Path 'PSScriptAnalyzerSettings.psd1'
     if (-not (Test-Path $settingsPath)) {
-        Write-Warning "No PSScriptAnalyzerSettings.psd1 found at $settingsPath — running with default rules."
+        Write-Warning "No PSScriptAnalyzerSettings.psd1 found at $settingsPath - running with default rules."
         Invoke-ScriptAnalyzer -Path $Path -Recurse -Fix:$Fix
         return
     }
@@ -85,7 +84,8 @@ function PSFormat {
 
     $settingsPath = Join-Path $Path 'PSScriptAnalyzerSettings.psd1'
     if (-not (Test-Path $settingsPath)) {
-        Write-Warning "No PSScriptAnalyzerSettings.psd1 found at $settingsPath — aborting to avoid reformatting with defaults."
+        Write-Warning ("No PSScriptAnalyzerSettings.psd1 found at $settingsPath" +
+            " - aborting to avoid reformatting with defaults.")
         return
     }
 
@@ -109,7 +109,8 @@ function ginit() {
 }
 
 function glog() {
-    git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+    git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' `
+        --abbrev-commit --date=relative
 }
 
 function gd() { git diff --color }
@@ -145,14 +146,12 @@ function Repair-UserPath {
 
         if (Test-Path $expandedPath) {
             $validPaths += $path
-        }
-        else {
+        } else {
             $response = Read-Host "The path '$path' does not exist. Remove it from User PATH? (y/n)"
             if ($response -match '^[yY]') {
                 Write-Host "Removing: $path" -ForegroundColor Yellow
                 $changed = $true
-            }
-            else {
+            } else {
                 $validPaths += $path
             }
         }
@@ -161,40 +160,36 @@ function Repair-UserPath {
     if ($changed) {
         $newPath = $validPaths -join ';'
         [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
-        Write-Host "User PATH updated successfully. (Please restart your terminal to see the changes)." -ForegroundColor Green
-    }
-    else {
+        Write-Host "User PATH updated successfully. (Please restart your terminal to see the changes)." `
+            -ForegroundColor Green
+    } else {
         Write-Host "No changes were made to User PATH." -ForegroundColor Cyan
     }
 }
 
-function Get-FolderSizes {
+function Get-FolderSize {
     $fso = New-Object -ComObject Scripting.FileSystemObject
     $results = Get-ChildItem -Recurse -Directory | ForEach-Object {
         $size = 0
         try {
             $folder = $fso.GetFolder($_.FullName)
             $size = $folder.Size
-        }
-        catch {}
+        } catch { Write-Warning "Could not get size for '$($_.FullName)': $($_.Exception.Message)" }
 
         $formattedSize = if ($size -ge 1GB) {
             "{0:N2} GB" -f ($size / 1GB)
-        }
-        elseif ($size -ge 1MB) {
+        } elseif ($size -ge 1MB) {
             "{0:N2} MB" -f ($size / 1MB)
-        }
-        elseif ($size -ge 1KB) {
+        } elseif ($size -ge 1KB) {
             "{0:N2} KB" -f ($size / 1KB)
-        }
-        else {
+        } else {
             "$size Bytes"
         }
 
         [PSCustomObject]@{
-            Folder  = (Resolve-Path -Relative $_.FullName) -replace '^\.\\', ''
+            Folder = (Resolve-Path -Relative $_.FullName) -replace '^\.\\', ''
             SizeRaw = $size
-            Size    = $formattedSize
+            Size = $formattedSize
         }
     } | Sort-Object SizeRaw -Descending
 
@@ -206,29 +201,34 @@ function Get-FolderSizes {
     $padding = $maxLen + 2
 
     $dashLine = "-" * ($padding + 15)
-    Write-Host (mccoloring "&n&su1🌊&su3*ﾟ¨ﾟ･ &su2Folder Sizes&su3 🌊&su1*ﾟ¨ﾟ")
+    Write-Host (mccoloring "&n&su1*~* &su2Folder Sizes &su3*~*")
     Write-Host (mccoloring "&su1$dashLine")
     Write-Host (mccoloring "&su3$("{0,-$padding}" -f 'Folder')&su2Size")
     Write-Host (mccoloring "&su1$dashLine")
 
     foreach ($item in $results) {
-        $folderName = if ($item.Folder.Length -gt $maxLen) { $item.Folder.Substring(0, $maxLen - 3) + "..." } else { $item.Folder }
+        $folderName = if ($item.Folder.Length -gt $maxLen) {
+            $item.Folder.Substring(0, $maxLen - 3) + "..."
+        } else {
+            $item.Folder
+        }
         Write-Host (mccoloring "&su3$("{0,-$padding}" -f $folderName)&su1$($item.Size)")
     }
 
     $totalRaw = 0
-    try { $totalRaw = $fso.GetFolder((Get-Item .).FullName).Size } catch {}
+    try {
+        $totalRaw = $fso.GetFolder((Get-Item .).FullName).Size
+    } catch {
+        Write-Warning "Could not get total size for current directory: $($_.Exception.Message)"
+    }
 
     $totalFormatted = if ($totalRaw -ge 1GB) {
         "{0:N2} GB" -f ($totalRaw / 1GB)
-    }
-    elseif ($totalRaw -ge 1MB) {
+    } elseif ($totalRaw -ge 1MB) {
         "{0:N2} MB" -f ($totalRaw / 1MB)
-    }
-    elseif ($totalRaw -ge 1KB) {
+    } elseif ($totalRaw -ge 1KB) {
         "{0:N2} KB" -f ($totalRaw / 1KB)
-    }
-    else {
+    } else {
         "$totalRaw Bytes"
     }
 
@@ -242,7 +242,10 @@ function OrganizeFilesInDir {
     )
 
     $imageExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg', '.ico', '.tiff', '.raw', '.heic')
-    $documentExtensions = @('.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.odt', '.ods', '.odp', '.md', '.rtf')
+    $documentExtensions = @(
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.txt', '.csv', '.odt', '.ods', '.odp', '.md', '.rtf'
+    )
 
     $imagesFolder = Join-Path $Path "Images"
     $documentsFolder = Join-Path $Path "Documents"
@@ -263,11 +266,9 @@ function OrganizeFilesInDir {
 
         if ($imageExtensions -contains $ext) {
             $destination = $imagesFolder
-        }
-        elseif ($documentExtensions -contains $ext) {
+        } elseif ($documentExtensions -contains $ext) {
             $destination = $documentsFolder
-        }
-        else {
+        } else {
             $destination = $miscFolder
         }
 
@@ -287,26 +288,26 @@ function OrganizeFilesInDir {
     }
 
     Get-ChildItem -Path $Path -Recurse -Directory |
-    Where-Object {
-        $_.FullName -notlike "$imagesFolder*" -and
-        $_.FullName -notlike "$documentsFolder*" -and
-        $_.FullName -notlike "$miscFolder*" -and
-        $_.FullName -ne $imagesFolder -and
-        $_.FullName -ne $documentsFolder -and
-        $_.FullName -ne $miscFolder
-    } |
-    Sort-Object -Property FullName -Descending |
-    ForEach-Object {
-        if ((Get-ChildItem -Path $_.FullName -Force | Measure-Object).Count -eq 0) {
-            Write-Host "Removing empty folder: $($_.FullName)"
-            Remove-Item -Path $_.FullName
+        Where-Object {
+            $_.FullName -notlike "$imagesFolder*" -and
+            $_.FullName -notlike "$documentsFolder*" -and
+            $_.FullName -notlike "$miscFolder*" -and
+            $_.FullName -ne $imagesFolder -and
+            $_.FullName -ne $documentsFolder -and
+            $_.FullName -ne $miscFolder
+        } |
+        Sort-Object -Property FullName -Descending |
+        ForEach-Object {
+            if ((Get-ChildItem -Path $_.FullName -Force | Measure-Object).Count -eq 0) {
+                Write-Host "Removing empty folder: $($_.FullName)"
+                Remove-Item -Path $_.FullName
+            }
         }
-    }
 
     Write-Host "`nDone! $Path is now organized."
 }
 # endregion
 
 Set-Alias ofid -Value OrganizeFilesInDir
-Set-Alias stexe -Value Get-ExePaths
-Set-Alias gfs -Value Get-FolderSizes
+Set-Alias stexe -Value Get-ExePath
+Set-Alias gfs -Value Get-FolderSize

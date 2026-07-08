@@ -5,7 +5,8 @@ param(
 
 $requiredPowerShellMajorVersion = 7
 if ($PSVersionTable.PSVersion.Major -lt $requiredPowerShellMajorVersion) {
-    throw "PowerShell $requiredPowerShellMajorVersion or later is required. Run this script with pwsh 7+ instead of Windows PowerShell."
+    throw "PowerShell $requiredPowerShellMajorVersion or later is required. " +
+    "Run this script with pwsh 7+ instead of Windows PowerShell."
 }
 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -34,7 +35,11 @@ function New-RepositorySymlink {
         $existingLink = Get-Item -Force $LinkPath -ErrorAction SilentlyContinue
         if ($existingLink -and $existingLink.LinkType) {
             $currentTarget = $null
-            try { $currentTarget = (Resolve-Path $existingLink.Target -ErrorAction Stop).Path } catch {}
+            try {
+                $currentTarget = (Resolve-Path $existingLink.Target -ErrorAction Stop).Path
+            } catch {
+                Write-Debug "Could not resolve symlink target '$($existingLink.Target)': $($_.Exception.Message)"
+            }
             $expectedTarget = (Resolve-Path $TargetPath).Path
 
             if ($currentTarget -eq $expectedTarget) {
@@ -45,7 +50,8 @@ function New-RepositorySymlink {
                 Remove-Item -Path $LinkPath -Force
             }
         } else {
-            throw "A file already exists at $LinkPath and it is not a symlink. Move it aside or delete it before running setup.ps1."
+            throw "A file already exists at $LinkPath and it is not a symlink. " +
+            "Move it aside or delete it before running setup.ps1."
         }
     }
 
@@ -53,7 +59,7 @@ function New-RepositorySymlink {
     Write-Host "Created symlink: $LinkPath -> $TargetPath"
 }
 
-function Initialize-RepositorySymlinks {
+function Initialize-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
@@ -106,7 +112,8 @@ function Register-BackupScheduledTask {
     $backupTaskArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$backupScriptPath`""
 
     if (-not (Test-Path $backupScriptPath)) {
-        throw "Could not find the backup script at $backupScriptPath. Make sure the dotfiles repo is checked out in $RepoRoot."
+        throw "Could not find the backup script at $backupScriptPath. " +
+        "Make sure the dotfiles repo is checked out in $RepoRoot."
     }
 
     if (Get-ScheduledTask -TaskName $backupTaskName -ErrorAction SilentlyContinue) {
@@ -116,13 +123,22 @@ function Register-BackupScheduledTask {
 
     $backupTaskAction = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument $backupTaskArguments
     $backupTaskTrigger = New-ScheduledTaskTrigger -AtStartup
-    $backupTaskPrincipal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType S4U -RunLevel Highest
+    $backupTaskPrincipal = New-ScheduledTaskPrincipal `
+        -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) `
+        -LogonType S4U `
+        -RunLevel Highest
 
-    Register-ScheduledTask -TaskName $backupTaskName -Action $backupTaskAction -Trigger $backupTaskTrigger -Principal $backupTaskPrincipal -Description 'Back up MR mods weekly.' -Force | Out-Null
+    Register-ScheduledTask `
+        -TaskName $backupTaskName `
+        -Action $backupTaskAction `
+        -Trigger $backupTaskTrigger `
+        -Principal $backupTaskPrincipal `
+        -Description 'Back up MR mods weekly.' `
+        -Force | Out-Null
     Write-Host "Registered scheduled task: $backupTaskName" -ForegroundColor Green
 }
 
-function Install-WingetPackages {
+function Install-WingetPackage {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ManifestPath
@@ -154,9 +170,9 @@ function Invoke-Setup {
         [switch]$Clean
     )
 
-    Initialize-RepositorySymlinks -RepoRoot $RepoRoot -Clean:$Clean
+    Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
-    Install-WingetPackages -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
+    Install-WingetPackage -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot

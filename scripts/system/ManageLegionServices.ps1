@@ -7,10 +7,12 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 # Dump a backup to the desktop first just in case
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backupCsv = "$env:USERPROFILE\Desktop\ServicesBackup-$timestamp.csv"
-Get-CimInstance Win32_Service | Select-Object Name, DisplayName, State, StartMode, StartName | Export-Csv -NoTypeInformation -Path $backupCsv
+Get-CimInstance Win32_Service |
+    Select-Object Name, DisplayName, State, StartMode, StartName |
+    Export-Csv -NoTypeInformation -Path $backupCsv
 Write-Host "Backup saved to: $backupCsv" -ForegroundColor Cyan
 
-function Resolve-Services {
+function Resolve-Service {
     param([string[]]$Patterns)
     $all = Get-CimInstance -ClassName Win32_Service
     $results = foreach ($p in $Patterns) {
@@ -124,23 +126,23 @@ $Optional_Manual = @(
 # Execution
 
 Write-Host "Stripping Telemetry..." -ForegroundColor Magenta
-Stop-And-Disable (Resolve-Services $Telemetry_Disable)
+Stop-And-Disable (Resolve-Service $Telemetry_Disable)
 
 Write-Host "Purging Lenovo Bloat..." -ForegroundColor Magenta
-Stop-And-Disable (Resolve-Services $Lenovo_Disable)
-Set-Startup -Services (Resolve-Services $Lenovo_Manual) -Mode Manual
+Stop-And-Disable (Resolve-Service $Lenovo_Disable)
+Set-Startup -Services (Resolve-Service $Lenovo_Manual) -Mode Manual
 
 Write-Host "Shifting Third-Party Updaters to Manual..." -ForegroundColor Magenta
-Set-Startup -Services (Resolve-Services $Updaters_Manual) -Mode Manual
+Set-Startup -Services (Resolve-Service $Updaters_Manual) -Mode Manual
 
 Write-Host "Dropping Unused Peripherals..." -ForegroundColor Magenta
-Stop-And-Disable (Resolve-Services $Peripherals_Disable)
+Stop-And-Disable (Resolve-Service $Peripherals_Disable)
 
 Write-Host "Dropping WSA Fabric..." -ForegroundColor Magenta
-Stop-And-Disable (Resolve-Services $WSA_Disable)
+Stop-And-Disable (Resolve-Service $WSA_Disable)
 
 Write-Host "Adjusting Optional Windows Services to Manual..." -ForegroundColor Magenta
-Set-Startup -Services (Resolve-Services $Optional_Manual) -Mode Manual
+Set-Startup -Services (Resolve-Service $Optional_Manual) -Mode Manual
 
 Write-Host "Service optimization complete." -ForegroundColor Green
 Write-Host "--------------------------------------------------------" -ForegroundColor Gray
