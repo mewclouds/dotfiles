@@ -67,13 +67,19 @@ function PSLint {
     )
 
     $settingsPath = Join-Path $Path 'PSScriptAnalyzerSettings.psd1'
+
+    # Filter out the settings file itself, otherwise Invoke-ScriptAnalyzer crashes with NullReferenceException
+    $files = Get-ChildItem -Path $Path -Recurse -Include *.ps1, *.psm1, *.psd1 |
+        Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
+    if (-not $files) { return }
+
     if (-not (Test-Path $settingsPath)) {
         Write-Warning "No PSScriptAnalyzerSettings.psd1 found at $settingsPath - running with default rules."
-        Invoke-ScriptAnalyzer -Path $Path -Recurse -Fix:$Fix
+        $files | Invoke-ScriptAnalyzer -Fix:$Fix
         return
     }
 
-    Invoke-ScriptAnalyzer -Path $Path -Recurse -Settings $settingsPath -Fix:$Fix
+    $files | Invoke-ScriptAnalyzer -Settings $settingsPath -Fix:$Fix
 }
 
 function PSFormat {
