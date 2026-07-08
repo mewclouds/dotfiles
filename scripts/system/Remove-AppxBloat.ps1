@@ -1,5 +1,10 @@
 #Requires -RunAsAdministrator
 
+if ($PSVersionTable.PSVersion.Major -ne 5) {
+    throw "This script must be run in Windows PowerShell (v5.1) because DISM APIs " +
+    "(like Get-AppxProvisionedPackage) fail with 'Class not registered' in PowerShell 7+."
+}
+
 $Packages = @(
 
     "Microsoft.WindowsFeedbackHub",
