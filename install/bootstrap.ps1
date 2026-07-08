@@ -1,9 +1,11 @@
-#Requires -RunAsAdministrator
-
-[CmdletBinding()]
-param()
-
 $ErrorActionPreference = 'Stop'
+
+$isAdmin = [bool]([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator
+)
+if (-not $isAdmin) {
+    throw "This script must be run as an Administrator. Please elevate your shell."
+}
 
 $wingetSettingsDir = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState'
 if (-not (Test-Path $wingetSettingsDir)) {
