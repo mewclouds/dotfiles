@@ -20,16 +20,13 @@ $ipv4Match = [regex]::Match($bwNote, 'IPv4 \((.*?)\)')
 $ipv6Match = [regex]::Match($bwNote, 'IPv6 \((.*?)\)')
 $dohMatch = [regex]::Match($bwNote, 'DoH \((.*?)\)')
 
-if (-not $ipv4Match.Success -or -not $dohMatch.Success) {
-    throw "Failed to parse MochiDNS formatting. Expected 'IPv4 (...)' and 'DoH (...)'. Found: $bwNote"
+if (-not $ipv4Match.Success -or -not $dohMatch.Success -or -not $ipv6Match.Success) {
+    throw "Failed to parse MochiDNS formatting. Expected 'IPv4 (...)', 'IPv6 (...)' and 'DoH (...)'. Found: $bwNote"
 }
 
 $ips = [System.Collections.Generic.List[string]]::new()
 $ipv4Match.Groups[1].Value -split ',' | ForEach-Object { $ips.Add($_.Trim()) }
-
-if ($ipv6Match.Success) {
-    $ipv6Match.Groups[1].Value -split ',' | ForEach-Object { $ips.Add($_.Trim()) }
-}
+$ipv6Match.Groups[1].Value -split ',' | ForEach-Object { $ips.Add($_.Trim()) }
 
 $dohTemplate = $dohMatch.Groups[1].Value.Trim()
 
@@ -50,8 +47,8 @@ foreach ($ip in $ips) {
     }
 }
 
-Write-Host "`nApplying DNS to Wi-Fi adapter..." -ForegroundColor Cyan
-$adapters = Get-NetAdapter | Where-Object { $_.Name -match "Wi-Fi|WiFi|Wireless|WLAN" }
+Write-Host "`nApplying DNS to Wi-Fi and Ethernet adapters..." -ForegroundColor Cyan
+$adapters = Get-NetAdapter | Where-Object { $_.Name -match "Wi-Fi|WiFi|Wireless|WLAN|Ethernet" }
 if ($adapters) {
     foreach ($adapter in $adapters) {
         try {
@@ -66,7 +63,7 @@ if ($adapters) {
         }
     }
 } else {
-    Write-Host "No Wi-Fi adapter found." -ForegroundColor Yellow
+    Write-Host "No Wi-Fi or Ethernet adapter found." -ForegroundColor Yellow
 }
 
 Write-Host "`nDNS configuration complete! Press any key to close." -ForegroundColor Cyan
