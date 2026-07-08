@@ -1,7 +1,7 @@
 # Make sure we are running as admin before doing anything else
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-	throw "Elevated privileges required. Please run this script as an administrator."
+    throw "Elevated privileges required. Please run this script as an administrator."
 }
 
 # Dump a backup to the desktop first just in case
@@ -11,116 +11,114 @@ Get-CimInstance Win32_Service | Select-Object Name, DisplayName, State, StartMod
 Write-Host "Backup saved to: $backupCsv" -ForegroundColor Cyan
 
 function Resolve-Services {
-	param([string[]]$Patterns)
-	$all = Get-CimInstance -ClassName Win32_Service
-	$results = foreach ($p in $Patterns) {
-		$all | Where-Object { $_.Name -like $p -or $_.DisplayName -like $p }
-	}
-	$results | Sort-Object Name -Unique
+    param([string[]]$Patterns)
+    $all = Get-CimInstance -ClassName Win32_Service
+    $results = foreach ($p in $Patterns) {
+        $all | Where-Object { $_.Name -like $p -or $_.DisplayName -like $p }
+    }
+    $results | Sort-Object Name -Unique
 }
 
 function Set-Startup {
-	param(
-		[object[]]$Services,
-		[ValidateSet('Automatic', 'Manual', 'Disabled')]$Mode
-	)
-	foreach ($s in $Services) {
-		try {
-			Set-Service -Name $s.Name -StartupType $Mode -ErrorAction Stop
-			Write-Host ("      -> {0,-45} [{1}]" -f $s.Name, $Mode) -ForegroundColor Gray
-		}
-		catch {
-			Write-Host "   [!] Failed to set $($s.Name) to $Mode" -ForegroundColor Yellow
-		}
-	}
+    param(
+        [object[]]$Services,
+        [ValidateSet('Automatic', 'Manual', 'Disabled')]$Mode
+    )
+    foreach ($s in $Services) {
+        try {
+            Set-Service -Name $s.Name -StartupType $Mode -ErrorAction Stop
+            Write-Host ("      -> {0,-45} [{1}]" -f $s.Name, $Mode) -ForegroundColor Gray
+        } catch {
+            Write-Host "   [!] Failed to set $($s.Name) to $Mode" -ForegroundColor Yellow
+        }
+    }
 }
 
 function Stop-And-Disable {
-	param([object[]]$Services)
-	foreach ($s in $Services) {
-		try {
-			if ($s.State -eq 'Running') {
-				Stop-Service -Name $s.Name -Force -ErrorAction SilentlyContinue
-			}
-			Set-Service -Name $s.Name -StartupType Disabled -ErrorAction Stop
-			Write-Host ("      -> {0,-45} [Disabled]" -f $s.Name) -ForegroundColor DarkGray
-		}
-		catch {
-			Write-Host "   [!] Failed to disable $($s.Name)" -ForegroundColor Yellow
-		}
-	}
+    param([object[]]$Services)
+    foreach ($s in $Services) {
+        try {
+            if ($s.State -eq 'Running') {
+                Stop-Service -Name $s.Name -Force -ErrorAction SilentlyContinue
+            }
+            Set-Service -Name $s.Name -StartupType Disabled -ErrorAction Stop
+            Write-Host ("      -> {0,-45} [Disabled]" -f $s.Name) -ForegroundColor DarkGray
+        } catch {
+            Write-Host "   [!] Failed to disable $($s.Name)" -ForegroundColor Yellow
+        }
+    }
 }
 
 # Service Lists
 
 $Telemetry_Disable = @(
-	'DiagTrack',
-	'dptftcs',
-	'wuqisvc',
-	'dmwappushservice',
-	'ESRV_*QUEENCREEK*',
-	'USER_ESRV_*QUEENCREEK*',
-	'SystemUsageReport*',
-	'InventorySvc'
+    'DiagTrack',
+    'dptftcs',
+    'wuqisvc',
+    'dmwappushservice',
+    'ESRV_*QUEENCREEK*',
+    'USER_ESRV_*QUEENCREEK*',
+    'SystemUsageReport*',
+    'InventorySvc'
 )
 
 $Lenovo_Disable = @(
-	'webthreatdefsvc',
-	'webthreatdefusersvc*',
-	'LRAvatarService',
-	'NahimicService'
+    'webthreatdefsvc',
+    'webthreatdefusersvc*',
+    'LRAvatarService',
+    'NahimicService'
 )
 
 $Lenovo_Manual = @(
-	'Lenovo*Communication*',
-	'LnvVCam*',
-	'SmartAppearance*',
-	'CameraEventService',
-	'AISpeechService',
-	'UDCService'
+    'Lenovo*Communication*',
+    'LnvVCam*',
+    'SmartAppearance*',
+    'CameraEventService',
+    'AISpeechService',
+    'UDCService'
 )
 
 $Updaters_Manual = @(
-	'GoogleUpdaterService*',
-	'GoogleUpdaterInternalService*',
-	'edgeupdate',
-	'edgeupdatem',
-	'brave',
-	'bravem'
+    'GoogleUpdaterService*',
+    'GoogleUpdaterInternalService*',
+    'edgeupdate',
+    'edgeupdatem',
+    'brave',
+    'bravem'
 )
 
 $Peripherals_Disable = @(
-	'logi_lamparray_service',
-	'TobiiALENOVOYXX0',
-	'Tobii Service'
+    'logi_lamparray_service',
+    'TobiiALENOVOYXX0',
+    'Tobii Service'
 )
 
 $WSA_Disable = @(
-	'WSAIFabricSvc'
+    'WSAIFabricSvc'
 )
 
 $Optional_Manual = @(
-	'MapsBroker',
-	'WMPNetworkSvc',
-	'SharedAccess',
-	'lfsvc',
-	'PhoneSvc',
-	'XblAuthManager',
-	'XblGameSave',
-	'XboxGipSvc',
-	'XboxNetApiSvc',
-	'TbtHostControllerService',
-	'TbtP2pShortcutService',
-	'GameInputSvc',
-	'StiSvc',
-	'WiaRpc',
-	'FDResPub',
-	'fdPHost',
-	'SSDPSRV',
-	'NvBroadcast.ContainerLocalSystem',
-	'XTU3SERVICE',
-	'DSAService',
-	'DSAUpdateService'
+    'MapsBroker',
+    'WMPNetworkSvc',
+    'SharedAccess',
+    'lfsvc',
+    'PhoneSvc',
+    'XblAuthManager',
+    'XblGameSave',
+    'XboxGipSvc',
+    'XboxNetApiSvc',
+    'TbtHostControllerService',
+    'TbtP2pShortcutService',
+    'GameInputSvc',
+    'StiSvc',
+    'WiaRpc',
+    'FDResPub',
+    'fdPHost',
+    'SSDPSRV',
+    'NvBroadcast.ContainerLocalSystem',
+    'XTU3SERVICE',
+    'DSAService',
+    'DSAUpdateService'
 )
 
 # Execution
@@ -151,5 +149,5 @@ Write-Host "--------------------------------------------------------" -Foregroun
 
 $reboot = Read-Host "Reboot now to finalize changes? (y/n)"
 if ($reboot -eq 'y') {
-	Restart-Computer -Force
+    Restart-Computer -Force
 }

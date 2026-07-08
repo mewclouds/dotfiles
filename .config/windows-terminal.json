@@ -10,12 +10,12 @@
 			"keys": "ctrl+c"
 		},
 		{
-			"id": "Terminal.FindText",
-			"keys": "ctrl+shift+f"
-		},
-		{
 			"id": "Terminal.PasteFromClipboard",
 			"keys": "ctrl+v"
+		},
+		{
+			"id": "Terminal.FindText",
+			"keys": "ctrl+shift+f"
 		},
 		{
 			"id": "Terminal.DuplicatePaneAuto",
@@ -31,8 +31,8 @@
 		"defaults": {
 			"colorScheme": "Apple System Colors",
 			"font": {
-				"face": "FiraCode Nerd Font",
-				"size": 11
+				"face": "JetBrainsMono Nerd Font Mono",
+				"size": 12
 			}
 		},
 		"list": [
@@ -55,25 +55,13 @@
 				"source": "Windows.Terminal.PowershellCore"
 			},
 			{
-				"guid": "{2ece5bfe-50ed-5f3a-ab87-5cd4baafed2b}",
-				"hidden": false,
-				"name": "Git Bash",
-				"source": "Git"
-			},
-			{
-				"guid": "{e7514470-5874-592e-88ca-3468d5de4dc7}",
-				"hidden": false,
-				"name": "Ubuntu",
-				"source": "Microsoft.WSL"
-			},
-			{
-				"guid": "{da632ed6-dadd-509c-a59c-bacd6733510f}",
+				"guid": "{2ea6e8b1-a013-5163-a50a-2e16a30ed34a}",
 				"hidden": false,
 				"name": "Developer Command Prompt for VS 18",
 				"source": "Windows.Terminal.VisualStudio"
 			},
 			{
-				"guid": "{318d3b8b-bec1-5e4c-b479-373366f67da9}",
+				"guid": "{4925fe7d-75af-5e45-ba2b-55e56313ea89}",
 				"hidden": false,
 				"name": "Developer PowerShell for VS 18",
 				"source": "Windows.Terminal.VisualStudio"
@@ -105,6 +93,29 @@
 			"yellow": "#C7C400"
 		},
 		{
+			"background": "#1E1E1E",
+			"black": "#1A1A1A",
+			"blue": "#0869CB",
+			"brightBlack": "#464646",
+			"brightBlue": "#0A84FF",
+			"brightCyan": "#76D6FF",
+			"brightGreen": "#32D74B",
+			"brightPurple": "#BF5AF2",
+			"brightRed": "#FF453A",
+			"brightWhite": "#FFFFFF",
+			"brightYellow": "#FFD60A",
+			"cursorColor": "#98989D",
+			"cyan": "#479EC2",
+			"foreground": "#FFFFFF",
+			"green": "#26A439",
+			"name": "Apple System Colors",
+			"purple": "#9647BF",
+			"red": "#CC372E",
+			"selectionBackground": "#3F638B",
+			"white": "#98989D",
+			"yellow": "#CDAC08"
+		},
+		{
 			"background": "#282A36",
 			"black": "#21222C",
 			"blue": "#BD93F9",
@@ -126,29 +137,6 @@
 			"selectionBackground": "#44475A",
 			"white": "#F8F8F2",
 			"yellow": "#F1FA8C"
-		},
-		{
-			"name": "Apple System Colors",
-			"black": "#1a1a1a",
-			"red": "#cc372e",
-			"green": "#26a439",
-			"yellow": "#cdac08",
-			"blue": "#0869cb",
-			"purple": "#9647bf",
-			"cyan": "#479ec2",
-			"white": "#98989d",
-			"brightBlack": "#464646",
-			"brightRed": "#ff453a",
-			"brightGreen": "#32d74b",
-			"brightYellow": "#ffd60a",
-			"brightBlue": "#0a84ff",
-			"brightPurple": "#bf5af2",
-			"brightCyan": "#76d6ff",
-			"brightWhite": "#ffffff",
-			"background": "#1e1e1e",
-			"foreground": "#ffffff",
-			"selectionBackground": "#3f638b",
-			"cursorColor": "#98989d"
 		}
 	],
 	"themes": []

@@ -4,34 +4,34 @@
 $LogDir = Join-Path $env:USERPROFILE 'runs\logs'
 $LogFile = Join-Path $LogDir 'backup-mrmods.log'
 if (-not (Test-Path $LogDir)) {
-	New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 }
 
 function Write-Log {
-	param([string]$Message)
-	$timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-	$logLine = "[$timestamp] $Message"
-	Add-Content -Path $LogFile -Value $logLine
-	Write-Host $Message # Print to console as well for manual runs
+    param([string]$Message)
+    $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+    $logLine = "[$timestamp] $Message"
+    Add-Content -Path $LogFile -Value $logLine
+    Write-Host $Message # Print to console as well for manual runs
 }
 
 Write-Log "Starting MR Mods Backup Task..."
 
 # Validate required environment variables before using them
 if ([string]::IsNullOrWhiteSpace($env:MR_MODS_PATH)) {
-	Write-Log "Error: Missing required environment variable 'MR_MODS_PATH'."
-	throw "Missing required environment variable 'MR_MODS_PATH'. Add a value to MR_MODS_PATH and try again."
+    Write-Log "Error: Missing required environment variable 'MR_MODS_PATH'."
+    throw "Missing required environment variable 'MR_MODS_PATH'. Add a value to MR_MODS_PATH and try again."
 }
 
 if ([string]::IsNullOrWhiteSpace($env:MR_MODS_BACKUP)) {
-	Write-Log "Error: Missing required environment variable 'MR_MODS_BACKUP'."
-	throw "Missing required environment variable 'MR_MODS_BACKUP'. Add a value to MR_MODS_BACKUP and try again."
+    Write-Log "Error: Missing required environment variable 'MR_MODS_BACKUP'."
+    throw "Missing required environment variable 'MR_MODS_BACKUP'. Add a value to MR_MODS_BACKUP and try again."
 }
 
 # Work around since scheduled tasks can't be scheduled during startup and at a specific day
 if ((Get-Date).DayOfWeek -ne [DayOfWeek]::Sunday) {
-	Write-Log "Skipping backup because today is not Sunday."
-	exit 0
+    Write-Log "Skipping backup because today is not Sunday."
+    exit 0
 }
 
 # Define source and destination paths
@@ -41,23 +41,23 @@ $ArchivePackage = Join-Path -Path $BackupDir -ChildPath "MRMods_Backup.7z"
 
 # Force create the source mods folder if it's missing
 if (-not (Test-Path -Path $SourceFolder)) {
-	New-Item -Path $SourceFolder -ItemType Directory | Out-Null
-	Write-Log "Created missing source folder: $SourceFolder"
+    New-Item -Path $SourceFolder -ItemType Directory | Out-Null
+    Write-Log "Created missing source folder: $SourceFolder"
 }
 
 # Force create the backup directory if it's missing
 if (-not (Test-Path -Path $BackupDir)) {
-	New-Item -Path $BackupDir -ItemType Directory | Out-Null
+    New-Item -Path $BackupDir -ItemType Directory | Out-Null
 }
 
 # Determine 7zip path
 $sevenZipCmd = "7z"
 if (-not (Get-Command $sevenZipCmd -ErrorAction SilentlyContinue)) {
-	$sevenZipCmd = "C:\Program Files\7-Zip\7z.exe"
-	if (-not (Test-Path $sevenZipCmd)) {
-		Write-Log "Error: 7z is not in PATH and not found at $sevenZipCmd"
-		throw "7z is missing"
-	}
+    $sevenZipCmd = "C:\Program Files\7-Zip\7z.exe"
+    if (-not (Test-Path $sevenZipCmd)) {
+        Write-Log "Error: 7z is not in PATH and not found at $sevenZipCmd"
+        throw "7z is missing"
+    }
 }
 
 # Archive the folder using 7zip with fastest compression (-mx=1)
@@ -67,8 +67,7 @@ Write-Log "Updating backup at $ArchivePackage..."
 & $sevenZipCmd a -t7z -mx=1 -y $ArchivePackage "$SourceFolder\*" | Out-Null
 
 if ($LASTEXITCODE -eq 0) {
-	Write-Log "Backup updated successfully!"
-}
-else {
-	Write-Log "Error: 7z backup failed with exit code $LASTEXITCODE"
+    Write-Log "Backup updated successfully!"
+} else {
+    Write-Log "Error: 7z backup failed with exit code $LASTEXITCODE"
 }
