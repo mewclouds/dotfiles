@@ -56,9 +56,9 @@ if ($win8Dpi.Win8DpiScaling -ne 1) {
 }
 
 # Run nircmd
-$nircmdPath = 'C:\nircmd\nircmd.exe'
+$nircmdPath = Get-Command nircmd -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
 if (-not (Test-Path $nircmdPath)) {
-    $nircmdPath = Get-Command nircmd -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+    $nircmdPath = 'C:\nircmd\nircmd.exe'
 }
 
 if ($nircmdPath) {

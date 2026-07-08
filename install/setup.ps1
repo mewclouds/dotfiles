@@ -84,6 +84,37 @@ function Resolve-EnvironmentVariable {
     Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
 }
 
+function Install-NirCmd {
+    $nircmdDir = 'C:\nircmd'
+    $nircmdZip = Join-Path $env:TEMP 'nircmd-x64.zip'
+    $nircmdUrl = 'https://www.nirsoft.net/utils/nircmd-x64.zip'
+
+    try {
+        if (-not (Test-Path $nircmdDir)) {
+            Write-Host "`nDownloading NirCmd..." -ForegroundColor Cyan
+            Invoke-WebRequest -Uri $nircmdUrl -OutFile $nircmdZip -ErrorAction Stop
+
+            Write-Host "Extracting NirCmd to $nircmdDir..." -ForegroundColor Cyan
+            Expand-Archive -Path $nircmdZip -DestinationPath $nircmdDir -Force -ErrorAction Stop
+
+            Remove-Item $nircmdZip -Force -ErrorAction SilentlyContinue
+        } else {
+            Write-Host "`nNirCmd is already installed at $nircmdDir." -ForegroundColor DarkGray
+        }
+
+        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+        if ($userPath -notlike "*$nircmdDir*") {
+            $newPath = $userPath + ';' + $nircmdDir
+            [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+            $processPath = [Environment]::GetEnvironmentVariable('Path', 'Process')
+            [Environment]::SetEnvironmentVariable('Path', $processPath + ';' + $nircmdDir, 'Process')
+            Write-Host "Added $nircmdDir to User PATH." -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "`nFailed to install NirCmd: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -241,6 +272,7 @@ function Invoke-Setup {
     Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
     Install-WingetPackage -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
+    Install-NirCmd
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
