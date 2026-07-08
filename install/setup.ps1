@@ -251,26 +251,46 @@ function Register-BackupScheduledTask {
     Write-Host "Registered scheduled task: $backupTaskName" -ForegroundColor Green
 }
 
-function Install-WingetPackage {
+function Install-CuratedPackage {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ManifestPath
     )
 
     if (-not (Test-Path $ManifestPath)) {
-        throw "Could not find the winget package manifest at $ManifestPath."
+        throw "Could not find the package manifest at $ManifestPath."
     }
 
-    $packages = Get-Content -Raw -Path $ManifestPath | ConvertFrom-Json
-    foreach ($package in $packages) {
-        if (-not $package.Id) {
-            throw "Encountered a package entry without an Id in $ManifestPath."
+    $categories = Get-Content -Raw -Path $ManifestPath | ConvertFrom-Json
+    $propertyNames = $categories.psobject.properties.name
+
+    foreach ($categoryName in $propertyNames) {
+        $packages = $categories.$categoryName
+        if (-not $packages -or $packages.Count -eq 0) { continue }
+
+        Write-Host "`nInstalling category: $categoryName" -ForegroundColor Yellow
+
+        foreach ($package in $packages) {
+            if ($package.type -eq 'winget') {
+                Write-Host "Installing winget package: $($package.name) ($($package.id))" -ForegroundColor Cyan
+                & winget install -e --id $package.id --accept-package-agreements --accept-source-agreements | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Warning: winget install failed for $($package.id)." -ForegroundColor Red
+                }
+            } elseif ($package.type -eq 'script') {
+                Write-Host "Installing via script: $($package.name)" -ForegroundColor Cyan
+                Invoke-Expression $package.command
+            } else {
+                Write-Host "Warning: Unknown package type '$($package.type)' for $($package.name)" `
+                    -ForegroundColor DarkYellow
+            }
         }
 
-        Write-Host "Installing winget package: $($package.Name) ($($package.Id))" -ForegroundColor Cyan
-        & winget install -e --id $package.Id --accept-package-agreements --accept-source-agreements
-        if ($LASTEXITCODE -ne 0) {
-            throw "winget install failed for $($package.Id)."
+        # Refresh environment variables process scope
+        foreach ($level in @('Machine', 'User')) {
+            [Environment]::GetEnvironmentVariables($level).GetEnumerator() | ForEach-Object {
+                [Environment]::SetEnvironmentVariable($_.Key, $_.Value, 'Process')
+            }
         }
     }
 }
@@ -286,7 +306,8 @@ function Invoke-Setup {
     Resolve-EnvironmentVariable
     Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
-    Install-WingetPackage -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
+    $manifest = Join-Path $RepoRoot 'install\winget-packages.json'
+    Install-CuratedPackage -ManifestPath $manifest
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
 }

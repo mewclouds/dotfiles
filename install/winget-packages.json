@@ -1,98 +1,29 @@
-[
-	{
-		"Name": "7-Zip 26.01 (x64 edition)",
-		"Id": "7zip.7zip"
-	},
-	{
-		"Name": "Bitwarden",
-		"Id": "Bitwarden.Bitwarden"
-	},
-	{
-		"Name": "Deezer 7.1.270",
-		"Id": "Deezer.Deezer"
-	},
-	{
-		"Name": "Discord",
-		"Id": "Discord.Discord"
-	},
-	{
-		"Name": "Fast Node Manager",
-		"Id": "Schniz.fnm"
-	},
-	{
-		"Name": "fastfetch",
-		"Id": "Fastfetch-cli.Fastfetch"
-	},
-	{
-		"Name": "Git",
-		"Id": "Git.Git"
-	},
-	{
-		"Name": "GitHub Desktop",
-		"Id": "GitHub.GitHubDesktop"
-	},
-	{
-		"Name": "LocalSend version 1.17.0",
-		"Id": "LocalSend.LocalSend"
-	},
-	{
-		"Name": "Microsoft Visual C++ v14 Redistributable (x64) - 14.51.36247",
-		"Id": "Microsoft.VCRedist.2015+.x64"
-	},
-	{
-		"Name": "Microsoft Visual C++ v14 Redistributable (x86) - 14.51.36247",
-		"Id": "Microsoft.VCRedist.2015+.x86"
-	},
-	{
-		"Name": "Mozilla Firefox (x64 en-US)",
-		"Id": "Mozilla.Firefox"
-	},
-	{
-		"Name": "NordVPN",
-		"Id": "NordSecurity.NordVPN"
-	},
-	{
-		"Name": "PowerShell",
-		"Id": "Microsoft.PowerShell"
-	},
-	{
-		"Name": "Revo Uninstaller Pro 5.5.0",
-		"Id": "RevoUninstaller.RevoUninstallerPro"
-	},
-	{
-		"Name": "Rustup: the Rust toolchain installer",
-		"Id": "Rustlang.Rustup"
-	},
-	{
-		"Name": "Steam",
-		"Id": "Valve.Steam"
-	},
-	{
-		"Name": "Visual Studio Community 2026",
-		"Id": "Microsoft.VisualStudio.Community"
-	},
-	{
-		"Name": "WizTree v4.31",
-		"Id": "AntibodySoftware.WizTree"
-	},
-	{
-		"Name": "YogaDNS 1.49",
-		"Id": "Initex.YogaDNS"
-	},
-	{
-		"Id": "sharkdp.bat",
-		"Name": "bat"
-	},
-	{
-		"Id": "Microsoft.VisualStudioCode",
-		"Name": "Microsoft Visual Studio Code (User)"
-	},
-	{
-		"Id": "Microsoft.WindowsTerminal",
-		"Name": "Windows Terminal"
-	},
-	{
-		"Id": "Google.AntigravityCLI",
-		"Name": "Antigravity CLI"
-	}
-]
+{
+  "Development": [
+    {
+      "name": "Bun",
+      "type": "script",
+      "command": "powershell -c \"irm bun.sh/install.ps1 | iex\""
+    },
+    {
+      "name": "Fast Node Manager (fnm)",
+      "type": "winget",
+      "id": "Schniz.fnm"
+    },
+    {
+      "name": "Rustup",
+      "type": "winget",
+      "id": "Rustlang.Rustup"
+    }
+  ],
+  "Browsers": [
+    {
+      "name": "Mozilla Firefox",
+      "type": "winget",
+      "id": "Mozilla.Firefox"
+    }
+  ],
+  "Utilities": [],
+  "Socials": [],
+  "Media": []
+}
