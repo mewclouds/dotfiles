@@ -61,4 +61,4 @@ Write-Host "`nBootstrap complete! Ready for Phase 2." -ForegroundColor Green
 Write-Host "Elevating privileges to run setup.ps1..." -ForegroundColor Cyan
 
 $setupScript = Join-Path $destPath "install\setup.ps1"
-#Start-Process pwsh -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$setupScript`"" -Verb RunAs -Wait
+Start-Process pwsh -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$setupScript`"" -Verb RunAs -Wait
