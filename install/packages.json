@@ -16,6 +16,11 @@
       "id": "Rustlang.Rustup"
     },
     {
+      "name": "PSScriptAnalyzer",
+      "type": "script",
+      "command": "Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force"
+    },
+    {
       "name": "Visual Studio Community 2026",
       "type": "winget",
       "id": "Microsoft.VisualStudio.Community"
@@ -26,6 +31,11 @@
       "name": "Mozilla Firefox",
       "type": "winget",
       "id": "Mozilla.Firefox"
+    },
+    {
+      "name": "Brave Browser",
+      "type": "winget",
+      "id": "Brave.Brave"
     }
   ],
   "Utilities": [],

@@ -306,7 +306,7 @@ function Invoke-Setup {
     Resolve-EnvironmentVariable
     Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
-    $manifest = Join-Path $RepoRoot 'install\winget-packages.json'
+    $manifest = Join-Path $RepoRoot 'install\packages.json'
     Install-CuratedPackage -ManifestPath $manifest
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
