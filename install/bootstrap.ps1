@@ -5,8 +5,10 @@ $ErrorActionPreference = 'Stop'
 
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     Write-Host "Installing PowerShell 7..." -ForegroundColor Cyan
-    winget install --id Microsoft.PowerShell --source winget --accept-package-agreements --accept-source-agreements --silent
-    Write-Host "`nPowerShell 7 installed. Please restart your terminal and run this script again." -ForegroundColor Yellow
+    winget install --id Microsoft.PowerShell --source winget `
+        --accept-package-agreements --accept-source-agreements --silent
+    Write-Host "`nPowerShell 7 installed. Please restart your terminal and run this script again." `
+        -ForegroundColor Yellow
     exit
 }
 
@@ -28,7 +30,8 @@ foreach ($pkg in $corePackages) {
 }
 
 # Refresh environment variables so git, gh, bw are available
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+[System.Environment]::GetEnvironmentVariable("Path", "User")
 
 Write-Host "`n[2/3] Authenticating..." -ForegroundColor Yellow
 
