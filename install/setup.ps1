@@ -115,6 +115,21 @@ function Install-NirCmd {
     }
 }
 
+function Invoke-AppxDebloat {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $appxScript = Join-Path $RepoRoot 'scripts\system\Remove-AppxBloat.ps1'
+    if (Test-Path $appxScript) {
+        Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
+        & $appxScript
+    } else {
+        Write-Host "`nAppx debloat script not found at $appxScript" -ForegroundColor Yellow
+    }
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -273,6 +288,7 @@ function Invoke-Setup {
     Register-BackupScheduledTask -RepoRoot $RepoRoot
     Install-WingetPackage -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')
     Install-NirCmd
+    Invoke-AppxDebloat -RepoRoot $RepoRoot
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
