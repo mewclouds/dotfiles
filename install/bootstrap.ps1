@@ -27,6 +27,9 @@ Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "        Dotfiles Bootstrap (Phase 1)      " -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
+# Disable pwsh telemetry
+[System.Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'Machine')
+
 $corePackages = @(
     "Git.Git",
     "GitHub.cli",
