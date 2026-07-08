@@ -3,6 +3,17 @@ param()
 
 $ErrorActionPreference = 'Stop'
 
+$wingetSettingsDir = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState'
+if (-not (Test-Path $wingetSettingsDir)) {
+    New-Item -ItemType Directory -Path $wingetSettingsDir -Force | Out-Null
+}
+$wingetSettingsJson = Join-Path $wingetSettingsDir 'settings.json'
+'{
+    "telemetry": {
+        "disable": true
+    }
+}' | Set-Content -Path $wingetSettingsJson -Force
+
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     Write-Host "Installing PowerShell 7..." -ForegroundColor Cyan
     winget install --id Microsoft.PowerShell --source winget `
