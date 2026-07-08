@@ -15,7 +15,7 @@ function Write-BackupLog {
     Write-Host $Message # Print to console as well for manual runs
 }
 
-Write-Log "Starting MR Mods Backup Task..."
+Write-BackupLog "Starting MR Mods Backup Task..."
 
 # Validate required environment variables before using them
 if ([string]::IsNullOrWhiteSpace($env:MR_MODS_PATH)) {
@@ -63,7 +63,7 @@ if (-not (Get-Command $sevenZipCmd -ErrorAction SilentlyContinue)) {
 # Archive the folder using 7zip with fastest compression (-mx=1)
 if (Test-Path $ArchivePackage) { Remove-Item $ArchivePackage -Force }
 
-Write-Log "Updating backup at $ArchivePackage..."
+Write-BackupLog "Updating backup at $ArchivePackage..."
 & $sevenZipCmd a -t7z -mx=1 -y $ArchivePackage "$SourceFolder\*" | Out-Null
 
 if ($LASTEXITCODE -eq 0) {

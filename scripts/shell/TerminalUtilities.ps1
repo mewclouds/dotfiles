@@ -99,6 +99,79 @@ function PSFormat {
     }
 }
 
+function PSBuild {
+    [CmdletBinding()]
+    param(
+        [string]$Path = '.'
+    )
+
+    $files = Get-ChildItem -Path $Path -Include *.ps1, *.psm1, *.psd1 -Recurse
+    $definedCmds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+
+    # Pre-populate with all known system commands
+    Get-Command -ErrorAction SilentlyContinue | ForEach-Object { $null = $definedCmds.Add($_.Name) }
+
+    # Pass 1: Extract all dynamically defined functions and aliases across the repo
+    foreach ($file in $files) {
+        $errs = $null; $tokens = $null;
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errs)
+        if ($ast) {
+            $funcs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            foreach ($f in $funcs) { $null = $definedCmds.Add($f.Name) }
+
+            $aliases = $ast.FindAll({
+                    $args[0] -is [System.Management.Automation.Language.CommandAst] -and
+                    $args[0].GetCommandName() -eq 'Set-Alias'
+                }, $true)
+            foreach ($a in $aliases) {
+                $nameParam = $a.CommandElements |
+                    Where-Object { $_ -is [System.Management.Automation.Language.StringConstantExpressionAst] } |
+                    Select-Object -First 1
+                if ($nameParam) { $null = $definedCmds.Add($nameParam.Value) }
+            }
+        }
+    }
+
+    # Pass 2: Syntax check and unknown command check
+    $errorsTotal = 0
+    $warningsTotal = 0
+
+    foreach ($file in $files) {
+        $errs = $null; $tokens = $null;
+        [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errs)
+
+        if ($errs) {
+            Write-Host "[ERROR] $($file.Name) has syntax errors:" -ForegroundColor Red
+            $errs | ForEach-Object {
+                Write-Host "  Line $($_.Extent.StartLineNumber): $($_.Message)"
+            }
+            $errorsTotal += $errs.Count
+        }
+
+        # Check for unknown commands (limit to verb-noun or standard dotfiles tools to reduce noise)
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errs)
+        if ($ast) {
+            $cmds = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.CommandAst] }, $true)
+            foreach ($cmd in $cmds) {
+                $name = $cmd.GetCommandName()
+                # Flag if it has a hyphen (like a cmdlet) but isn't known, ignoring paths/variables
+                if ($name -match '-' -and -not $definedCmds.Contains($name) -and
+                    $name -notmatch '^\w:\\' -and $name -notmatch '^\.') {
+                    Write-Host "[WARNING] $($file.Name):$($cmd.Extent.StartLineNumber) Unknown command '$name'" `
+                        -ForegroundColor Yellow
+                    $warningsTotal++
+                }
+            }
+        }
+    }
+
+    if ($errorsTotal -eq 0 -and $warningsTotal -eq 0) {
+        Write-Host "All scripts parsed successfully! (0 syntax errors, 0 unknown functions)" -ForegroundColor Green
+    } else {
+        Write-Host "Found $errorsTotal syntax errors and $warningsTotal unknown functions." -ForegroundColor Yellow
+    }
+}
+
 #region git
 
 ### Git Aliases/Utilities

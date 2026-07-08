@@ -33,7 +33,7 @@ function Write-BackupLog {
 }
 
 $refresh = if ($Mode -eq 'Quiet') { 60 } else { 240 }
-Write-Log "Start $Mode mode ($refresh Hz)"
+Write-BackupLog "Start $Mode mode ($refresh Hz)"
 
 $regPath = "HKCU:\Control Panel\Desktop"
 
