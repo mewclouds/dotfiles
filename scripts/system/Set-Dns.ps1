@@ -10,8 +10,28 @@ if (-not $principal.IsInRole($adminRole)) {
     exit
 }
 
-$ips = @('76.76.2.2', '76.76.10.2', '2606:1a40::2', '2606:1a40:1::2')
-$dohTemplate = "https://freedns.controld.com/p2"
+Write-Host "Fetching DNS configuration from Bitwarden (MochiDNS)..." -ForegroundColor Cyan
+$bwNote = & bw get notes MochiDNS 2>&1
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($bwNote)) {
+    throw "Failed to fetch MochiDNS from Bitwarden. Are you logged in and synced?"
+}
+
+$ipv4Match = [regex]::Match($bwNote, 'IPv4 \((.*?)\)')
+$ipv6Match = [regex]::Match($bwNote, 'IPv6 \((.*?)\)')
+$dohMatch = [regex]::Match($bwNote, 'DoH \((.*?)\)')
+
+if (-not $ipv4Match.Success -or -not $dohMatch.Success) {
+    throw "Failed to parse MochiDNS formatting. Expected 'IPv4 (...)' and 'DoH (...)'. Found: $bwNote"
+}
+
+$ips = [System.Collections.Generic.List[string]]::new()
+$ipv4Match.Groups[1].Value -split ',' | ForEach-Object { $ips.Add($_.Trim()) }
+
+if ($ipv6Match.Success) {
+    $ipv6Match.Groups[1].Value -split ',' | ForEach-Object { $ips.Add($_.Trim()) }
+}
+
+$dohTemplate = $dohMatch.Groups[1].Value.Trim()
 
 Write-Host "Registering ControlD DoH Templates..." -ForegroundColor Cyan
 foreach ($ip in $ips) {

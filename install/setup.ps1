@@ -130,6 +130,21 @@ function Invoke-AppxDebloat {
     }
 }
 
+function Invoke-DnsSetup {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $dnsScript = Join-Path $RepoRoot 'scripts\system\Set-Dns.ps1'
+    if (Test-Path $dnsScript) {
+        Write-Host "`nConfiguring DNS settings..." -ForegroundColor Cyan
+        & $dnsScript
+    } else {
+        Write-Host "`nDNS script not found at $dnsScript" -ForegroundColor Yellow
+    }
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -310,6 +325,7 @@ function Invoke-Setup {
     Install-CuratedPackage -ManifestPath $manifest
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
+    Invoke-DnsSetup -RepoRoot $RepoRoot
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
