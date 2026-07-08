@@ -20,6 +20,8 @@ The repository is structured logically by purpose:
 
 If I ever wipe my machine, here is how I get it back:
 
-1. Clone the repository.
-2. Run `install/preSetup.ps1` to configure environment paths.
-3. Run `install/setup.ps1` as Administrator to link configs, install winget apps, and register scheduled tasks.
+1. Open a fresh PowerShell terminal as Administrator and run the remote bootstrap script:
+   ```powershell
+   irm https://raw.githubusercontent.com/mewclouds/dotfiles/refs/heads/master/install/bootstrap.ps1 | iex
+   ```
+   This will automatically install core dependencies, prompt you to authenticate (GitHub, Bitwarden), clone this repository, and automatically launch `setup.ps1` to link configs, install apps, and register scheduled tasks.

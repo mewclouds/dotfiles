@@ -17,6 +17,73 @@ if (-not $principal.IsInRole($adminRole)) {
     throw "Elevated privileges required. Please run this script as an administrator."
 }
 
+Add-Type -AssemblyName System.Windows.Forms
+
+function Get-FolderSelection {
+    param([string]$VarName, [string]$Prompt)
+    $current = [Environment]::GetEnvironmentVariable($VarName, 'User')
+    if ($current) {
+        [Environment]::SetEnvironmentVariable($VarName, $current, 'Process')
+        return
+    }
+
+    Write-Host "`n$Prompt" -ForegroundColor Yellow
+    $browser = New-Object System.Windows.Forms.FolderBrowserDialog
+    $browser.Description = $Prompt
+    $browser.ShowNewFolderButton = $true
+
+    if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        [Environment]::SetEnvironmentVariable($VarName, $browser.SelectedPath, 'User')
+        [Environment]::SetEnvironmentVariable($VarName, $browser.SelectedPath, 'Process')
+        Write-Host "Set $VarName to $($browser.SelectedPath)" -ForegroundColor Green
+    }
+}
+
+function Get-FileSelection {
+    param([string]$VarName, [string]$Prompt, [string]$Filter = 'All Files (*.*)|*.*')
+    $current = [Environment]::GetEnvironmentVariable($VarName, 'User')
+    if ($current) {
+        [Environment]::SetEnvironmentVariable($VarName, $current, 'Process')
+        return
+    }
+
+    Write-Host "`n$Prompt" -ForegroundColor Yellow
+    $browser = New-Object System.Windows.Forms.OpenFileDialog
+    $browser.Title = $Prompt
+    $browser.Filter = $Filter
+
+    if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+        [Environment]::SetEnvironmentVariable($VarName, $browser.FileName, 'User')
+        [Environment]::SetEnvironmentVariable($VarName, $browser.FileName, 'Process')
+        Write-Host "Set $VarName to $($browser.FileName)" -ForegroundColor Green
+    }
+}
+
+function Resolve-EnvironmentVariable {
+    # UTILITIES_PATH
+    $utilitiesPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\shell\TerminalUtilities.ps1'
+    if (Test-Path $utilitiesPath) {
+        [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
+        [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'Process')
+    }
+
+    # WT_JSON
+    $defaultWtJson = Join-Path $env:LOCALAPPDATA `
+        'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
+    if (-not [Environment]::GetEnvironmentVariable('WT_JSON', 'User') -and (Test-Path $defaultWtJson)) {
+        [Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'User')
+        [Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'Process')
+        Write-Host "Set WT_JSON to $defaultWtJson (auto-detected)" -ForegroundColor Green
+    } else {
+        Get-FileSelection -VarName 'WT_JSON' `
+            -Prompt 'Select your Windows Terminal settings.json' `
+            -Filter 'JSON Files (*.json)|*.json'
+    }
+
+    Get-FolderSelection -VarName 'MR_MODS_PATH' -Prompt 'Select your MR Mods directory'
+    Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -170,6 +237,7 @@ function Invoke-Setup {
         [switch]$Clean
     )
 
+    Resolve-EnvironmentVariable
     Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
     Install-WingetPackage -ManifestPath (Join-Path $RepoRoot 'install\winget-packages.json')

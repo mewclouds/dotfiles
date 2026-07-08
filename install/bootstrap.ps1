@@ -44,6 +44,7 @@ $bwSession = bw unlock --raw
 Write-Host "Bitwarden unlocked." -ForegroundColor Green
 
 # GitHub
+gh config set telemetry disabled
 Write-Host "`nPlease authenticate with GitHub CLI (this will generate an SSH key):" -ForegroundColor Cyan
 gh auth login
 
