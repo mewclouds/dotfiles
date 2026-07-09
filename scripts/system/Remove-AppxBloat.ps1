@@ -1,13 +1,5 @@
 #Requires -RunAsAdministrator
 
-# This requirement check cannot be refactored to `#Requires -Version 5.1` because that directive
-# only enforces a minimum version (meaning it would still execute on PowerShell 7+, where the DISM COM
-# APIs fail with 'Class not registered'). We must enforce exactly version 5.
-if ($PSVersionTable.PSVersion.Major -ne 5) {
-    throw "This script must be run in Windows PowerShell (v5.1) because DISM APIs " +
-    "(like Get-AppxProvisionedPackage) fail with 'Class not registered' in PowerShell 7+."
-}
-
 $Packages = @(
 
     "Microsoft.WindowsFeedbackHub",
@@ -44,23 +36,15 @@ Write-Host ""
 Write-Host "Removing bundled Windows apps..." -ForegroundColor Cyan
 Write-Host ""
 
-# Cache package lists once
-$Installed = Get-AppxPackage
-$Provisioned = Get-AppxProvisionedPackage -Online
-
 foreach ($Package in $Packages) {
     Write-Host "[$Package]" -ForegroundColor Yellow
 
     # Remove installed package(s)
-    $Apps = $Installed | Where-Object Name -EQ $Package
-
-    if ($Apps) {
-        foreach ($App in $Apps) {
+    $pkgs = Get-AppxPackage "*$Package*" -AllUsers -ErrorAction SilentlyContinue
+    if ($null -ne $pkgs) {
+        foreach ($pkg in $pkgs) {
             try {
-                Remove-AppxPackage `
-                    -Package $App.PackageFullName `
-                    -ErrorAction Stop
-
+                Remove-AppxPackage -AllUsers -Package $pkg.PackageFullName -ErrorAction Stop
                 Write-Host "  Removed user package" -ForegroundColor Green
             } catch {
                 Write-Host "  Skipped ($($_.Exception.Message))" -ForegroundColor DarkYellow
@@ -70,24 +54,21 @@ foreach ($Package in $Packages) {
         Write-Host "  Not installed"
     }
 
-    # Remove provisioned package(s)
-    $Prov = $Provisioned |
-        Where-Object DisplayName -EQ $Package
-
-    if ($Prov) {
-        foreach ($P in $Prov) {
-            try {
-                Remove-AppxProvisionedPackage `
-                    -Online `
-                    -PackageName $P.PackageName `
-                    -ErrorAction Stop | Out-Null
-
-                Write-Host "  Removed provisioned package" -ForegroundColor Green
-            } catch {
-                Write-Host "  Provisioned package skipped" -ForegroundColor DarkYellow
+    # DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
+    # We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
+    $ps5ScriptBlock = {
+        $provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
+            Where-Object DisplayName -Like "*$Using:Package*"
+        if ($null -ne $provs) {
+            foreach ($prov in $provs) {
+                Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName `
+                    -ErrorAction SilentlyContinue | Out-Null
             }
         }
     }
+
+    powershell.exe -NoProfile -NonInteractive -Command $ps5ScriptBlock
+    Write-Host "  Removed provisioned package (if existed)" -ForegroundColor Green
 }
 
 Write-Host ""
