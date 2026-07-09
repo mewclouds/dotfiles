@@ -16,7 +16,7 @@ $Packages = @(
     "Microsoft.Windows.DevHome",
     "Microsoft.Todos",
     "Microsoft.PowerAutomateDesktop",
-    "Microsoft.YourPhone",
+    "Microsoft.YourPhone",   # Phone Link
     "Microsoft.MicrosoftStickyNotes",
     "Microsoft.WindowsSoundRecorder",
     "Microsoft.Copilot",
@@ -24,6 +24,11 @@ $Packages = @(
     "Microsoft.BingWeather",
     "Microsoft.StartExperiencesApp",
     "Microsoft.MicrosoftSolitaireCollection",
+    "MicrosoftCorporationII.MicrosoftFamily",
+    "MicrosoftWindows.CrossDevice",
+
+    # Lenovo / OEM removals
+    "TobiiAB.TobiiEyeTrackingPortal", # Lenovo Tobii Eye Tracking
 
     # Xbox removals
 
@@ -56,37 +61,19 @@ foreach ($Package in $Packages) {
 
     # DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
     # We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
-    $ps5ScriptBlock = {
-        $provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
-            Where-Object DisplayName -Like "*$Using:Package*"
-        if ($null -ne $provs) {
-            foreach ($prov in $provs) {
-                Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName `
-                    -ErrorAction SilentlyContinue | Out-Null
+    $ps5Command = "
+        `$provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
+            Where-Object DisplayName -Like '*$Package*'
+        if (`$null -ne `$provs) {
+            foreach (`$prov in `$provs) {
+                `$n = `$prov.PackageName
+                Remove-AppxProvisionedPackage -Online -PackageName `$n -ErrorAction SilentlyContinue | Out-Null
             }
         }
-    }
+    "
 
-    powershell.exe -NoProfile -NonInteractive -Command $ps5ScriptBlock
+    powershell.exe -NoProfile -NonInteractive -Command $ps5Command
     Write-Host "  Removed provisioned package (if existed)" -ForegroundColor Green
 }
 
-Write-Host ""
-Write-Host "Done." -ForegroundColor Green
-Write-Host ""
-Write-Host "Kept:" -ForegroundColor Cyan
-Write-Host "  Xbox Game Bar"
-Write-Host "  XboxIdentityProvider"
-Write-Host "  Xbox.TCUI"
-Write-Host "  Calculator"
-Write-Host "  Photos"
-Write-Host "  Paint"
-Write-Host "  Notepad"
-Write-Host "  Snipping Tool"
-Write-Host "  Camera"
-Write-Host "  Clock"
-Write-Host "  Media Player"
-Write-Host "  Store"
-Write-Host "  Edge"
-Write-Host "  Defender"
-Write-Host "  Windows Update"
+Write-Host "`nDone." -ForegroundColor Green
