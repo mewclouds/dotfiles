@@ -24,6 +24,16 @@
       "name": "Visual Studio Community 2026",
       "type": "winget",
       "id": "Microsoft.VisualStudio.Community"
+    },
+    {
+      "name": "Fastfetch",
+      "type": "winget",
+      "id": "Fastfetch-cli.Fastfetch"
+    },
+    {
+      "name": "Antigravity CLI",
+      "type": "winget",
+      "id": "Google.AntigravityCLI"
     }
   ],
   "Browsers": [
@@ -38,7 +48,13 @@
       "id": "Brave.Brave"
     }
   ],
-  "Utilities": [],
+  "Utilities": [
+    {
+      "name": "Terminal-Icons",
+      "type": "script",
+      "command": "Install-Module -Name Terminal-Icons -Scope CurrentUser -Force"
+    }
+  ],
   "Socials": [],
   "Media": []
 }
