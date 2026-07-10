@@ -58,22 +58,30 @@ foreach ($Package in $Packages) {
     } else {
         Write-Host "  Not installed"
     }
+}
 
-    # DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
-    # We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
-    $ps5Command = "
-        `$provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
-            Where-Object DisplayName -Like '*$Package*'
-        if (`$null -ne `$provs) {
-            foreach (`$prov in `$provs) {
-                `$n = `$prov.PackageName
-                Remove-AppxProvisionedPackage -Online -PackageName `$n -ErrorAction SilentlyContinue | Out-Null
+Write-Host "`nRemoving provisioned packages (via Windows PowerShell 5.1)..." -ForegroundColor Cyan
+
+# DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
+# We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
+$ps5Command = {
+    param([string[]]$PackageList)
+
+    foreach ($Package in $PackageList) {
+        $provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
+            Where-Object DisplayName -Like "*$Package*"
+
+        if ($null -ne $provs) {
+            foreach ($prov in $provs) {
+                Remove-AppxProvisionedPackage -Online `
+                    -PackageName $prov.PackageName `
+                    -ErrorAction SilentlyContinue | Out-Null
             }
         }
-    "
-
-    powershell.exe -NoProfile -NonInteractive -Command $ps5Command
-    Write-Host "  Removed provisioned package (if existed)" -ForegroundColor Green
+    }
 }
+
+powershell.exe -NoProfile -NonInteractive -Command "& {$ps5Command}" -args $Packages
+Write-Host "  Finished checking and removing provisioned packages." -ForegroundColor Green
 
 Write-Host "`nDone." -ForegroundColor Green
