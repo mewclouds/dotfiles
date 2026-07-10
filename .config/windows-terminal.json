@@ -1,143 +1,155 @@
 {
-	"$help": "https://aka.ms/terminal-documentation",
-	"$schema": "https://aka.ms/terminal-profiles-schema",
-	"actions": [],
-	"copyFormatting": "none",
-	"defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
-	"keybindings": [
-		{
-			"id": "Terminal.CopyToClipboard",
-			"keys": "ctrl+c"
-		},
-		{
-			"id": "Terminal.PasteFromClipboard",
-			"keys": "ctrl+v"
-		},
-		{
-			"id": "Terminal.FindText",
-			"keys": "ctrl+shift+f"
-		},
-		{
-			"id": "Terminal.DuplicatePaneAuto",
-			"keys": "alt+shift+d"
-		}
-	],
-	"newTabMenu": [
-		{
-			"type": "remainingProfiles"
-		}
-	],
-	"profiles": {
-		"defaults": {
-			"colorScheme": "Apple System Colors",
-			"font": {
-				"face": "JetBrainsMono Nerd Font Mono",
-				"size": 12
-			}
-		},
-		"list": [
-			{
-				"commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-				"guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
-				"hidden": false,
-				"name": "Windows PowerShell"
-			},
-			{
-				"commandline": "%SystemRoot%\\System32\\cmd.exe",
-				"guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
-				"hidden": false,
-				"name": "Command Prompt"
-			},
-			{
-				"guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
-				"hidden": false,
-				"name": "PowerShell",
-				"source": "Windows.Terminal.PowershellCore"
-			},
-			{
-				"guid": "{2ea6e8b1-a013-5163-a50a-2e16a30ed34a}",
-				"hidden": false,
-				"name": "Developer Command Prompt for VS 18",
-				"source": "Windows.Terminal.VisualStudio"
-			},
-			{
-				"guid": "{4925fe7d-75af-5e45-ba2b-55e56313ea89}",
-				"hidden": false,
-				"name": "Developer PowerShell for VS 18",
-				"source": "Windows.Terminal.VisualStudio"
-			}
-		]
-	},
-	"schemes": [
-		{
-			"background": "#2C2B2B",
-			"black": "#000000",
-			"blue": "#0225C7",
-			"brightBlack": "#686868",
-			"brightBlue": "#6871FF",
-			"brightCyan": "#60FDFF",
-			"brightGreen": "#5FFA68",
-			"brightPurple": "#FF77FF",
-			"brightRed": "#FF6E67",
-			"brightWhite": "#FFFFFF",
-			"brightYellow": "#FFFC67",
-			"cursorColor": "#C7C7C7",
-			"cyan": "#00C5C7",
-			"foreground": "#D5A200",
-			"green": "#00C200",
-			"name": "Apple Classic",
-			"purple": "#CA30C7",
-			"red": "#C91B00",
-			"selectionBackground": "#6B5B02",
-			"white": "#C7C7C7",
-			"yellow": "#C7C400"
-		},
-		{
-			"background": "#1E1E1E",
-			"black": "#1A1A1A",
-			"blue": "#0869CB",
-			"brightBlack": "#464646",
-			"brightBlue": "#0A84FF",
-			"brightCyan": "#76D6FF",
-			"brightGreen": "#32D74B",
-			"brightPurple": "#BF5AF2",
-			"brightRed": "#FF453A",
-			"brightWhite": "#FFFFFF",
-			"brightYellow": "#FFD60A",
-			"cursorColor": "#98989D",
-			"cyan": "#479EC2",
-			"foreground": "#FFFFFF",
-			"green": "#26A439",
-			"name": "Apple System Colors",
-			"purple": "#9647BF",
-			"red": "#CC372E",
-			"selectionBackground": "#3F638B",
-			"white": "#98989D",
-			"yellow": "#CDAC08"
-		},
-		{
-			"background": "#282A36",
-			"black": "#21222C",
-			"blue": "#BD93F9",
-			"brightBlack": "#6272A4",
-			"brightBlue": "#D6ACFF",
-			"brightCyan": "#A4FFFF",
-			"brightGreen": "#69FF94",
-			"brightPurple": "#FF92DF",
-			"brightRed": "#FF6E6E",
-			"brightWhite": "#FFFFFF",
-			"brightYellow": "#FFFFA5",
-			"cursorColor": "#F8F8F2",
-			"cyan": "#8BE9FD",
-			"foreground": "#F8F8F2",
-			"green": "#50FA7B",
-			"name": "Dracula",
-			"purple": "#FF79C6",
-			"red": "#FF5555",
-			"selectionBackground": "#44475A",
-			"white": "#F8F8F2",
-			"yellow": "#F1FA8C"
-		}
-	],
-	"themes": []
+  "$help": "https://aka.ms/terminal-documentation",
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "actions": [],
+  "copyFormatting": "none",
+  "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+  "keybindings": [
+    {
+      "id": "Terminal.CopyToClipboard",
+      "keys": "ctrl+c"
+    },
+    {
+      "id": "Terminal.FindText",
+      "keys": "ctrl+shift+f"
+    },
+    {
+      "id": "Terminal.PasteFromClipboard",
+      "keys": "ctrl+v"
+    },
+    {
+      "id": "Terminal.DuplicatePaneAuto",
+      "keys": "alt+shift+d"
+    }
+  ],
+  "newTabMenu": [
+    {
+      "type": "remainingProfiles"
+    }
+  ],
+  "profiles": {
+    "defaults": {
+      "colorScheme": "Apple System Colors",
+      "font": {
+        "face": "CaskaydiaCove Nerd Font Mono",
+        "size": 12
+      }
+    },
+    "list": [
+      {
+        "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+        "hidden": false,
+        "name": "Windows PowerShell"
+      },
+      {
+        "commandline": "%SystemRoot%\\System32\\cmd.exe",
+        "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+        "hidden": false,
+        "name": "Command Prompt"
+      },
+      {
+        "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+        "hidden": false,
+        "name": "PowerShell",
+        "source": "Windows.Terminal.PowershellCore"
+      },
+      {
+        "guid": "{2ea6e8b1-a013-5163-a50a-2e16a30ed34a}",
+        "hidden": false,
+        "name": "Developer Command Prompt for VS 18",
+        "source": "Windows.Terminal.VisualStudio"
+      },
+      {
+        "guid": "{4925fe7d-75af-5e45-ba2b-55e56313ea89}",
+        "hidden": false,
+        "name": "Developer PowerShell for VS 18",
+        "source": "Windows.Terminal.VisualStudio"
+      },
+      {
+        "guid": "{5fd9b0c2-8626-5c4e-945a-eb237868a8aa}",
+        "hidden": false,
+        "name": "Developer Command Prompt for VS 18",
+        "source": "Windows.Terminal.VisualStudio"
+      },
+      {
+        "guid": "{1992ac8b-2ded-5bf6-8f3c-23e018565cac}",
+        "hidden": false,
+        "name": "Developer PowerShell for VS 18",
+        "source": "Windows.Terminal.VisualStudio"
+      }
+    ]
+  },
+  "schemes": [
+    {
+      "background": "#2C2B2B",
+      "black": "#000000",
+      "blue": "#0225C7",
+      "brightBlack": "#686868",
+      "brightBlue": "#6871FF",
+      "brightCyan": "#60FDFF",
+      "brightGreen": "#5FFA68",
+      "brightPurple": "#FF77FF",
+      "brightRed": "#FF6E67",
+      "brightWhite": "#FFFFFF",
+      "brightYellow": "#FFFC67",
+      "cursorColor": "#C7C7C7",
+      "cyan": "#00C5C7",
+      "foreground": "#D5A200",
+      "green": "#00C200",
+      "name": "Apple Classic",
+      "purple": "#CA30C7",
+      "red": "#C91B00",
+      "selectionBackground": "#6B5B02",
+      "white": "#C7C7C7",
+      "yellow": "#C7C400"
+    },
+    {
+      "background": "#1E1E1E",
+      "black": "#1A1A1A",
+      "blue": "#0869CB",
+      "brightBlack": "#464646",
+      "brightBlue": "#0A84FF",
+      "brightCyan": "#76D6FF",
+      "brightGreen": "#32D74B",
+      "brightPurple": "#BF5AF2",
+      "brightRed": "#FF453A",
+      "brightWhite": "#FFFFFF",
+      "brightYellow": "#FFD60A",
+      "cursorColor": "#98989D",
+      "cyan": "#479EC2",
+      "foreground": "#FFFFFF",
+      "green": "#26A439",
+      "name": "Apple System Colors",
+      "purple": "#9647BF",
+      "red": "#CC372E",
+      "selectionBackground": "#3F638B",
+      "white": "#98989D",
+      "yellow": "#CDAC08"
+    },
+    {
+      "background": "#282A36",
+      "black": "#21222C",
+      "blue": "#BD93F9",
+      "brightBlack": "#6272A4",
+      "brightBlue": "#D6ACFF",
+      "brightCyan": "#A4FFFF",
+      "brightGreen": "#69FF94",
+      "brightPurple": "#FF92DF",
+      "brightRed": "#FF6E6E",
+      "brightWhite": "#FFFFFF",
+      "brightYellow": "#FFFFA5",
+      "cursorColor": "#F8F8F2",
+      "cyan": "#8BE9FD",
+      "foreground": "#F8F8F2",
+      "green": "#50FA7B",
+      "name": "Dracula",
+      "purple": "#FF79C6",
+      "red": "#FF5555",
+      "selectionBackground": "#44475A",
+      "white": "#F8F8F2",
+      "yellow": "#F1FA8C"
+    }
+  ],
+  "themes": []
 }

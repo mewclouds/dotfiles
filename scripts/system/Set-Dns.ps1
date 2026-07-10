@@ -59,5 +59,5 @@ if ($adapters) {
     Write-Host "No Wi-Fi or Ethernet adapter found." -ForegroundColor Yellow
 }
 
-Write-Host "`nDNS configuration complete! Press any key to close." -ForegroundColor Cyan
-[Console]::ReadKey() | Out-Null
+Write-Host "`nDNS configuration complete!" -ForegroundColor Cyan
+

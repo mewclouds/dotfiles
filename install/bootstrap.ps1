@@ -80,4 +80,13 @@ Write-Host "`nBootstrap complete! Ready for Phase 2." -ForegroundColor Green
 Write-Host "Elevating privileges to run setup.ps1..." -ForegroundColor Cyan
 
 $setupScript = Join-Path $destPath "install\setup.ps1"
-Start-Process pwsh -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$setupScript`"" -Verb RunAs -Wait
+
+# Resolve the exact pwsh executable to avoid environment variable drops when elevating Store apps
+$pwshPath = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+if (-not (Test-Path $pwshPath)) {
+    $pwshPath = (Get-Command pwsh).Source
+}
+
+Start-Process $pwshPath `
+    -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$setupScript`" -Clean" `
+    -Verb RunAs -Wait

@@ -319,3 +319,5 @@ function Invoke-Setup {
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Invoke-Setup -RepoRoot $repoRoot -Clean:$Clean
+Write-Host "`nSetup complete! Press any key to close." -ForegroundColor Cyan
+[Console]::ReadKey() | Out-Null

@@ -38,29 +38,8 @@ $Packages = @(
 )
 
 Write-Host ""
-Write-Host "Removing bundled Windows apps..." -ForegroundColor Cyan
+Write-Host "Removing provisioned Windows apps (via Windows PowerShell 5.1)..." -ForegroundColor Cyan
 Write-Host ""
-
-foreach ($Package in $Packages) {
-    Write-Host "[$Package]" -ForegroundColor Yellow
-
-    # Remove installed package(s)
-    $pkgs = Get-AppxPackage "*$Package*" -AllUsers -ErrorAction SilentlyContinue
-    if ($null -ne $pkgs) {
-        foreach ($pkg in $pkgs) {
-            try {
-                Remove-AppxPackage -AllUsers -Package $pkg.PackageFullName -ErrorAction Stop
-                Write-Host "  Removed user package" -ForegroundColor Green
-            } catch {
-                Write-Host "  Skipped ($($_.Exception.Message))" -ForegroundColor DarkYellow
-            }
-        }
-    } else {
-        Write-Host "  Not installed"
-    }
-}
-
-Write-Host "`nRemoving provisioned packages (via Windows PowerShell 5.1)..." -ForegroundColor Cyan
 
 # DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
 # We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
@@ -83,5 +62,26 @@ $ps5Command = {
 
 powershell.exe -NoProfile -NonInteractive -Command "& {$ps5Command}" -args $Packages
 Write-Host "  Finished checking and removing provisioned packages." -ForegroundColor Green
+
+Write-Host "`nRemoving user packages..." -ForegroundColor Cyan
+
+foreach ($Package in $Packages) {
+    Write-Host "[$Package]" -ForegroundColor Yellow
+
+    # Remove installed package(s)
+    $pkgs = Get-AppxPackage "*$Package*" -AllUsers -ErrorAction SilentlyContinue
+    if ($null -ne $pkgs) {
+        foreach ($pkg in $pkgs) {
+            try {
+                Remove-AppxPackage -AllUsers -Package $pkg.PackageFullName -ErrorAction Stop
+                Write-Host "  Removed user package" -ForegroundColor Green
+            } catch {
+                Write-Host "  Skipped ($($_.Exception.Message))" -ForegroundColor DarkYellow
+            }
+        }
+    } else {
+        Write-Host "  Not installed"
+    }
+}
 
 Write-Host "`nDone." -ForegroundColor Green
