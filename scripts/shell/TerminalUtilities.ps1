@@ -33,6 +33,18 @@ function rmh() { Remove-Item (Get-PSReadLineOption).HistorySavePath }
 # Compute file hashes
 function sha256 { Get-FileHash -Algorithm SHA256 $args }
 
+# Quickly open my dots
+function dots {
+    Set-Location (Join-Path $HOME "dotfiles")
+    code .
+}
+
+# Quickly open rippie
+function rippie {
+    Set-Location (Join-Path $HOME "Rippie")
+    code .
+}
+
 function Get-ExePath {
     Get-ChildItem -Path $PWD -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue |
         Where-Object {
