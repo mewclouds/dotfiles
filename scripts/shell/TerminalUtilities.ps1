@@ -61,6 +61,7 @@ function mccoloring($tmp) {
     $tmp = $tmp.replace("&lp", "$033[38;5;217m") # Light Pink
     $tmp = $tmp.replace("&p", "$033[38;5;218m")  # Pink
     $tmp = $tmp.replace("&l", "$033[38;5;183m")  # Plum
+    $tmp = $tmp.replace("&red", "$033[38;5;196m") # Bright Red
     $tmp = $tmp.replace("&g", "$033[38;5;135m")  # Medium Purple 2
     $tmp = $tmp.replace("&b", "$033[38;5;153m")  # Light Sky Blue 1
     $tmp = $tmp.replace("&su1", "$033[38;2;0;191;255m") # Ocean Blue
