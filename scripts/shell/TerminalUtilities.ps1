@@ -7,8 +7,8 @@ function CommandExists {
     finally { $ErrorActionPreference = $preference }
 }
 
-# Unix-like sudo
-function sudo {
+# Invokes an admin window in the current dir
+function su {
     Start-Process wt -ArgumentList "-d `"$PWD`"" -Verb RunAs
 }
 
@@ -402,3 +402,4 @@ function OrganizeFilesInDir {
 Set-Alias ofid -Value OrganizeFilesInDir
 Set-Alias stexe -Value Get-ExePath
 Set-Alias gfs -Value Get-FolderSize
+Set-Alias sudo -Value gsudo

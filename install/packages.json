@@ -53,6 +53,11 @@
       "name": "Terminal-Icons",
       "type": "script",
       "command": "Install-Module -Name Terminal-Icons -Scope CurrentUser -Force"
+    },
+    {
+      "name": "gsudo",
+      "type": "winget",
+      "id": "gerardog.gsudo"
     }
   ],
   "Socials": [],

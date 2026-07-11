@@ -13,6 +13,10 @@ if (CommandExists fastfetch) {
     fastfetch
 }
 
+if (CommandExists gsudo -and Get-Module -ListAvailable -Name "gsudoModule") {
+    Import-Module "gsudoModule"
+}
+
 # Set the prompt to my liking
 function prompt {
     mccoloring ("&n" +
