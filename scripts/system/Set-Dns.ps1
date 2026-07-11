@@ -3,8 +3,8 @@
 [CmdletBinding()]
 param()
 
-Write-Host "Fetching DNS configuration from Bitwarden (MochiDNS)..." -ForegroundColor Cyan
-$bwNote = & bw get notes MochiDNS 2>&1
+Write-Host "Fetching DNS configuration from Bitwarden..." -ForegroundColor Cyan
+$bwNote = & bw get notes PixieDNS 2>&1
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($bwNote)) {
     throw "Failed to fetch MochiDNS from Bitwarden. Are you logged in and synced?"
 }
@@ -46,7 +46,27 @@ if ($adapters) {
     foreach ($adapter in $adapters) {
         try {
             Set-DnsClientServerAddress -InterfaceAlias $adapter.Name -ServerAddresses $ips -ErrorAction Stop
-            Write-Host "  Successfully applied DNS to adapter: $($adapter.Name)" -ForegroundColor Green
+            Write-Host "  Successfully applied DNS IPs to adapter: $($adapter.Name)" -ForegroundColor Green
+
+            # Force DoH on the interface for each IP and Address Family (v4 and v6)
+            foreach ($ip in $ips) {
+                try {
+                    $isIPv6 = ([System.Net.IPAddress]$ip).AddressFamily -eq 'InterNetworkV6'
+                    $leaf = if ($isIPv6) { 'Doh6' } else { 'Doh' }
+                    $dnscacheBase = "HKLM:\System\CurrentControlSet\Services\Dnscache"
+                    $interfaceParams = "$dnscacheBase\InterfaceSpecificParameters\$($adapter.InterfaceGuid)"
+                    $regPath = "$interfaceParams\DohInterfaceSettings\$leaf\$ip"
+
+                    if (-not (Test-Path $regPath)) {
+                        New-Item -Path $regPath -Force | Out-Null
+                    }
+
+                    New-ItemProperty -Path $regPath -Name "DohFlags" -Value 1 -PropertyType QWord -Force | Out-Null
+                } catch {
+                    Write-Host "  Failed to force DoH for $($ip): $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
+            Write-Host "  Enforced DoH (HTTPS) on adapter: $($adapter.Name)" -ForegroundColor Green
 
             # Flush DNS to ensure immediate effect
             Clear-DnsClientCache
@@ -60,4 +80,3 @@ if ($adapters) {
 }
 
 Write-Host "`nDNS configuration complete!" -ForegroundColor Cyan
-
