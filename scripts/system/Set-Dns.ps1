@@ -6,7 +6,7 @@ param()
 Write-Host "Fetching DNS configuration from Bitwarden..." -ForegroundColor Cyan
 $bwNote = & bw get notes PixieDNS 2>&1
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($bwNote)) {
-    throw "Failed to fetch MochiDNS from Bitwarden. Are you logged in and synced?"
+    throw "Failed to fetch DNS config from Bitwarden. Are you logged in and synced?"
 }
 
 $ipv4Match = [regex]::Match($bwNote, 'IPv4 \((.*?)\)')
@@ -14,7 +14,7 @@ $ipv6Match = [regex]::Match($bwNote, 'IPv6 \((.*?)\)')
 $dohMatch = [regex]::Match($bwNote, 'DoH \((.*?)\)')
 
 if (-not $ipv4Match.Success -or -not $dohMatch.Success -or -not $ipv6Match.Success) {
-    throw "Failed to parse MochiDNS formatting. Expected 'IPv4 (...)', 'IPv6 (...)' and 'DoH (...)'. Found: $bwNote"
+    throw "Failed to parse DNS formatting. Expected 'IPv4 (...)', 'IPv6 (...)' and 'DoH (...)'. Found: $bwNote"
 }
 
 $ips = [System.Collections.Generic.List[string]]::new()
