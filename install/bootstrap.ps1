@@ -11,6 +11,7 @@ $wingetSettingsDir = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppI
 if (-not (Test-Path $wingetSettingsDir)) {
     New-Item -ItemType Directory -Path $wingetSettingsDir -Force | Out-Null
 }
+
 $wingetSettingsJson = Join-Path $wingetSettingsDir 'settings.json'
 '{
     "telemetry": {
@@ -28,7 +29,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 }
 
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "        Dotfiles Bootstrap (Phase 1)      " -ForegroundColor Cyan
+Write-Host "        Dotfiles Bootstrap                " -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # Disable pwsh telemetry
@@ -41,17 +42,25 @@ $corePackages = @(
     "Bitwarden.cli"
 )
 
-Write-Host "`n[1/3] Installing core dependencies via winget..." -ForegroundColor Yellow
+Write-Host "`nInstalling core dependencies via winget..." -ForegroundColor Yellow
 foreach ($pkg in $corePackages) {
     Write-Host "Installing $pkg..."
     winget install --id $pkg --source winget --accept-package-agreements --accept-source-agreements --silent | Out-Null
+}
+
+# Add 7z to path
+$sevenZipPath = 'C:\Program Files\7-Zip'
+$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+if ($machinePath -notlike "*$sevenZipPath*") {
+    [Environment]::SetEnvironmentVariable('Path', $machinePath + ';' + $sevenZipPath, 'Machine')
+    Write-Host "Added $sevenZipPath to Machine PATH" -ForegroundColor Green
 }
 
 # Refresh environment variables so git, gh, bw are available
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
 [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-Write-Host "`n[2/3] Authenticating..." -ForegroundColor Yellow
+Write-Host "`nAuthenticating..." -ForegroundColor Yellow
 
 # Bitwarden
 Write-Host "Please login to Bitwarden:" -ForegroundColor Cyan
@@ -66,7 +75,7 @@ gh config set telemetry disabled
 Write-Host "`nPlease authenticate with GitHub CLI (this will generate an SSH key):" -ForegroundColor Cyan
 gh auth login
 
-Write-Host "`n[3/3] Cloning dotfiles repository..." -ForegroundColor Yellow
+Write-Host "`nCloning dotfiles repository..." -ForegroundColor Yellow
 $repoUrl = "git@github.com:mewclouds/dotfiles.git"
 $destPath = Join-Path $HOME "dotfiles"
 
