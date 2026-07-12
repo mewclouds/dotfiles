@@ -1,0 +1,60 @@
+name: PowerShell Lint & Format Check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer (if missing)
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+              Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+          }
+
+      - name: Check Formatting (PSFormat)
+        shell: pwsh
+        run: |
+          $settingsPath = "PSScriptAnalyzerSettings.psd1"
+          $files = Get-ChildItem -Recurse -Include *.ps1, *.psm1, *.psd1 | Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
+          $unformatted = 0
+
+          foreach ($file in $files) {
+              $original = Get-Content $file.FullName -Raw
+              if ([string]::IsNullOrWhiteSpace($original)) { continue }
+              
+              # Invoke-Formatter requires string input
+              $formatted = Invoke-Formatter -ScriptDefinition $original -Settings $settingsPath
+              if ($original -ne $formatted) {
+                  Write-Error "Formatting violation found in: $($file.FullName)"
+                  $unformatted++
+              }
+          }
+
+          if ($unformatted -gt 0) {
+              Write-Error "$unformatted files are not formatted correctly. Please run PSFormat locally and commit the changes."
+              exit 1
+          }
+          Write-Host "All files are formatted correctly!" -ForegroundColor Green
+
+      - name: Lint PowerShell (PSLint)
+        shell: pwsh
+        run: |
+          $settingsPath = "PSScriptAnalyzerSettings.psd1"
+          $files = Get-ChildItem -Recurse -Include *.ps1, *.psm1, *.psd1 | Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
+
+          # Using -Path with an array avoids the pipeline NRE bug you saw earlier
+          $results = Invoke-ScriptAnalyzer -Path $files.FullName -Settings $settingsPath -ErrorAction Continue
+
+          if ($results) {
+              $results | Format-Table -AutoSize
+              Write-Error "Found $($results.Count) linting issues. Please run PSLint locally to fix them."
+              exit 1
+          }
+          Write-Host "No linting issues found!" -ForegroundColor Green
