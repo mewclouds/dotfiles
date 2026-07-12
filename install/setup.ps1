@@ -50,7 +50,7 @@ function Get-FileSelection {
 
 function Resolve-EnvironmentVariable {
     # UTILITIES_PATH
-    $utilitiesPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts\shell\TerminalUtilities.ps1'
+    $utilitiesPath = Join-Path (Split-Path -Path $PSScriptRoot -Parent) 'scripts\shell\TerminalUtilities.ps1'
     if (Test-Path $utilitiesPath) {
         [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
         [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'Process')
@@ -134,6 +134,34 @@ function Invoke-DnsSetup {
     }
 }
 
+function Invoke-InstallLLT {
+    $lltInstaller = Join-Path $env:TEMP 'LenovoLegionToolkitSetup.exe'
+    $lltUrl = 'https://github.com/BartoszCichecki/LenovoLegionToolkit' +
+    '/releases/download/2.26.1/LenovoLegionToolkitSetup.exe'
+
+    try {
+        Write-Host "`nDownloading Lenovo Legion Toolkit 2.26.1..." -ForegroundColor Cyan
+        Invoke-WebRequest -Uri $lltUrl -OutFile $lltInstaller -ErrorAction Stop
+
+        Write-Host "Installing Lenovo Legion Toolkit..." -ForegroundColor Cyan
+        $startArgs = @{
+            FilePath = $lltInstaller
+            ArgumentList = '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+            Wait = $true
+            NoNewWindow = $true
+            ErrorAction = 'Stop'
+        }
+        Start-Process @startArgs
+        Write-Host "  Lenovo Legion Toolkit installed successfully." -ForegroundColor Green
+    } catch {
+        Write-Host "  Failed to install Lenovo Legion Toolkit: $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        if (Test-Path $lltInstaller) {
+            Remove-Item $lltInstaller -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -143,7 +171,7 @@ function New-RepositorySymlink {
         [string]$TargetPath
     )
 
-    $linkDirectory = Split-Path -Parent $LinkPath
+    $linkDirectory = Split-Path -Path $LinkPath -Parent
     if ($linkDirectory) {
         New-Item -ItemType Directory -Path $linkDirectory -Force | Out-Null
     }
@@ -203,7 +231,7 @@ function Initialize-RepositorySymlink {
         }
     }
 
-    New-Item -ItemType Directory -Path (Split-Path -Parent $repoProfilePath) -Force | Out-Null
+    New-Item -ItemType Directory -Path (Split-Path -Path $repoProfilePath -Parent) -Force | Out-Null
     if (-not (Test-Path $repoProfilePath)) {
         New-Item -ItemType File -Path $repoProfilePath -Force | Out-Null
     }
@@ -315,9 +343,10 @@ function Invoke-Setup {
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
     Invoke-DnsSetup -RepoRoot $RepoRoot
+    Invoke-InstallLLT
 }
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Path $PSScriptRoot -Parent
 Invoke-Setup -RepoRoot $repoRoot -Clean:$Clean
 Write-Host "`nSetup complete! Press any key to close." -ForegroundColor Cyan
 [Console]::ReadKey() | Out-Null
