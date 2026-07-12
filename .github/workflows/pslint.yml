@@ -9,7 +9,7 @@ jobs:
   check:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install PSScriptAnalyzer (if missing)
         shell: pwsh
@@ -48,10 +48,12 @@ jobs:
         run: |
           $settingsPath = "PSScriptAnalyzerSettings.psd1"
           $files = Get-ChildItem -Recurse -Include *.ps1, *.psm1, *.psd1 | Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
-
-          # Using -Path with an array avoids the pipeline NRE bug you saw earlier
-          $results = Invoke-ScriptAnalyzer -Path $files.FullName -Settings $settingsPath -ErrorAction Continue
-
+          
+          $results = @()
+          foreach ($file in $files) {
+              $results += Invoke-ScriptAnalyzer -Path $file.FullName -Settings $settingsPath -ErrorAction Continue
+          }
+          
           if ($results) {
               $results | Format-Table -AutoSize
               Write-Error "Found $($results.Count) linting issues. Please run PSLint locally to fix them."
