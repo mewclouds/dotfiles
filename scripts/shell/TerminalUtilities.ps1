@@ -54,20 +54,20 @@ function Get-ExePath {
         Select-Object -ExpandProperty FullName
 }
 
-# Minecraft coloring (Summer Vibes Palette - Pastel Edition)
+# Minecraft coloring (Evergarden Spring Palette Edition - High Contrast)
 function mccoloring($tmp) {
     $033 = [char]27
     $tmp = "$tmp&r"
 
-    # 24-bit True Color RGB Palette (Soft Pastel Summer Colors)
-    $tmp = $tmp.replace("&ocean", "$033[38;2;114;186;201m") # Soft pastel ocean blue
-    $tmp = $tmp.replace("&sky", "$033[38;2;162;210;255m")   # Soft pastel sky blue
-    $tmp = $tmp.replace("&coral", "$033[38;2;238;150;140m") # Soft pastel coral
-    $tmp = $tmp.replace("&sand", "$033[38;2;246;224;181m")  # Soft pastel sand
-    $tmp = $tmp.replace("&sun", "$033[38;2;255;229;143m")   # Soft pastel sun yellow
-    $tmp = $tmp.replace("&leaf", "$033[38;2;168;230;207m")  # Soft pastel leaf green
-    $tmp = $tmp.replace("&cloud", "$033[38;2;240;244;248m") # Soft cloud white
-    $tmp = $tmp.replace("&red", "$033[38;2;255;105;97m")    # Soft pastel red
+    # 24-bit True Color RGB Palette (Evergarden-inspired High Contrast pastels)
+    $tmp = $tmp.replace("&ocean", "$033[38;2;194;223;255m") # Brightened Evergarden Blue
+    $tmp = $tmp.replace("&sky", "$033[38;2;194;242;231m")   # Brightened Evergarden Mint
+    $tmp = $tmp.replace("&coral", "$033[38;2;248;200;237m") # Brightened Evergarden Purple/Pink
+    $tmp = $tmp.replace("&sand", "$033[38;2;250;219;176m")  # Brightened Evergarden Sage/Sand
+    $tmp = $tmp.replace("&sun", "$033[38;2;252;219;168m")   # Brightened Evergarden Yellow/Peach
+    $tmp = $tmp.replace("&leaf", "$033[38;2;220;242;188m")  # Brightened Evergarden Green
+    $tmp = $tmp.replace("&cloud", "$033[38;2;251;252;235m") # Brightened Evergarden Cream White
+    $tmp = $tmp.replace("&red", "$033[38;2;255;151;154m")    # Brightened Evergarden Red
 
     $tmp = $tmp.replace("&r", "$033[0m")
     $tmp = $tmp.replace("&n", "`r`n")
@@ -407,7 +407,49 @@ function OrganizeFilesInDir {
 }
 # endregion
 
+function Sync-TerminalConfig {
+    $repoRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
+    $source = Join-Path $repoRoot '.config\windows-terminal.json'
+    $destination = $env:WT_JSON
+
+    if (-not (Test-Path $source)) {
+        Write-Error "Source config not found at $source"
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace($destination)) {
+        Write-Error "WT_JSON environment variable is not defined."
+        return
+    }
+
+    Write-Host "Syncing Windows Terminal config..." -ForegroundColor Cyan
+    Write-Host "Source: $source" -ForegroundColor DarkGray
+    Write-Host "Destination: $destination" -ForegroundColor DarkGray
+
+    # Construct the command string directly with variables expanded
+    $cmd = "Start-Sleep -Seconds 1; " +
+    "Stop-Process -Name 'WindowsTerminal' -Force -ErrorAction SilentlyContinue; " +
+    "Stop-Process -Name 'wt' -Force -ErrorAction SilentlyContinue; " +
+    "Start-Sleep -Milliseconds 500; " +
+    "Copy-Item -Path '$source' -Destination '$destination' -Force; " +
+    "Start-Process -FilePath 'wt.exe'"
+
+    $pwshExe = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
+    $startArgs = @{
+        FilePath = $pwshExe
+        ArgumentList = @(
+            "-NoProfile",
+            "-WindowStyle", "Hidden",
+            "-Command", $cmd
+        )
+        NoNewWindow = $false
+    }
+    Start-Process @startArgs
+    Write-Host "Sync initiated in the background. Windows Terminal will restart shortly." -ForegroundColor Green
+}
+
 Set-Alias ofid -Value OrganizeFilesInDir
 Set-Alias stexe -Value Get-ExePath
 Set-Alias gfs -Value Get-FolderSize
 Set-Alias sudo -Value gsudo
+Set-Alias syncwt -Value Sync-TerminalConfig

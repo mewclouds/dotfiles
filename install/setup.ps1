@@ -214,7 +214,16 @@ function Initialize-RepositorySymlink {
 
     New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
     New-RepositorySymlink -LinkPath $fastfetchConfigPath -TargetPath $repoFastfetchConfigPath
-    New-RepositorySymlink -LinkPath $windowsTerminalJsonPath -TargetPath $repoWindowsTerminalJson
+
+    # Copy Windows Terminal settings file instead of symlinking it
+    if ((Test-Path $windowsTerminalJsonPath) -or (Get-Item $windowsTerminalJsonPath -ErrorAction SilentlyContinue)) {
+        Write-Host ("Removing existing Windows Terminal file/symlink at " +
+            "$windowsTerminalJsonPath...") -ForegroundColor Yellow
+        Remove-Item $windowsTerminalJsonPath -Force -ErrorAction SilentlyContinue
+    }
+    Copy-Item -Path $repoWindowsTerminalJson -Destination $windowsTerminalJsonPath -Force
+    Write-Host "Copied Windows Terminal config: $repoWindowsTerminalJson -> $windowsTerminalJsonPath"
+
     New-RepositorySymlink -LinkPath $gitConfigPath -TargetPath $repoGitConfigPath
 }
 

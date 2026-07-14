@@ -17,6 +17,12 @@ if (CommandExists gsudo -and Get-Module -ListAvailable -Name "gsudoModule") {
     Import-Module "gsudoModule"
 }
 
+# Customize PSStyle file listing colors (remove directory background blocks for readability)
+if ($null -ne $PSStyle) {
+    $PSStyle.FileInfo.Directory = "`e[34;1m"
+    $PSStyle.FileInfo.SymbolicLink = "`e[36;1m"
+}
+
 # Set the prompt to my liking
 function prompt {
     $isAdmin = [bool]([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
