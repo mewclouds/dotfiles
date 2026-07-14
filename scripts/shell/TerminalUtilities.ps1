@@ -54,19 +54,21 @@ function Get-ExePath {
         Select-Object -ExpandProperty FullName
 }
 
-# Minecraft coloring (useful for prompt)
+# Minecraft coloring (Summer Vibes Palette - Pastel Edition)
 function mccoloring($tmp) {
     $033 = [char]27
     $tmp = "$tmp&r"
-    $tmp = $tmp.replace("&lp", "$033[38;5;217m") # Light Pink
-    $tmp = $tmp.replace("&p", "$033[38;5;218m")  # Pink
-    $tmp = $tmp.replace("&l", "$033[38;5;183m")  # Plum
-    $tmp = $tmp.replace("&red", "$033[38;5;196m") # Bright Red
-    $tmp = $tmp.replace("&g", "$033[38;5;135m")  # Medium Purple 2
-    $tmp = $tmp.replace("&b", "$033[38;5;153m")  # Light Sky Blue 1
-    $tmp = $tmp.replace("&su1", "$033[38;2;0;191;255m") # Ocean Blue
-    $tmp = $tmp.replace("&su2", "$033[38;2;255;127;80m") # Sunset Coral
-    $tmp = $tmp.replace("&su3", "$033[38;2;255;215;0m") # Sun Yellow
+
+    # 24-bit True Color RGB Palette (Soft Pastel Summer Colors)
+    $tmp = $tmp.replace("&ocean", "$033[38;2;114;186;201m") # Soft pastel ocean blue
+    $tmp = $tmp.replace("&sky", "$033[38;2;162;210;255m")   # Soft pastel sky blue
+    $tmp = $tmp.replace("&coral", "$033[38;2;238;150;140m") # Soft pastel coral
+    $tmp = $tmp.replace("&sand", "$033[38;2;246;224;181m")  # Soft pastel sand
+    $tmp = $tmp.replace("&sun", "$033[38;2;255;229;143m")   # Soft pastel sun yellow
+    $tmp = $tmp.replace("&leaf", "$033[38;2;168;230;207m")  # Soft pastel leaf green
+    $tmp = $tmp.replace("&cloud", "$033[38;2;240;244;248m") # Soft cloud white
+    $tmp = $tmp.replace("&red", "$033[38;2;255;105;97m")    # Soft pastel red
+
     $tmp = $tmp.replace("&r", "$033[0m")
     $tmp = $tmp.replace("&n", "`r`n")
     $tmp
@@ -293,10 +295,14 @@ function Get-FolderSize {
     $padding = $maxLen + 2
 
     $dashLine = "-" * ($padding + 15)
-    Write-Host (mccoloring "&n&su1*~* &su2Folder Sizes &su3*~*")
-    Write-Host (mccoloring "&su1$dashLine")
-    Write-Host (mccoloring "&su3$("{0,-$padding}" -f 'Folder')&su2Size")
-    Write-Host (mccoloring "&su1$dashLine")
+
+    # Styled header
+    Write-Host ""
+    Write-Host "*~* Folder Sizes *~*" -ForegroundColor Yellow
+    Write-Host $dashLine -ForegroundColor Cyan
+    Write-Host ("{0,-$padding}" -f 'Folder') -NoNewline -ForegroundColor Yellow
+    Write-Host "Size" -ForegroundColor Green
+    Write-Host $dashLine -ForegroundColor Cyan
 
     foreach ($item in $results) {
         $folderName = if ($item.Folder.Length -gt $maxLen) {
@@ -304,15 +310,13 @@ function Get-FolderSize {
         } else {
             $item.Folder
         }
-        Write-Host (mccoloring "&su3$("{0,-$padding}" -f $folderName)&su1$($item.Size)")
+        Write-Host ("{0,-$padding}" -f $folderName) -NoNewline
+        Write-Host $item.Size -ForegroundColor Green
     }
 
-    $totalRaw = 0
-    try {
-        $totalRaw = $fso.GetFolder((Get-Item .).FullName).Size
-    } catch {
-        Write-Warning "Could not get total size for current directory: $($_.Exception.Message)"
-    }
+    $totalRaw = (Get-ChildItem -Recurse -File -Force -ErrorAction SilentlyContinue |
+            Measure-Object -Property Length -Sum).Sum
+    if ($null -eq $totalRaw) { $totalRaw = 0 }
 
     $totalFormatted = if ($totalRaw -ge 1GB) {
         "{0:N2} GB" -f ($totalRaw / 1GB)
@@ -324,9 +328,12 @@ function Get-FolderSize {
         "$totalRaw Bytes"
     }
 
-    Write-Host (mccoloring "&su1$dashLine")
-    Write-Host (mccoloring "&su2$("{0,-$padding}" -f 'Total Current Directory:')&su3$totalFormatted&n")
+    Write-Host $dashLine -ForegroundColor Cyan
+    Write-Host ("{0,-$padding}" -f 'Total Current Directory:') -NoNewline -ForegroundColor Red
+    Write-Host $totalFormatted -ForegroundColor Yellow
+    Write-Host ""
 }
+
 
 function OrganizeFilesInDir {
     param(

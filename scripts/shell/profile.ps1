@@ -23,10 +23,10 @@ function prompt {
         [Security.Principal.WindowsBuiltInRole]::Administrator
     )
 
-    $userPart = if ($isAdmin) { "&red@ADMIN" } else { "&su2@$($env:USERNAME)" }
+    $userPart = if ($isAdmin) { "&red@ADMIN" } else { "&sand@$($env:USERNAME)" }
 
     mccoloring ("&n" +
-        "&su3&su3$(Get-Date -UFormat "%a %m-%d %H:%M") &su1$($env:computername)" +
-        "&su2$userPart &su1$(pwdd)&n" +
-        "&su2> &r")
+        "&sun$(Get-Date -UFormat "%a %m-%d %H:%M") &sky$($env:computername)" +
+        "$userPart &ocean$(pwdd)&n" +
+        "&coral> &r")
 }
