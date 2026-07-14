@@ -93,6 +93,16 @@
       "name": "NVIDIA Profile Inspector",
       "type": "winget",
       "id": "Orbmu2k.nvidiaProfileInspector"
+    },
+    {
+      "name": "PawnIO",
+      "type": "winget",
+      "id": "namazso.PawnIO"
+    },
+    {
+      "name": "Lenovo Legion Toolkit",
+      "type": "winget",
+      "id": "LenovoLegionToolkitTeam.LenovoLegionToolkit"
     }
   ],
   "Socials": [

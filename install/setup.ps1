@@ -134,34 +134,6 @@ function Invoke-DnsSetup {
     }
 }
 
-function Invoke-InstallLLT {
-    $lltInstaller = Join-Path $env:TEMP 'LenovoLegionToolkitSetup.exe'
-    $lltUrl = 'https://github.com/BartoszCichecki/LenovoLegionToolkit' +
-    '/releases/download/2.26.1/LenovoLegionToolkitSetup.exe'
-
-    try {
-        Write-Host "`nDownloading Lenovo Legion Toolkit 2.26.1..." -ForegroundColor Cyan
-        Invoke-WebRequest -Uri $lltUrl -OutFile $lltInstaller -ErrorAction Stop
-
-        Write-Host "Installing Lenovo Legion Toolkit..." -ForegroundColor Cyan
-        $startArgs = @{
-            FilePath = $lltInstaller
-            ArgumentList = '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
-            Wait = $true
-            NoNewWindow = $true
-            ErrorAction = 'Stop'
-        }
-        Start-Process @startArgs
-        Write-Host "  Lenovo Legion Toolkit installed successfully." -ForegroundColor Green
-    } catch {
-        Write-Host "  Failed to install Lenovo Legion Toolkit: $($_.Exception.Message)" -ForegroundColor Red
-    } finally {
-        if (Test-Path $lltInstaller) {
-            Remove-Item $lltInstaller -Force -ErrorAction SilentlyContinue
-        }
-    }
-}
-
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -343,7 +315,6 @@ function Invoke-Setup {
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
     Invoke-DnsSetup -RepoRoot $RepoRoot
-    Invoke-InstallLLT
 }
 
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
