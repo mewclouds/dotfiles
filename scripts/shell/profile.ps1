@@ -28,28 +28,28 @@ function Initialize-PSReadLine {
 
     # Set basic options via splatting to avoid whitespace line continuation errors
     $psReadLineSettings = @{
-        EditMode                      = 'Windows'
-        HistoryNoDuplicates           = $true
+        EditMode = 'Windows'
+        HistoryNoDuplicates = $true
         HistorySearchCursorMovesToEnd = $true
-        PredictionSource              = 'HistoryAndPlugin'
-        PredictionViewStyle           = 'ListView'
-        BellStyle                     = 'None'
-        MaximumHistoryCount           = 10000
+        PredictionSource = 'HistoryAndPlugin'
+        PredictionViewStyle = 'ListView'
+        BellStyle = 'None'
+        MaximumHistoryCount = 10000
     }
     Set-PSReadLineOption @psReadLineSettings
 
     # Colors mapped to Evergarden Skye palette
     Set-PSReadLineOption -Colors @{
-        Command   = '#B2CFED' # Light blue
+        Command = '#B2CFED' # Light blue
         Parameter = '#ADDEB9' # Mint/cyan
-        Operator  = '#F8F9E8' # Cream white
-        Variable  = '#F3C0E5' # Pink/purple
-        String    = '#CAE0A7' # Sage green
-        Number    = '#F5D098' # Peach/yellow
-        Type      = '#B2CFED' # Light blue
-        Comment   = '#96B4AA' # Sage gray
-        Keyword   = '#F3C0E5' # Pink/purple
-        Error     = '#F57F82' # Soft red
+        Operator = '#F8F9E8' # Cream white
+        Variable = '#F3C0E5' # Pink/purple
+        String = '#CAE0A7' # Sage green
+        Number = '#F5D098' # Peach/yellow
+        Type = '#B2CFED' # Light blue
+        Comment = '#96B4AA' # Sage gray
+        Keyword = '#F3C0E5' # Pink/purple
+        Error = '#F57F82' # Soft red
     }
 
     # Key Handlers for navigation and history search

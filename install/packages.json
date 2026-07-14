@@ -44,6 +44,16 @@
       "name": "BentoMod",
       "type": "script",
       "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"irm 'https://raw.githubusercontent.com/Kuusouu/BentoMod/refs/heads/master/scripts/Install-BentoMod.ps1' | iex\""
+    },
+    {
+      "name": "bat",
+      "type": "winget",
+      "id": "sharkdp.bat"
+    },
+    {
+      "name": "fd",
+      "type": "winget",
+      "id": "sharkdp.fd"
     }
   ],
   "Browsers": [
@@ -108,6 +118,11 @@
       "name": "Lenovo Legion Toolkit",
       "type": "winget",
       "id": "LenovoLegionToolkitTeam.LenovoLegionToolkit"
+    },
+    {
+      "name": "PuTTY",
+      "type": "winget",
+      "id": "PuTTY.PuTTY"
     }
   ],
   "Socials": [
