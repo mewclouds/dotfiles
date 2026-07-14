@@ -262,14 +262,20 @@ function Repair-UserPath {
 }
 
 function Get-FolderSize {
-    $fso = New-Object -ComObject Scripting.FileSystemObject
-    $results = Get-ChildItem -Recurse -Directory | ForEach-Object {
-        $size = 0
-        try {
-            $folder = $fso.GetFolder($_.FullName)
-            $size = $folder.Size
-        } catch { Write-Warning "Could not get size for '$($_.FullName)': $($_.Exception.Message)" }
+    $dirSizes = @{}
+    $files = Get-ChildItem -Recurse -File -Force -ErrorAction SilentlyContinue
+    if ($null -ne $files) {
+        foreach ($file in $files) {
+            $parent = $file.DirectoryName
+            while ($parent -and $parent -like "$($PWD.Path)*") {
+                $dirSizes[$parent] = [long]($dirSizes[$parent]) + $file.Length
+                $parent = Split-Path -Path $parent -Parent
+            }
+        }
+    }
 
+    $results = Get-ChildItem -Recurse -Directory | ForEach-Object {
+        $size = if ($dirSizes.Contains($_.FullName)) { $dirSizes[$_.FullName] } else { 0 }
         $formattedSize = if ($size -ge 1GB) {
             "{0:N2} GB" -f ($size / 1GB)
         } elseif ($size -ge 1MB) {
@@ -314,9 +320,13 @@ function Get-FolderSize {
         Write-Host $item.Size -ForegroundColor Green
     }
 
-    $totalRaw = (Get-ChildItem -Recurse -File -Force -ErrorAction SilentlyContinue |
-            Measure-Object -Property Length -Sum).Sum
-    if ($null -eq $totalRaw) { $totalRaw = 0 }
+    # Sum all files to get the grand total
+    $totalRaw = 0
+    if ($null -ne $files) {
+        foreach ($file in $files) {
+            $totalRaw += $file.Length
+        }
+    }
 
     $totalFormatted = if ($totalRaw -ge 1GB) {
         "{0:N2} GB" -f ($totalRaw / 1GB)

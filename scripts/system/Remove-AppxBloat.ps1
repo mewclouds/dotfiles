@@ -10,6 +10,7 @@ $Packages = @(
     "Microsoft.MicrosoftOfficeHub",
 
     "Microsoft.ZuneMusic",   # Media Player
+    "Microsoft.Windows.Photos", # Photos
 
     "Microsoft.BingSearch",
     "MicrosoftCorporationII.QuickAssist",
