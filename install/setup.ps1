@@ -134,6 +134,55 @@ function Invoke-DnsSetup {
     }
 }
 
+function Invoke-InstallLosslessCut {
+    $installDir = 'C:\Program Files\LosslessCut'
+    $apiUrl = 'https://api.github.com/repos/mifi/lossless-cut/releases/latest'
+    $tempDir = Join-Path $env:TEMP "LosslessCut-Install-$([guid]::NewGuid())"
+
+    try {
+        Write-Host "`nFetching latest LosslessCut release info..." -ForegroundColor Cyan
+        $release = Invoke-RestMethod -Uri $apiUrl -Headers @{ 'User-Agent' = 'PowerShell' }
+        Write-Host "  Latest version: $($release.tag_name)" -ForegroundColor Green
+
+        # Find the 7z asset (e.g. LosslessCut-win-x64.7z)
+        $asset = $release.assets | Where-Object { $_.name -like '*win-x64*.7z' } | Select-Object -First 1
+        if (-not $asset) {
+            Write-Error "No Windows 7z found in the latest LosslessCut release assets. Skipping."
+            return
+        }
+        Write-Host "  Found: $($asset.name)" -ForegroundColor Green
+
+        # Download the asset
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        $archivePath = Join-Path $tempDir $asset.name
+
+        Write-Host "  Downloading LosslessCut..." -ForegroundColor Cyan
+        $oldProgress = $ProgressPreference
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $archivePath -UseBasicParsing
+        $ProgressPreference = $oldProgress
+        Write-Host "  Download complete." -ForegroundColor Green
+
+        # Extract it
+        Write-Host "  Extracting LosslessCut..." -ForegroundColor Cyan
+        if (-not (Test-Path $installDir)) {
+            New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+        }
+
+        # Use 7z to extract
+        $extractArgs = @('x', $archivePath, "-o$installDir", '-y')
+        Start-Process -FilePath '7z' -ArgumentList $extractArgs -Wait -NoNewWindow -ErrorAction Stop
+
+        Write-Host "  LosslessCut installed successfully to $installDir" -ForegroundColor Green
+    } catch {
+        Write-Host "  Failed to install LosslessCut: $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        if (Test-Path $tempDir) {
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -324,6 +373,7 @@ function Invoke-Setup {
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
     Invoke-DnsSetup -RepoRoot $RepoRoot
+    Invoke-InstallLosslessCut
 }
 
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent

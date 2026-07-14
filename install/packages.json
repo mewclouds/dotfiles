@@ -43,7 +43,7 @@
     {
       "name": "BentoMod",
       "type": "script",
-      "command": "if (-not (Test-Path \"$HOME/BentoMod\")) { git clone git@github.com:Kuusouu/BentoMod.git \"$HOME/BentoMod\" }"
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"irm 'https://raw.githubusercontent.com/Kuusouu/BentoMod/refs/heads/master/scripts/Install-BentoMod.ps1' | iex\""
     }
   ],
   "Browsers": [
@@ -132,11 +132,6 @@
       "name": "ImageGlass",
       "type": "winget",
       "id": "DuongDieuPhap.ImageGlass"
-    },
-    {
-      "name": "LosslessCut",
-      "type": "winget",
-      "id": "ch.LosslessCut"
     }
   ]
 }
