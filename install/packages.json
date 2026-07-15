@@ -31,6 +31,11 @@
       "id": "Microsoft.VisualStudioCode"
     },
     {
+      "name": "Zed",
+      "type": "winget",
+      "id": "ZedIndustries.Zed"
+    },
+    {
       "name": "Fastfetch",
       "type": "winget",
       "id": "Fastfetch-cli.Fastfetch"

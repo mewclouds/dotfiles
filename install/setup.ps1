@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 #Requires -RunAsAdministrator
 
 [CmdletBinding()]
@@ -357,6 +357,21 @@ function Install-CuratedPackage {
     }
 }
 
+function Show-WelcomeBanner {
+    Clear-Host
+    $banner = @'
+███╗   ███╗███████╗██╗    ██╗██████╗  ██████╗ ████████╗███████╗   ██╗   ██╗
+████╗ ████║██╔════╝██║    ██║██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝  ████╗ ████╗
+██╔████╔██║█████╗  ██║ █╗ ██║██║  ██║██║   ██║   ██║   ███████╗  ╚████████╔╝
+██║╚██╔╝██║██╔══╝  ██║███╗██║██║  ██║██║   ██║   ██║   ╚════██║   ╚██████╔╝
+██║ ╚═╝ ██║███████╗╚███╔███╔╝██████╔╝╚██████╔╝   ██║   ███████║    ╚████╔╝
+╚═╝     ╚═╝╚══════╝ ╚══╝╚══╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝     ╚══╝
+'@
+    Write-Host $banner -ForegroundColor Cyan
+    Write-Host "`nWelcome to MewDots Setup! ꨄ" -ForegroundColor Green
+    Write-Host "Setting up environment and utilities...`n" -ForegroundColor DarkCyan
+}
+
 function Invoke-Setup {
     param(
         [Parameter(Mandatory = $false)]
@@ -365,6 +380,7 @@ function Invoke-Setup {
         [switch]$Clean
     )
 
+    Show-WelcomeBanner
     Resolve-EnvironmentVariable
     Initialize-RepositorySymlink -RepoRoot $RepoRoot -Clean:$Clean
     Register-BackupScheduledTask -RepoRoot $RepoRoot
@@ -380,3 +396,4 @@ $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 Invoke-Setup -RepoRoot $repoRoot -Clean:$Clean
 Write-Host "`nSetup complete! Press any key to close." -ForegroundColor Cyan
 [Console]::ReadKey() | Out-Null
+
