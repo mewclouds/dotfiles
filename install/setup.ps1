@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 #Requires -RunAsAdministrator
 
 [CmdletBinding()]
@@ -111,13 +111,15 @@ function Invoke-AppxDebloat {
     )
 
     $appxScript = Join-Path $RepoRoot 'scripts\system\Remove-AppxBloat.ps1'
+
     if (Test-Path $appxScript) {
         Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
-        & $appxScript
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $appxScript
     } else {
         Write-Host "`nAppx debloat script not found at $appxScript" -ForegroundColor Yellow
     }
 }
+
 
 function Invoke-DnsSetup {
     param(
@@ -389,7 +391,7 @@ function Invoke-Setup {
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
     Invoke-DnsSetup -RepoRoot $RepoRoot
-    Invoke-InstallLosslessCut
+    #Invoke-InstallLosslessCut
 }
 
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent

@@ -1,23 +1,55 @@
+<#
+    This script forces execution under Windows PowerShell 5.1.
+
+    Many Windows AppX management cmdlets - including:
+        • Get-AppxPackage
+        • Remove-AppxPackage
+        • Get-AppxProvisionedPackage
+        • Remove-AppxProvisionedPackage
+
+    rely on COM-based Windows APIs that exist only in the full .NET Framework.
+
+    PowerShell 7 runs on .NET Core, which does NOT include the AppX deployment
+    COM interfaces. As a result, PowerShell 7 can list AppX packages but cannot
+    reliably remove them. Attempts to uninstall built-in or provisioned packages
+    from PowerShell 7 typically fail with errors such as:
+
+        “Access is denied.”
+        “Class not registered.”
+        or silent no-op failures.
+
+    To ensure consistent and reliable removal of both user-installed and
+    provisioned AppX packages, this script automatically relaunches itself
+    under Windows PowerShell 5.1 when executed from PowerShell 7 or later.
+#>
+
+
 #Requires -RunAsAdministrator
 
-$Packages = @(
+if ($PSVersionTable.PSVersion.Major -ne 5) {
+    Write-Host "This script must run in Windows PowerShell 5.1. Relaunching..." -ForegroundColor Yellow
 
+    $scriptPath = $MyInvocation.MyCommand.Path
+
+    # Relaunch in Windows PowerShell 5.1
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath
+    exit
+}
+
+$Packages = @(
     "Microsoft.WindowsFeedbackHub",
     "Microsoft.GetHelp",
     "Microsoft.OutlookForWindows",
     "MSTeams",
     "Clipchamp.Clipchamp",
     "Microsoft.MicrosoftOfficeHub",
-
-    "Microsoft.ZuneMusic",   # Media Player
-    "Microsoft.Windows.Photos", # Photos
-
+    "Microsoft.ZuneMusic",
     "Microsoft.BingSearch",
     "MicrosoftCorporationII.QuickAssist",
     "Microsoft.Windows.DevHome",
     "Microsoft.Todos",
     "Microsoft.PowerAutomateDesktop",
-    "Microsoft.YourPhone",   # Phone Link
+    "Microsoft.YourPhone",
     "Microsoft.MicrosoftStickyNotes",
     "Microsoft.WindowsSoundRecorder",
     "Microsoft.Copilot",
@@ -27,51 +59,39 @@ $Packages = @(
     "Microsoft.MicrosoftSolitaireCollection",
     "MicrosoftCorporationII.MicrosoftFamily",
     "MicrosoftWindows.CrossDevice",
-
     # Lenovo / OEM removals
-    "TobiiAB.TobiiEyeTrackingPortal", # Lenovo Tobii Eye Tracking
-
+    "TobiiAB.TobiiEyeTrackingPortal",
     # Xbox removals
-
     "Microsoft.GamingApp",
     "Microsoft.XboxSpeechToTextOverlay"
-
 )
 
 Write-Host ""
-Write-Host "Removing provisioned Windows apps (via Windows PowerShell 5.1)..." -ForegroundColor Cyan
+Write-Host "Removing provisioned Windows apps..." -ForegroundColor Cyan
 Write-Host ""
 
-# DISM cmdlets like Get-AppxProvisionedPackage often fail with "Class not registered" or hang in PowerShell 7.
-# We shell out to Windows PowerShell 5.1 (powershell.exe) to reliably remove the provisioned packages.
-$ps5Command = {
-    param([string[]]$PackageList)
+foreach ($Package in $Packages) {
+    $provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
+        Where-Object DisplayName -Like "*$Package*"
 
-    foreach ($Package in $PackageList) {
-        $provs = Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue |
-            Where-Object DisplayName -Like "*$Package*"
-
-        if ($null -ne $provs) {
-            foreach ($prov in $provs) {
-                Remove-AppxProvisionedPackage -Online `
-                    -PackageName $prov.PackageName `
-                    -ErrorAction SilentlyContinue | Out-Null
-            }
+    if ($provs) {
+        foreach ($prov in $provs) {
+            Remove-AppxProvisionedPackage -Online `
+                -PackageName $prov.PackageName `
+                -ErrorAction SilentlyContinue | Out-Null
         }
     }
 }
 
-powershell.exe -NoProfile -NonInteractive -Command "& {$ps5Command}" -args $Packages
 Write-Host "  Finished checking and removing provisioned packages." -ForegroundColor Green
 
 Write-Host "`nRemoving user packages..." -ForegroundColor Cyan
-
 foreach ($Package in $Packages) {
     Write-Host "[$Package]" -ForegroundColor Yellow
 
-    # Remove installed package(s)
     $pkgs = Get-AppxPackage "*$Package*" -AllUsers -ErrorAction SilentlyContinue
-    if ($null -ne $pkgs) {
+
+    if ($pkgs) {
         foreach ($pkg in $pkgs) {
             try {
                 Remove-AppxPackage -AllUsers -Package $pkg.PackageFullName -ErrorAction Stop

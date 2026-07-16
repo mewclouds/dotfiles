@@ -31,11 +31,6 @@
       "id": "Microsoft.VisualStudioCode"
     },
     {
-      "name": "Zed",
-      "type": "winget",
-      "id": "ZedIndustries.Zed"
-    },
-    {
       "name": "Fastfetch",
       "type": "winget",
       "id": "Fastfetch-cli.Fastfetch"
@@ -90,19 +85,14 @@
       "id": "RevoUninstaller.RevoUninstallerPro"
     },
     {
-      "name": "BetterTrumpet",
+      "name": "EarTrumpet",
       "type": "winget",
-      "id": "xmn.BetterTrumpet"
+      "id": "File-New-Project.EarTrumpet"
     },
     {
       "name": "MEGASync",
       "type": "winget",
       "id": "MEGA.MEGASync"
-    },
-    {
-      "name": "Microsoft PowerToys",
-      "type": "winget",
-      "id": "Microsoft.PowerToys"
     },
     {
       "name": "NVCleanstall",
@@ -113,16 +103,6 @@
       "name": "NVIDIA Profile Inspector",
       "type": "winget",
       "id": "Orbmu2k.nvidiaProfileInspector"
-    },
-    {
-      "name": "PawnIO",
-      "type": "winget",
-      "id": "namazso.PawnIO"
-    },
-    {
-      "name": "Lenovo Legion Toolkit",
-      "type": "winget",
-      "id": "LenovoLegionToolkitTeam.LenovoLegionToolkit"
     },
     {
       "name": "PuTTY",
@@ -142,16 +122,5 @@
       "id": "SpikeHD.Dorion"
     }
   ],
-  "Media": [
-    {
-      "name": "mpv.net",
-      "type": "winget",
-      "id": "mpv.net"
-    },
-    {
-      "name": "ImageGlass",
-      "type": "winget",
-      "id": "DuongDieuPhap.ImageGlass"
-    }
-  ]
+  "Media": []
 }

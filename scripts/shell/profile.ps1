@@ -98,6 +98,16 @@ function Register-CustomCompletion {
     }
 }
 
+
+# Automatically import Pester 5.8.0 when starting in the winutil directory
+if ($PWD.Path -like "*winutil" -or (Test-Path ".\Compile.ps1")) {
+    if (Get-Module -ListAvailable Pester | Where-Object { $_.Version -eq '5.8.0' }) {
+        Import-Module Pester -RequiredVersion 5.8.0 -Force
+        Write-Host "Pester 5.8.0 auto-imported!" -ForegroundColor Green
+    }
+}
+
+
 # Set the prompt to my liking
 function prompt {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
