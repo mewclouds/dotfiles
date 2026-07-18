@@ -93,6 +93,8 @@ if (-not (gh auth status 2>&1 | Select-String "Logged in" -Quiet)) {
     Write-Host "`nGitHub already authenticated." -ForegroundColor DarkGray
 }
 
+gh config set telemetry disabled
+
 Write-Host "`nCloning dotfiles repository..." -ForegroundColor Yellow
 $repoUrl = "git@github.com:mewclouds/dotfiles.git"
 $destPath = Join-Path $HOME "dotfiles"
