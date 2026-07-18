@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 #Requires -RunAsAdministrator
 
 [CmdletBinding()]
@@ -398,4 +398,5 @@ $repoRoot = Split-Path -Path $PSScriptRoot -Parent
 Invoke-Setup -RepoRoot $repoRoot -Clean:$Clean
 Write-Host "`nSetup complete! Press any key to close." -ForegroundColor Cyan
 [Console]::ReadKey() | Out-Null
+
 

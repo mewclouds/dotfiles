@@ -1,4 +1,4 @@
-<#
+﻿<#
     This script forces execution under Windows PowerShell 5.1.
 
     Many Windows AppX management cmdlets - including:
@@ -106,3 +106,4 @@ foreach ($Package in $Packages) {
 }
 
 Write-Host "`nDone." -ForegroundColor Green
+
