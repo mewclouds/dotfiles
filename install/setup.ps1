@@ -69,7 +69,11 @@ function Resolve-EnvironmentVariable {
             -Filter 'JSON Files (*.json)|*.json'
     }
 
-    Get-FolderSelection -VarName 'MR_MODS_PATH' -Prompt 'Select your MR Mods directory'
+    $mrModsPath = 'C:\Program Files (x86)\Steam\steamapps\common\MarvelRivals\MarvelGame\Marvel\Content\Paks\~mods'
+    New-Item -ItemType Directory -Path $mrModsPath -Force | Out-Null
+    [Environment]::SetEnvironmentVariable('MR_MODS_PATH', $mrModsPath, 'User')
+    [Environment]::SetEnvironmentVariable('MR_MODS_PATH', $mrModsPath, 'Process')
+    Write-Host "Set MR_MODS_PATH to $mrModsPath" -ForegroundColor Green
     Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
 }
 
