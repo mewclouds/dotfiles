@@ -1,0 +1,16 @@
+#!/bin/sh
+echo "Running pre-commit checks..."
+
+# 1. Enforce UTF-8 BOM encoding
+pwsh -NoProfile -File ./bom.ps1
+
+# 2. Run PowerShell linting
+pwsh -NoProfile -Command ". ./scripts/shell/TerminalUtilities.ps1; PSLint -Path ."
+
+# If the linter returns errors, abort the commit
+if [ $? -ne 0 ]; then
+    echo "PSScriptAnalyzer lint checks failed. Commit aborted."
+    exit 1
+fi
+
+echo "Pre-commit checks passed!"

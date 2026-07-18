@@ -1,4 +1,4 @@
-﻿#Requires -Version 7.0
+#Requires -Version 7.0
 #Requires -RunAsAdministrator
 
 [CmdletBinding()]
@@ -343,6 +343,9 @@ function Invoke-Setup {
     Install-NirCmd
     Invoke-AppxDebloat -RepoRoot $RepoRoot
     Invoke-DnsSetup -RepoRoot $RepoRoot
+
+    Write-Host "`nRegistering Git Hooks..." -ForegroundColor Cyan
+    git -C $RepoRoot config core.hooksPath .githooks
 }
 
 $repoRoot = Split-Path -Path $PSScriptRoot -Parent
