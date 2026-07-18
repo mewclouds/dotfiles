@@ -1,11 +1,11 @@
-﻿<#
+<#
     This script forces execution under Windows PowerShell 5.1.
 
     Many Windows AppX management cmdlets - including:
-        • Get-AppxPackage
-        • Remove-AppxPackage
-        • Get-AppxProvisionedPackage
-        • Remove-AppxProvisionedPackage
+        - Get-AppxPackage
+        - Remove-AppxPackage
+        - Get-AppxProvisionedPackage
+        - Remove-AppxProvisionedPackage
 
     rely on COM-based Windows APIs that exist only in the full .NET Framework.
 
@@ -14,8 +14,8 @@
     reliably remove them. Attempts to uninstall built-in or provisioned packages
     from PowerShell 7 typically fail with errors such as:
 
-        “Access is denied.”
-        “Class not registered.”
+        "Access is denied."
+        "Class not registered."
         or silent no-op failures.
 
     To ensure consistent and reliable removal of both user-installed and
