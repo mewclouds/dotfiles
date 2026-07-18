@@ -5,14 +5,17 @@ if ($env:UTILITIES_PATH) {
     Write-Error "UTILITIES_PATH environment variable is not set. Please run preSetup.ps1 first."
 }
 
-# Load node version manager if available
-if (CommandExists fnm) {
-    fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression
-}
-
 # Import elevation tools if available
 if (CommandExists gsudo -and Get-Module -ListAvailable -Name "gsudoModule") {
     Import-Module "gsudoModule"
+}
+
+if (CommandExists mise) {
+    (&mise activate pwsh) | Out-String | Invoke-Expression
+}
+
+if (CommandExists fastfetch) {
+    fastfetch
 }
 
 # Customize PSStyle file listing colors (remove directory background blocks for readability)
@@ -113,12 +116,23 @@ function prompt {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]$identity
     $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
     $userPart = if ($isAdmin) { "&red@ADMIN" } else { "&sand@$($env:USERNAME)" }
+
+    # Git branch + status (color reflects whether the working tree is clean)
+    $gitPart = ""
+    $insideGit = git rev-parse --is-inside-work-tree 2>$null
+    if ($LASTEXITCODE -eq 0 -and $insideGit -eq 'true') {
+        $branch = git rev-parse --abbrev-ref HEAD 2>$null
+        if ($branch) {
+            $isDirty = [bool](git status --porcelain 2>$null)
+            $gitColor = if ($isDirty) { "&red" } else { "&leaf" }
+            $gitPart = " $gitColor($branch)"
+        }
+    }
 
     mccoloring ("&n" +
         "&sun$(Get-Date -UFormat "%a %m-%d %H:%M") &sky$($env:computername)" +
-        "$userPart &ocean$(pwdd)&n" +
+        "$userPart &ocean$(pwdd)$gitPart&n" +
         "&coral> &r")
 }
 
