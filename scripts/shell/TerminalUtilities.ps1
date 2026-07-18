@@ -190,123 +190,16 @@ function Repair-UserPath {
 }
 
 function Get-FolderSize {
-    $dirSizes = @{}
-    $totalRaw = 0
-    $visitedDirs = [System.Collections.Generic.List[System.IO.DirectoryInfo]]::new()
-    $stack = [System.Collections.Generic.Stack[System.IO.DirectoryInfo]]::new()
+    Get-ChildItem -Directory | ForEach-Object {
+        $files = Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue
+        $size = ($files | Measure-Object -Property Length -Sum).Sum
+        $fmt = if ($size -ge 1GB) { "{0:N2} GB" -f ($size / 1GB) }
+        elseif ($size -ge 1MB) { "{0:N2} MB" -f ($size / 1MB) }
+        elseif ($size -ge 1KB) { "{0:N2} KB" -f ($size / 1KB) }
+        else { "$size Bytes" }
 
-    try {
-        $root = [System.IO.DirectoryInfo]::new($PWD.Path)
-        $rootPath = $root.FullName
-        $stack.Push($root)
-
-        while ($stack.Count -gt 0) {
-            $currentDir = $stack.Pop()
-
-            if ($currentDir.FullName -ne $rootPath) {
-                $visitedDirs.Add($currentDir)
-            }
-
-            # Enumerate files and sum sizes
-            try {
-                $files = $currentDir.GetFiles()
-                foreach ($file in $files) {
-                    try {
-                        $len = $file.Length
-                        $totalRaw += $len
-
-                        $dir = $file.Directory
-                        while ($dir -and $dir.FullName -like "$rootPath*") {
-                            $dirSizes[$dir.FullName] = [long]($dirSizes[$dir.FullName]) + $len
-                            $dir = $dir.Parent
-                        }
-                    } catch {
-                        $null = $_
-                    }
-                }
-            } catch {
-                $null = $_
-            }
-
-            # Enumerate subdirectories
-            try {
-                $subdirs = $currentDir.GetDirectories()
-                foreach ($subdir in $subdirs) {
-                    $stack.Push($subdir)
-                }
-            } catch {
-                $null = $_
-            }
-        }
-
-        # Build results
-        $results = foreach ($dir in $visitedDirs) {
-            $size = if ($dirSizes.Contains($dir.FullName)) { $dirSizes[$dir.FullName] } else { 0 }
-            $formattedSize = if ($size -ge 1GB) {
-                "{0:N2} GB" -f ($size / 1GB)
-            } elseif ($size -ge 1MB) {
-                "{0:N2} MB" -f ($size / 1MB)
-            } elseif ($size -ge 1KB) {
-                "{0:N2} KB" -f ($size / 1KB)
-            } else {
-                "$size Bytes"
-            }
-
-            [PSCustomObject]@{
-                Folder = $dir.FullName.Substring($rootPath.Length).TrimStart('\')
-                SizeRaw = $size
-                Size = $formattedSize
-            }
-        }
-
-        if ($null -ne $results) {
-            $results = $results | Sort-Object SizeRaw -Descending
-        }
-
-        $maxLen = 20
-        foreach ($item in $results) {
-            if ($item.Folder.Length -gt $maxLen) { $maxLen = $item.Folder.Length }
-        }
-        if ($maxLen -gt 80) { $maxLen = 80 }
-        $padding = $maxLen + 2
-
-        $dashLine = "-" * ($padding + 15)
-
-        # Styled header
-        Write-Host ""
-        Write-Host "*~* Folder Sizes *~*" -ForegroundColor Yellow
-        Write-Host $dashLine -ForegroundColor Cyan
-        Write-Host ("{0,-$padding}" -f 'Folder') -NoNewline -ForegroundColor Yellow
-        Write-Host "Size" -ForegroundColor Green
-        Write-Host $dashLine -ForegroundColor Cyan
-
-        foreach ($item in $results) {
-            $folderName = if ($item.Folder.Length -gt $maxLen) {
-                $item.Folder.Substring(0, $maxLen - 3) + "..."
-            } else {
-                $item.Folder
-            }
-            Write-Host ("{0,-$padding}" -f $folderName) -NoNewline
-            Write-Host $item.Size -ForegroundColor Green
-        }
-
-        $totalFormatted = if ($totalRaw -ge 1GB) {
-            "{0:N2} GB" -f ($totalRaw / 1GB)
-        } elseif ($totalRaw -ge 1MB) {
-            "{0:N2} MB" -f ($totalRaw / 1MB)
-        } elseif ($totalRaw -ge 1KB) {
-            "{0:N2} KB" -f ($totalRaw / 1KB)
-        } else {
-            "$totalRaw Bytes"
-        }
-
-        Write-Host $dashLine -ForegroundColor Cyan
-        Write-Host ("{0,-$padding}" -f 'Total Current Directory:') -NoNewline -ForegroundColor Red
-        Write-Host $totalFormatted -ForegroundColor Yellow
-        Write-Host ""
-    } catch {
-        Write-Error "Failed to calculate folder sizes: $($_.Exception.Message)"
-    }
+        [PSCustomObject]@{ Folder = $_.Name; Size = $fmt; SizeBytes = $size }
+    } | Sort-Object SizeBytes -Descending | Select-Object Folder, Size
 }
 
 
