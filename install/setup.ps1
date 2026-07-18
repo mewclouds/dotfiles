@@ -79,6 +79,10 @@ function Resolve-EnvironmentVariable {
 
 function Install-NirCmd {
     $nircmdDir = 'C:\nircmd'
+    if (Test-Path (Join-Path $nircmdDir 'nircmd.exe')) {
+        Write-Host "NirCmd is already installed. Skipping." -ForegroundColor DarkGray
+        return
+    }
     $nircmdZip = Join-Path $env:TEMP 'nircmd-x64.zip'
     $nircmdUrl = 'https://www.nirsoft.net/utils/nircmd-x64.zip'
 
@@ -118,7 +122,7 @@ function Invoke-AppxDebloat {
 
     if (Test-Path $appxScript) {
         Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -File $appxScript
+        & $appxScript
     } else {
         Write-Host "`nAppx debloat script not found at $appxScript" -ForegroundColor Yellow
     }
@@ -303,13 +307,6 @@ function Install-CuratedPackage {
             } else {
                 Write-Host "Warning: Unknown package type '$($package.type)' for $($package.name)" `
                     -ForegroundColor DarkYellow
-            }
-        }
-
-        # Refresh environment variables process scope
-        foreach ($level in @('Machine', 'User')) {
-            [Environment]::GetEnvironmentVariables($level).GetEnumerator() | ForEach-Object {
-                [Environment]::SetEnvironmentVariable($_.Key, $_.Value, 'Process')
             }
         }
     }

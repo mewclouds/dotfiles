@@ -4,7 +4,10 @@ $isAdmin = [bool]([Security.Principal.WindowsPrincipal][Security.Principal.Windo
     [Security.Principal.WindowsBuiltInRole]::Administrator
 )
 if (-not $isAdmin) {
-    throw "This script must be run as an Administrator. Please elevate your shell."
+    Write-Host "Elevating to Administrator..." -ForegroundColor Yellow
+    $pwshExe = if ($PSVersionTable.PSVersion.Major -ge 7) { "pwsh.exe" } else { "powershell.exe" }
+    Start-Process $pwshExe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs -Wait
+    exit
 }
 
 $wingetSettingsDir = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState'
@@ -70,17 +73,25 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
 Write-Host "`nAuthenticating..." -ForegroundColor Yellow
 
 # Bitwarden
-Write-Host "Please login to Bitwarden:" -ForegroundColor Cyan
-bw login
-$bwSession = bw unlock --raw
-[Environment]::SetEnvironmentVariable("BW_SESSION", $bwSession, "User")
-[Environment]::SetEnvironmentVariable("BW_SESSION", $bwSession, "Process")
-Write-Host "Bitwarden unlocked." -ForegroundColor Green
+$bwSession = [Environment]::GetEnvironmentVariable("BW_SESSION", "User")
+if (-not $bwSession -or -not (bw status | Select-String "unlocked" -Quiet)) {
+    Write-Host "Please login to Bitwarden:" -ForegroundColor Cyan
+    bw login
+    $bwSession = bw unlock --raw
+    [Environment]::SetEnvironmentVariable("BW_SESSION", $bwSession, "User")
+    [Environment]::SetEnvironmentVariable("BW_SESSION", $bwSession, "Process")
+    Write-Host "Bitwarden unlocked." -ForegroundColor Green
+} else {
+    Write-Host "Bitwarden already unlocked." -ForegroundColor DarkGray
+}
 
 # GitHub
-gh config set telemetry disabled
-Write-Host "`nPlease authenticate with GitHub CLI (this will generate an SSH key):" -ForegroundColor Cyan
-gh auth login
+if (-not (gh auth status 2>&1 | Select-String "Logged in" -Quiet)) {
+    Write-Host "`nPlease authenticate with GitHub CLI (this will generate an SSH key):" -ForegroundColor Cyan
+    gh auth login
+} else {
+    Write-Host "`nGitHub already authenticated." -ForegroundColor DarkGray
+}
 
 Write-Host "`nCloning dotfiles repository..." -ForegroundColor Yellow
 $repoUrl = "git@github.com:mewclouds/dotfiles.git"
@@ -97,12 +108,6 @@ Write-Host "Elevating privileges to run setup.ps1..." -ForegroundColor Cyan
 
 $setupScript = Join-Path $destPath "install\setup.ps1"
 
-# Resolve the exact pwsh executable to avoid environment variable drops when elevating Store apps
-$pwshPath = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
-if (-not (Test-Path $pwshPath)) {
-    $pwshPath = (Get-Command pwsh).Source
-}
-
-Start-Process $pwshPath `
+Start-Process pwsh.exe `
     -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$setupScript`" -Clean" `
     -Verb RunAs -Wait

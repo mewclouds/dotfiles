@@ -122,5 +122,12 @@
       "id": "SpikeHD.Dorion"
     }
   ],
-  "Media": []
+  "Media": [],
+  "Games": [
+    {
+      "name": "Steam",
+      "type": "winget",
+      "id": "Valve.Steam"
+    }
+  ]
 }
