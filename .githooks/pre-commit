@@ -3,6 +3,7 @@ echo "Running pre-commit checks..."
 
 # 1. Enforce UTF-8 BOM encoding
 pwsh -NoProfile -File ./bom.ps1
+git add install/bootstrap.ps1 install/setup.ps1
 
 # 2. Run PowerShell linting
 pwsh -NoProfile -Command ". ./scripts/shell/TerminalUtilities.ps1; PSLint -Path ."
