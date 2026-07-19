@@ -181,11 +181,6 @@ function Initialize-RepositorySymlink {
         }
     }
 
-    New-Item -ItemType Directory -Path (Split-Path -Path $repoProfilePath -Parent) -Force | Out-Null
-    if (-not (Test-Path $repoProfilePath)) {
-        New-Item -ItemType File -Path $repoProfilePath -Force | Out-Null
-    }
-
     if ([string]::IsNullOrWhiteSpace($windowsTerminalJsonPath)) {
         throw 'Windows Terminal settings path is not set in env variables. Set it before proceeding.'
     }
