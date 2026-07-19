@@ -165,15 +165,24 @@ function Initialize-RepositorySymlink {
     $repoProfilePath = Join-Path $RepoRoot 'scripts\shell\Profile.ps1'
     $repoFastfetchConfigPath = Join-Path $RepoRoot '.config\fastfetch-win.jsonc'
     $repoGitConfigPath = Join-Path $RepoRoot '.config\.gitconfig'
+    $repoMiseConfigPath = Join-Path $RepoRoot '.config\mise\config.toml'
     $profilePath = $PROFILE
     $fastfetchConfigPath = 'C:\ProgramData\fastfetch\config.jsonc'
     $gitConfigPath = Join-Path $env:USERPROFILE '.gitconfig'
+    $miseConfigPath = Join-Path $env:USERPROFILE '.config\mise\config.toml'
     $windowsTerminalJsonPath = $env:WT_JSON
     $repoWindowsTerminalJson = Join-Path $RepoRoot '.config\windows-terminal.json'
 
     if ($Clean) {
         Write-Host "`n[Clean] Wiping all known symlinks..." -ForegroundColor Yellow
-        foreach ($path in @($profilePath, $fastfetchConfigPath, $gitConfigPath, $windowsTerminalJsonPath)) {
+        $knownPaths = @(
+            $profilePath
+            $fastfetchConfigPath
+            $gitConfigPath
+            $miseConfigPath
+            $windowsTerminalJsonPath
+        )
+        foreach ($path in $knownPaths) {
             if ($path -and ((Test-Path $path) -or (Get-Item $path -ErrorAction SilentlyContinue))) {
                 Remove-Item -Path $path -Force -ErrorAction SilentlyContinue
                 Write-Host "Removed: $path" -ForegroundColor DarkGray
@@ -187,6 +196,7 @@ function Initialize-RepositorySymlink {
 
     New-RepositorySymlink -LinkPath $profilePath -TargetPath $repoProfilePath
     New-RepositorySymlink -LinkPath $fastfetchConfigPath -TargetPath $repoFastfetchConfigPath
+    New-RepositorySymlink -LinkPath $miseConfigPath -TargetPath $repoMiseConfigPath
 
     # Copy Windows Terminal settings file instead of symlinking it
     if ((Test-Path $windowsTerminalJsonPath) -or (Get-Item $windowsTerminalJsonPath -ErrorAction SilentlyContinue)) {
@@ -303,6 +313,13 @@ function Invoke-Setup {
     Register-BackupScheduledTask -RepoRoot $RepoRoot
     $manifest = Join-Path $RepoRoot 'install\packages.json'
     Install-CuratedPackage -ManifestPath $manifest
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = "$machinePath;$userPath"
+    if (-not (Get-Command mise -ErrorAction SilentlyContinue)) {
+        throw 'mise was not found after package installation.'
+    }
+    mise install
     Install-NirCmd
     Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
     & (Join-Path $RepoRoot 'scripts\system\Remove-AppxBloat.ps1')

@@ -1,19 +1,9 @@
 {
   "Development": [
     {
-      "name": "Bun",
-      "type": "script",
-      "command": "powershell -c \"irm bun.sh/install.ps1 | iex\""
-    },
-    {
-      "name": "Fast Node Manager (fnm)",
+      "name": "mise",
       "type": "winget",
-      "id": "Schniz.fnm"
-    },
-    {
-      "name": "Rustup",
-      "type": "winget",
-      "id": "Rustlang.Rustup"
+      "id": "jdx.mise"
     },
     {
       "name": "PSScriptAnalyzer",
