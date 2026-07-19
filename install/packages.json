@@ -60,6 +60,11 @@
       "command": "Install-Module -Name Terminal-Icons -Scope CurrentUser -Force"
     },
     {
+      "name": "UniGetUI",
+      "type": "winget",
+      "id": "Devolutions.UniGetUI"
+    },
+    {
       "name": "gsudo",
       "type": "winget",
       "id": "gerardog.gsudo"
