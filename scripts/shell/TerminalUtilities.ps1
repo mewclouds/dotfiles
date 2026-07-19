@@ -5,6 +5,14 @@ function su {
     Start-Process wt -ArgumentList "-d `"$PWD`"" -Verb RunAs
 }
 
+
+# Run the full elevated system health check
+function systemhealth {
+    $checks = 'sfc /scannow; DISM /Online /Cleanup-Image /CheckHealth; ' +
+    'DISM /Online /Cleanup-Image /ScanHealth'
+    gsudo pwsh -NoProfile -Command $checks
+}
+
 # Open the current directory in the file explorer
 function here() { Invoke-Item . }
 
@@ -113,12 +121,21 @@ function PSFormat {
         return
     }
 
-    Get-ChildItem -Path $Path -Recurse -Include *.ps1, *.psm1, *.psd1 | ForEach-Object {
-        $original = Get-Content $_.FullName -Raw
-        $formatted = Invoke-Formatter -ScriptDefinition $original -Settings $settingsPath
+    $files = Get-ChildItem -Path $Path -Recurse -Include *.ps1, *.psm1, *.psd1 |
+        Where-Object { $_.FullName -ne (Resolve-Path $settingsPath).Path }
+
+    foreach ($file in $files) {
+        $original = (Get-Content $file.FullName -Raw) -replace "`r`n?", "`n"
+        try {
+            $formatted = Invoke-Formatter -ScriptDefinition $original -Settings $settingsPath
+        } catch {
+            Write-Warning "Could not format $($file.FullName): $($_.Exception.Message)"
+            continue
+        }
+
         if ($original -ne $formatted) {
-            Set-Content -Path $_.FullName -Value $formatted -NoNewline
-            Write-Host "Formatted: $($_.FullName)" -ForegroundColor Green
+            Set-Content -Path $file.FullName -Value $formatted -Encoding utf8NoBOM -NoNewline
+            Write-Host "Formatted: $($file.FullName)" -ForegroundColor Green
         }
     }
 }
