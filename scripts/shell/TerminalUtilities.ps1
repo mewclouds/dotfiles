@@ -24,7 +24,7 @@ function pwdd { $("$PWD".replace($HOME, '~')) }
 function rmh() { Remove-Item (Get-PSReadLineOption).HistorySavePath }
 
 # Compute file hashes
-function sha256 { Get-FileHash -Algorithm SHA256 $args }
+function sha256 { (Get-FileHash -Algorithm SHA256 $args).Hash }
 
 # Quickly open my dots
 function dots {
