@@ -26,9 +26,9 @@
       "id": "Fastfetch-cli.Fastfetch"
     },
     {
-      "name": "Antigravity CLI",
+      "name": "Codex CLI",
       "type": "winget",
-      "id": "Google.AntigravityCLI"
+      "id": "OpenAI.Codex"
     },
     {
       "name": "BentoMod",
