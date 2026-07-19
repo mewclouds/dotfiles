@@ -1,11 +1,4 @@
-function CommandExists {
-    param ($command)
-    $preference = $ErrorActionPreference
-    $ErrorActionPreference = 'SilentlyContinue'
-    try { if (Get-Command $command) { return $true } }
-    catch { Write-Host "$command does not exist"; return $false }
-    finally { $ErrorActionPreference = $preference }
-}
+function CommandExists($command) { [bool](Get-Command $command -ErrorAction SilentlyContinue) }
 
 # Invokes an admin window in the current dir
 function su {
