@@ -26,6 +26,10 @@ function rmh() { Remove-Item (Get-PSReadLineOption).HistorySavePath }
 # Compute file hashes
 function sha256 { (Get-FileHash -Algorithm SHA256 $args).Hash }
 
+# Launch Chris Titus Tech WinUtil
+function winutil { Invoke-RestMethod https://christitus.com/win | Invoke-Expression }
+function winutildev { Invoke-RestMethod https://christitus.com/windev | Invoke-Expression }
+
 # Quickly open my dots
 function dots {
     Set-Location (Join-Path $HOME "dotfiles")
@@ -35,6 +39,12 @@ function dots {
 # Quickly open rippie
 function rippie {
     Set-Location (Join-Path $HOME "Rippie")
+    code .
+}
+
+# Quickly open WinUtil
+function codewinutil {
+    Set-Location (Join-Path $HOME "oss\winutil")
     code .
 }
 
