@@ -112,39 +112,6 @@ function Install-NirCmd {
     }
 }
 
-function Invoke-AppxDebloat {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
-    )
-
-    $appxScript = Join-Path $RepoRoot 'scripts\system\Remove-AppxBloat.ps1'
-
-    if (Test-Path $appxScript) {
-        Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
-        & $appxScript
-    } else {
-        Write-Host "`nAppx debloat script not found at $appxScript" -ForegroundColor Yellow
-    }
-}
-
-
-function Invoke-DnsSetup {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
-    )
-
-    $dnsScript = Join-Path $RepoRoot 'scripts\system\Set-Dns.ps1'
-    if (Test-Path $dnsScript) {
-        Write-Host "`nConfiguring DNS settings..." -ForegroundColor Cyan
-        & $dnsScript
-    } else {
-        Write-Host "`nDNS script not found at $dnsScript" -ForegroundColor Yellow
-    }
-}
-
-
 function New-RepositorySymlink {
     param(
         [Parameter(Mandatory = $true)]
@@ -342,8 +309,10 @@ function Invoke-Setup {
     $manifest = Join-Path $RepoRoot 'install\packages.json'
     Install-CuratedPackage -ManifestPath $manifest
     Install-NirCmd
-    Invoke-AppxDebloat -RepoRoot $RepoRoot
-    Invoke-DnsSetup -RepoRoot $RepoRoot
+    Write-Host "`nRemoving Windows Appx bloat..." -ForegroundColor Cyan
+    & (Join-Path $RepoRoot 'scripts\system\Remove-AppxBloat.ps1')
+    Write-Host "`nConfiguring DNS settings..." -ForegroundColor Cyan
+    & (Join-Path $RepoRoot 'scripts\system\Set-Dns.ps1')
 
     Write-Host "`nRegistering Git Hooks..." -ForegroundColor Cyan
     git -C $RepoRoot config core.hooksPath .githooks

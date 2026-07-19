@@ -1,3 +1,9 @@
+if (-not [Environment]::UserInteractive -or
+    [Console]::IsInputRedirected -or
+    [Console]::IsOutputRedirected) {
+    return
+}
+
 # Load utilities script
 if ($env:UTILITIES_PATH) {
     . $env:UTILITIES_PATH
