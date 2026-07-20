@@ -75,36 +75,29 @@ function Initialize-PSReadLine {
     }
 }
 
-function Register-CustomCompletion {
-    # Setup tab-completion for Bun (suggests custom project scripts only)
-    Register-ArgumentCompleter -Native -CommandName bun -ScriptBlock {
-        param($wordToComplete, $commandAst, $cursorPosition)
-        $null = $commandAst
-        $null = $cursorPosition
-        $scripts = @('dev', 'build', 'start', 'lint', 'lint:fix', 'format', 'format:fix')
-        $scripts |
-            Where-Object { $_ -like "$wordToComplete*" } |
-            ForEach-Object {
-                [System.Management.Automation.CompletionResult]::new(
-                    $_, $_, 'ParameterValue', $_
-                )
-            }
-    }
+function Register-ScriptCompletion {
+    param(
+        [string]$CommandName,
+        [string[]]$Scripts
+    )
 
-    # Setup tab-completion for NPM (suggests core lifecycle scripts)
-    Register-ArgumentCompleter -Native -CommandName npm -ScriptBlock {
-        param($wordToComplete, $commandAst, $cursorPosition)
-        $null = $commandAst
-        $null = $cursorPosition
-        $core = @('install', 'start', 'run', 'test', 'build')
-        $core |
+    $completion = @{ Scripts = $Scripts }
+    Register-ArgumentCompleter -Native -CommandName $CommandName -ScriptBlock {
+        param($wordToComplete)
+
+        $completion.Scripts |
             Where-Object { $_ -like "$wordToComplete*" } |
             ForEach-Object {
                 [System.Management.Automation.CompletionResult]::new(
                     $_, $_, 'ParameterValue', $_
                 )
             }
-    }
+    }.GetNewClosure()
+}
+
+function Register-CustomCompletion {
+    Register-ScriptCompletion bun @('dev', 'build', 'start', 'lint', 'lint:fix', 'format', 'format:fix')
+    Register-ScriptCompletion pnpm @('install', 'start', 'run', 'test', 'build')
 }
 
 
