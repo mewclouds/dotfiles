@@ -8,6 +8,16 @@ param(
 
 Add-Type -AssemblyName System.Windows.Forms
 
+function Set-EnvironmentVariable {
+    param(
+        [string]$Name,
+        [string]$Value
+    )
+
+    [Environment]::SetEnvironmentVariable($Name, $Value, 'User')
+    [Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
+}
+
 function Get-FolderSelection {
     param([string]$VarName, [string]$Prompt)
     $current = [Environment]::GetEnvironmentVariable($VarName, 'User')
@@ -22,8 +32,7 @@ function Get-FolderSelection {
     $browser.ShowNewFolderButton = $true
 
     if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        [Environment]::SetEnvironmentVariable($VarName, $browser.SelectedPath, 'User')
-        [Environment]::SetEnvironmentVariable($VarName, $browser.SelectedPath, 'Process')
+        Set-EnvironmentVariable -Name $VarName -Value $browser.SelectedPath
         Write-Host "Set $VarName to $($browser.SelectedPath)" -ForegroundColor Green
     }
 }
@@ -42,8 +51,7 @@ function Get-FileSelection {
     $browser.Filter = $Filter
 
     if ($browser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        [Environment]::SetEnvironmentVariable($VarName, $browser.FileName, 'User')
-        [Environment]::SetEnvironmentVariable($VarName, $browser.FileName, 'Process')
+        Set-EnvironmentVariable -Name $VarName -Value $browser.FileName
         Write-Host "Set $VarName to $($browser.FileName)" -ForegroundColor Green
     }
 }
@@ -52,16 +60,14 @@ function Resolve-EnvironmentVariable {
     # UTILITIES_PATH
     $utilitiesPath = Join-Path (Split-Path -Path $PSScriptRoot -Parent) 'scripts\shell\TerminalUtilities.ps1'
     if (Test-Path $utilitiesPath) {
-        [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'User')
-        [Environment]::SetEnvironmentVariable('UTILITIES_PATH', $utilitiesPath, 'Process')
+        Set-EnvironmentVariable -Name 'UTILITIES_PATH' -Value $utilitiesPath
     }
 
     # WT_JSON
     $defaultWtJson = Join-Path $env:LOCALAPPDATA `
         'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
     if (-not [Environment]::GetEnvironmentVariable('WT_JSON', 'User') -and (Test-Path $defaultWtJson)) {
-        [Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'User')
-        [Environment]::SetEnvironmentVariable('WT_JSON', $defaultWtJson, 'Process')
+        Set-EnvironmentVariable -Name 'WT_JSON' -Value $defaultWtJson
         Write-Host "Set WT_JSON to $defaultWtJson (auto-detected)" -ForegroundColor Green
     } else {
         Get-FileSelection -VarName 'WT_JSON' `
@@ -71,8 +77,7 @@ function Resolve-EnvironmentVariable {
 
     $mrModsPath = 'C:\Program Files (x86)\Steam\steamapps\common\MarvelRivals\MarvelGame\Marvel\Content\Paks\~mods'
     New-Item -ItemType Directory -Path $mrModsPath -Force | Out-Null
-    [Environment]::SetEnvironmentVariable('MR_MODS_PATH', $mrModsPath, 'User')
-    [Environment]::SetEnvironmentVariable('MR_MODS_PATH', $mrModsPath, 'Process')
+    Set-EnvironmentVariable -Name 'MR_MODS_PATH' -Value $mrModsPath
     Write-Host "Set MR_MODS_PATH to $mrModsPath" -ForegroundColor Green
     Get-FolderSelection -VarName 'MR_MODS_BACKUP' -Prompt 'Select your MR Mods backup directory'
 }
