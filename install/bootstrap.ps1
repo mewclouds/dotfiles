@@ -86,7 +86,7 @@ if (-not $bwSession -or -not (bw status | Select-String "unlocked" -Quiet)) {
 }
 
 # GitHub
-if (-not (gh auth status 2>&1 | Select-String "Logged in" -Quiet)) {
+if (-not (gh auth status --hostname "github.com" | Select-String "Logged in" -Quiet)) {
     Write-Host "`nPlease authenticate with GitHub CLI (this will generate an SSH key):" -ForegroundColor Cyan
     gh auth login
 } else {
