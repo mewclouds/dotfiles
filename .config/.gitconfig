@@ -10,3 +10,5 @@
 	defaultBranch = master
 [includeIf "gitdir:~/codeberg/"]
 	path = ~/.codeberg_gitconfig
+[include]
+	path = C:/Users/mewclouds/.gitconfig.safe
