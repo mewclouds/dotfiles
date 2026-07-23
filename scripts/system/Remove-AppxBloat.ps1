@@ -54,6 +54,7 @@ $Packages = @(
     "Microsoft.WindowsSoundRecorder",
     "Microsoft.Copilot",
     "Microsoft.BingNews",
+    "Microsoft.News",
     "Microsoft.BingWeather",
     "Microsoft.StartExperiencesApp",
     "Microsoft.MicrosoftSolitaireCollection",
