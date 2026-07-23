@@ -296,44 +296,49 @@ function OrganizeFilesInDir {
 # endregion
 
 function Sync-TerminalConfig {
+    [CmdletBinding()]
+    param(
+        [switch]$Reverse
+    )
+
     $repoRoot = Split-Path -Path (Split-Path -Path $PSScriptRoot -Parent) -Parent
-    $source = Join-Path $repoRoot '.config\windows-terminal.json'
-    $destination = $env:WT_JSON
+    $repoConfig = Join-Path $repoRoot '.config\windows-terminal.json'
+    $wtJson = $env:WT_JSON
 
-    if (-not (Test-Path $source)) {
-        Write-Error "Source config not found at $source"
-        return
-    }
-
-    if ([string]::IsNullOrWhiteSpace($destination)) {
+    if ([string]::IsNullOrWhiteSpace($wtJson)) {
         Write-Error "WT_JSON environment variable is not defined."
         return
     }
 
-    Write-Host "Syncing Windows Terminal config..." -ForegroundColor Cyan
-    Write-Host "Source: $source" -ForegroundColor DarkGray
-    Write-Host "Destination: $destination" -ForegroundColor DarkGray
+    try {
+        if ($Reverse) {
+            if (-not (Test-Path $wtJson)) {
+                Write-Error "Source config not found at $wtJson"
+                return
+            }
 
-    # Construct the command string directly with variables expanded
-    $cmd = "Start-Sleep -Seconds 1; " +
-    "Stop-Process -Name 'WindowsTerminal' -Force -ErrorAction SilentlyContinue; " +
-    "Stop-Process -Name 'wt' -Force -ErrorAction SilentlyContinue; " +
-    "Start-Sleep -Milliseconds 500; " +
-    "Copy-Item -Path '$source' -Destination '$destination' -Force; " +
-    "Start-Process -FilePath 'wt.exe'"
+            Write-Host "Syncing Terminal config to repo..." -ForegroundColor Cyan
+            Write-Host "Source: $wtJson" -ForegroundColor Cyan
+            Write-Host "Destination: $repoConfig" -ForegroundColor Cyan
 
-    $pwshExe = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
-    $startArgs = @{
-        FilePath = $pwshExe
-        ArgumentList = @(
-            "-NoProfile",
-            "-WindowStyle", "Hidden",
-            "-Command", $cmd
-        )
-        NoNewWindow = $false
+            Copy-Item -Path $wtJson -Destination $repoConfig -Force -ErrorAction Stop
+        } else {
+            if (-not (Test-Path $repoConfig)) {
+                Write-Error "Source config not found at $repoConfig"
+                return
+            }
+
+            Write-Host "Syncing Windows Terminal config..." -ForegroundColor Cyan
+            Write-Host "Source: $repoConfig" -ForegroundColor Cyan
+            Write-Host "Destination: $wtJson" -ForegroundColor Cyan
+
+            Copy-Item -Path $repoConfig -Destination $wtJson -Force -ErrorAction Stop
+        }
+
+        Write-Host "Sync complete." -ForegroundColor Green
+    } catch {
+        Write-Error "Sync failed: $($_.Exception.Message)"
     }
-    Start-Process @startArgs
-    Write-Host "Sync initiated in the background. Windows Terminal will restart shortly." -ForegroundColor Green
 }
 
 Set-Alias ofid -Value OrganizeFilesInDir
