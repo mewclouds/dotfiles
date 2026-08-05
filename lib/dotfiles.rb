@@ -3,6 +3,8 @@
 require_relative "dotfiles/context"
 require_relative "dotfiles/action"
 require_relative "dotfiles/plan"
+require_relative "dotfiles/desired_state"
+require_relative "dotfiles/executor"
 
 # Coordinates dotfiles setup actions
 module Dotfiles
@@ -20,6 +22,8 @@ module Dotfiles
       status
     when "plan"
       show_plan
+    when "apply"
+      apply(clean: clean_option(arguments.drop(1)))
     else
       raise "Unknown command: #{command}"
     end
@@ -50,7 +54,30 @@ module Dotfiles
   #
   # @return [Dotfiles::Plan]
   def plan
-    Plan.new
+    current_context = context
+    Plan.new(DesiredState.new(current_context).actions).for_platform(current_context.platform_name)
+  end
+
+  # Executes the current plan without installing bootstrap prerequisites.
+  #
+  # @param clean [Boolean] whether existing regular files may be removed
+  #
+  # @return [void]
+  def apply(clean: false)
+    results = Executor.new(repository_root: context.repository_root, clean: clean).execute(plan)
+    puts "Applied #{results.length} action(s)."
+  end
+
+  # Parses the explicit clean option for the apply command.
+  #
+  # @param arguments [Array<String>] command-line options
+  # @return [Boolean]
+  def clean_option(arguments)
+    allowed_options = ["--clean", "-Clean"]
+    unknown_options = arguments - allowed_options
+    raise "Unknown option: #{unknown_options.first}" unless unknown_options.empty?
+
+    arguments.any? { |argument| allowed_options.include?(argument) }
   end
 
   # Displays the current execution plan without performing any actions.
@@ -64,7 +91,10 @@ module Dotfiles
       puts "No actions planned."
     else
       current_plan.actions.each do |action|
-        puts "- #{action.description} (#{action.platform})"
+        parameters = action.parameters.map { |key, value| "#{key}=#{value}" }.join(", ")
+        suffix = parameters.empty? ? "" : ": #{parameters}"
+
+        puts "- #{action.description} (#{action.platform})#{suffix}"
       end
     end
   end

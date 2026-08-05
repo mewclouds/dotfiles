@@ -31,5 +31,17 @@ module Dotfiles
     def size
       @actions.size
     end
+
+    # Returns actions shared by all platforms and actions for the given platform.
+    #
+    # @param platform [Symbol, String] friendly platform name
+    # @return [Dotfiles::Plan]
+    def for_platform(platform)
+      selected_actions = @actions.select do |action|
+        action.platform == :shared || action.platform.to_s == platform.to_s
+      end
+
+      self.class.new(selected_actions)
+    end
   end
 end

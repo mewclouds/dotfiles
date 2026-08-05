@@ -1,0 +1,71 @@
+# frozen_string_literal: true
+
+require "fileutils"
+
+module Dotfiles
+  # Executes supported file-linking actions without overwriting regular files.
+  class Executor
+    # @param repository_root [String] absolute repository path
+    # @param home_directory [String] destination home directory
+    # @param clean [Boolean] whether existing regular files may be removed
+    def initialize(repository_root:, home_directory: Dir.home, clean: false)
+      @repository_root = repository_root
+      @home_directory = home_directory
+      @clean = clean
+    end
+
+    # Executes every action in a plan.
+    #
+    # @param plan [Dotfiles::Plan]
+    # @return [Array<Symbol>] results for each executed action
+    def execute(plan)
+      plan.actions.map { |action| execute_action(action) }
+    end
+
+    private
+
+    def execute_action(action)
+      case action.name
+      when :link_file
+        link_file(action)
+      else
+        raise "Unsupported action: #{action.name}"
+      end
+    end
+
+    def link_file(action)
+      source = File.expand_path(action.parameters.fetch(:source), @repository_root)
+      target = expand_target(action.parameters.fetch(:target))
+
+      raise "Source file does not exist: #{source}" unless File.file?(source)
+
+      if File.symlink?(target)
+        current_target = begin
+          File.realpath(target)
+        rescue Errno::ENOENT
+          nil
+        end
+        return :already_linked if current_target == File.realpath(source)
+
+        File.delete(target)
+      elsif File.exist?(target)
+        raise "Refusing to replace existing file: #{target}" unless @clean
+
+        raise "Refusing to remove existing non-file path: #{target}" unless File.file?(target)
+
+        File.delete(target)
+      end
+
+      FileUtils.mkdir_p(File.dirname(target))
+      File.symlink(source, target)
+      :linked
+    end
+
+    def expand_target(target)
+      relative_target = target.sub(/\A~[\\\/]/, "")
+      return File.join(@home_directory, relative_target) if relative_target != target
+
+      File.expand_path(target)
+    end
+  end
+end

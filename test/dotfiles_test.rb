@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "fileutils"
+require "tmpdir"
 require_relative "../lib/dotfiles"
 
 class DotfilesTest < Minitest::Test
@@ -39,29 +41,38 @@ class DotfilesTest < Minitest::Test
     assert_equal "windows", context.platform_name
   end
 
-  def test_plan_starts_empty
+  def test_plan_contains_shared_configuration_actions
     plan = Dotfiles.plan
 
-    assert_empty plan.actions
-    assert plan.empty?
-    assert_equal 0, plan.size
+    assert_equal 2, plan.size
+    assert_equal :link_file, plan.actions[0].name
+    assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
+    assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
+    assert_equal :link_file, plan.actions[1].name
+    assert_equal ".config/mise/config.toml", plan.actions[1].parameters[:source]
+    assert_equal "~/.config/mise/config.toml", plan.actions[1].parameters[:target]
   end
 
-  def test_plan_command_reports_empty_plan
+  def test_plan_command_reports_shared_configuration
     output, error = capture_io do
       assert_equal 0, Dotfiles.run(["plan"])
     end
 
     assert_empty error
     assert_includes output, "Execution plan"
-    assert_includes output, "No actions planned."
+    assert_includes output, "Apply shared Git configuration"
+    assert_includes output, "Apply mise toolchain configuration"
   end
 
   def test_plan_holds_descriptive_actions
     action = Dotfiles::Action.new(
       name: :install_ruby,
       description: "Install Ruby",
-      platform: :windows
+      platform: :windows,
+      parameters: {
+        source: "install/ruby.ps1",
+        target: "~/ruby.ps1"
+      }
     )
     plan = Dotfiles::Plan.new.add(action)
 
@@ -70,6 +81,8 @@ class DotfilesTest < Minitest::Test
     assert_equal :install_ruby, plan.actions.first.name
     assert_equal "Install Ruby", plan.actions.first.description
     assert_equal :windows, plan.actions.first.platform
+    assert_equal "install/ruby.ps1", plan.actions.first.parameters[:source]
+    assert_equal "~/ruby.ps1", plan.actions.first.parameters[:target]
   end
 
   def test_plan_actions_cannot_be_modified_through_reader
@@ -80,6 +93,125 @@ class DotfilesTest < Minitest::Test
     end
 
     assert_empty plan.actions
+  end
+
+  def test_plan_filters_platform_specific_actions
+    shared = Dotfiles::Action.new(name: :shared, description: "Shared")
+    windows = Dotfiles::Action.new(name: :windows, description: "Windows", platform: :windows)
+    linux = Dotfiles::Action.new(name: :linux, description: "Linux", platform: :linux)
+    plan = Dotfiles::Plan.new([shared, windows, linux])
+
+    assert_equal [shared, windows], plan.for_platform(:windows).actions
+    assert_equal [shared, linux], plan.for_platform(:linux).actions
+  end
+
+  def test_executor_links_a_file_without_overwriting
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      File.write(File.join(source_directory, "config"), "value\n")
+
+      action = Dotfiles::Action.new(
+        name: :link_file,
+        description: "Link test file",
+        parameters: {source: "config", target: "~/config"}
+      )
+
+      begin
+        result = Dotfiles::Executor.new(
+          repository_root: source_directory,
+          home_directory: home_directory
+        ).execute(Dotfiles::Plan.new([action]))
+      rescue SystemCallError => error
+        skip "Symlinks are unavailable: #{error.message}"
+      end
+
+      assert_equal [:linked], result
+      target = File.join(home_directory, "config")
+      assert File.symlink?(target)
+      assert_equal File.realpath(File.join(source_directory, "config")), File.realpath(target)
+    end
+  end
+
+  def test_executor_refuses_to_replace_a_regular_file
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      File.write(File.join(source_directory, "config"), "new\n")
+      File.write(File.join(home_directory, "config"), "old\n")
+
+      action = Dotfiles::Action.new(
+        name: :link_file,
+        description: "Link test file",
+        parameters: {source: "config", target: "~/config"}
+      )
+
+      executor = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      )
+
+      error = assert_raises(RuntimeError) do
+        executor.execute(Dotfiles::Plan.new([action]))
+      end
+      assert_match(/Refusing to replace/, error.message)
+      assert_equal "old\n", File.read(File.join(home_directory, "config"))
+    end
+  end
+
+  def test_executor_clean_mode_replaces_a_regular_file_with_a_symlink
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      File.write(File.join(source_directory, "config"), "new\n")
+      File.write(File.join(home_directory, "config"), "old\n")
+
+      action = Dotfiles::Action.new(
+        name: :link_file,
+        description: "Link test file",
+        parameters: {source: "config", target: "~/config"}
+      )
+
+      begin
+        result = Dotfiles::Executor.new(
+          repository_root: source_directory,
+          home_directory: home_directory,
+          clean: true
+        ).execute(Dotfiles::Plan.new([action]))
+      rescue SystemCallError => error
+        skip "Symlinks are unavailable: #{error.message}"
+      end
+
+      assert_equal [:linked], result
+      target = File.join(home_directory, "config")
+      assert File.symlink?(target)
+      assert_equal "new\n", File.read(target)
+    end
+  end
+
+  def test_clean_option_accepts_both_cli_spellings
+    assert Dotfiles.clean_option(["--clean"])
+    assert Dotfiles.clean_option(["-Clean"])
+    refute Dotfiles.clean_option([])
+  end
+
+  def test_action_parameters_cannot_be_modified_through_reader
+    action = Dotfiles::Action.new(
+      name: :install_tool,
+      description: "Install a tool",
+      parameters: {tool: "ruby"}
+    )
+
+    assert_raises(FrozenError) do
+      action.parameters[:tool] = "python"
+    end
+
+    assert_equal "ruby", action.parameters[:tool]
   end
 
   def test_repository_root_is_based_on_the_library_location
