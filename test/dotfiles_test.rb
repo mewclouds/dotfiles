@@ -44,13 +44,17 @@ class DotfilesTest < Minitest::Test
   def test_plan_contains_shared_configuration_actions
     plan = Dotfiles.plan
 
-    assert_equal 2, plan.size
+    assert_equal 3, plan.size
     assert_equal :link_file, plan.actions[0].name
     assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
     assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
     assert_equal :link_file, plan.actions[1].name
     assert_equal ".config/mise/config.toml", plan.actions[1].parameters[:source]
     assert_equal "~/.config/mise/config.toml", plan.actions[1].parameters[:target]
+    assert_equal :link_file, plan.actions[2].name
+    assert_equal :windows, plan.actions[2].platform
+    assert_equal ".config/fastfetch-win.jsonc", plan.actions[2].parameters[:source]
+    assert_equal "%PROGRAMDATA%/fastfetch/config.jsonc", plan.actions[2].parameters[:target]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -62,6 +66,7 @@ class DotfilesTest < Minitest::Test
     assert_includes output, "Execution plan"
     assert_includes output, "Apply shared Git configuration"
     assert_includes output, "Apply mise toolchain configuration"
+    assert_includes output, "Apply Windows Fastfetch configuration"
   end
 
   def test_plan_holds_descriptive_actions
@@ -103,6 +108,15 @@ class DotfilesTest < Minitest::Test
 
     assert_equal [shared, windows], plan.for_platform(:windows).actions
     assert_equal [shared, linux], plan.for_platform(:linux).actions
+  end
+
+  def test_linux_plan_excludes_windows_fastfetch_configuration
+    context = Dotfiles::Context.new(host_os: "linux-gnu")
+    plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
+      .for_platform(context.platform_name)
+
+    assert_equal 2, plan.size
+    refute plan.actions.any? { |action| action.description.include?("Fastfetch") }
   end
 
   def test_executor_links_a_file_without_overwriting

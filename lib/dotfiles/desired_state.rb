@@ -28,6 +28,15 @@ module Dotfiles
             source: ".config/mise/config.toml",
             target: "~/.config/mise/config.toml"
           }
+        ),
+        Action.new(
+          name: :link_file,
+          description: "Apply Windows Fastfetch configuration",
+          platform: :windows,
+          parameters: {
+            source: ".config/fastfetch-win.jsonc",
+            target: "%PROGRAMDATA%/fastfetch/config.jsonc"
+          }
         )
       ]
     end

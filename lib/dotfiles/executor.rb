@@ -98,6 +98,11 @@ module Dotfiles
     end
 
     def expand_target(target)
+      target = target.gsub(/%([^%]+)%/) do
+        variable = Regexp.last_match(1)
+        ENV.fetch(variable) { raise "Environment variable is not set: #{variable}" }
+      end
+
       relative_target = target.sub(/\A~[\\\/]/, "")
       return File.join(@home_directory, relative_target) if relative_target != target
 
