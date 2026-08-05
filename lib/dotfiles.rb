@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "dotfiles/context"
+require_relative "dotfiles/action"
+require_relative "dotfiles/plan"
 
 # Coordinates dotfiles setup actions
 module Dotfiles
@@ -16,6 +18,8 @@ module Dotfiles
     case command
     when "status"
       status
+    when "plan"
+      show_plan
     else
       raise "Unknown command: #{command}"
     end
@@ -40,6 +44,29 @@ module Dotfiles
   # @return [Dotfiles::Context]
   def context
     Context.new
+  end
+
+  # Builds the current execution plan without performing any actions.
+  #
+  # @return [Dotfiles::Plan]
+  def plan
+    Plan.new
+  end
+
+  # Displays the current execution plan without performing any actions.
+  #
+  # @return [void]
+  def show_plan
+    current_plan = plan
+
+    puts "Execution plan"
+    if current_plan.empty?
+      puts "No actions planned."
+    else
+      current_plan.actions.each do |action|
+        puts "- #{action.description} (#{action.platform})"
+      end
+    end
   end
 
   # Returns the current platform for compatibility with the status API.

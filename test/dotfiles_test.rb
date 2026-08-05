@@ -39,6 +39,49 @@ class DotfilesTest < Minitest::Test
     assert_equal "windows", context.platform_name
   end
 
+  def test_plan_starts_empty
+    plan = Dotfiles.plan
+
+    assert_empty plan.actions
+    assert plan.empty?
+    assert_equal 0, plan.size
+  end
+
+  def test_plan_command_reports_empty_plan
+    output, error = capture_io do
+      assert_equal 0, Dotfiles.run(["plan"])
+    end
+
+    assert_empty error
+    assert_includes output, "Execution plan"
+    assert_includes output, "No actions planned."
+  end
+
+  def test_plan_holds_descriptive_actions
+    action = Dotfiles::Action.new(
+      name: :install_ruby,
+      description: "Install Ruby",
+      platform: :windows
+    )
+    plan = Dotfiles::Plan.new.add(action)
+
+    assert_equal 1, plan.size
+    assert_equal action, plan.actions.first
+    assert_equal :install_ruby, plan.actions.first.name
+    assert_equal "Install Ruby", plan.actions.first.description
+    assert_equal :windows, plan.actions.first.platform
+  end
+
+  def test_plan_actions_cannot_be_modified_through_reader
+    plan = Dotfiles::Plan.new
+
+    assert_raises(FrozenError) do
+      plan.actions << Dotfiles::Action.new(name: :test, description: "Test")
+    end
+
+    assert_empty plan.actions
+  end
+
   def test_repository_root_is_based_on_the_library_location
     expected_root = File.expand_path("..", __dir__)
 
