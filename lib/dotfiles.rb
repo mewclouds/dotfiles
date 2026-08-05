@@ -12,7 +12,14 @@ module Dotfiles
 
   def platform
     host_os = RbConfig::CONFIG.fetch("host_os")
-    platform_name = host_os.match?(/mswin|mingw|cygwin/) ? "windows" : "unknown"
+    platform_name = case host_os
+    when /mswin|mingw|cygwin/
+      "windows"
+    when /linux/
+      "linux"
+    else
+      "unknown"
+    end
 
     "#{platform_name} (#{host_os})"
   end
