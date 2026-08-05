@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rbconfig"
+require_relative "dotfiles/context"
 
 # Coordinates dotfiles setup actions
 module Dotfiles
@@ -20,7 +20,6 @@ module Dotfiles
       raise "Unknown command: #{command}"
     end
 
-    # Happy exit state
     0
   end
 
@@ -28,36 +27,32 @@ module Dotfiles
   #
   # @return [void]
   def status
+    current_context = context
+
     puts "Dotfiles orchestrator"
-    puts "Platform: #{platform}"
-    puts "Ruby: #{RUBY_VERSION}"
-    puts "Repository: #{repository_root}"
+    puts "Platform: #{current_context.platform}"
+    puts "Ruby: #{current_context.ruby_version}"
+    puts "Repository: #{current_context.repository_root}"
   end
 
-  # Returns the operating-system family and Ruby's raw host identifier.
+  # Builds the runtime and repository context for the current execution.
   #
-  # WSL is intentionally reported as Linux because it uses the Linux Ruby
-  # runtime and should follow the same platform behavior for now.
+  # @return [Dotfiles::Context]
+  def context
+    Context.new
+  end
+
+  # Returns the current platform for compatibility with the status API.
   #
   # @return [String]
   def platform
-    host_os = RbConfig::CONFIG.fetch("host_os")
-    platform_name = case host_os
-    when /mswin|mingw|cygwin/
-      "windows"
-    when /linux/
-      "linux"
-    else
-      "unknown"
-    end
-
-    "#{platform_name} (#{host_os})"
+    context.platform
   end
 
-  # Returns the repository root based on this library file's location.
+  # Returns the current repository root for compatibility with existing callers.
   #
   # @return [String]
   def repository_root
-    File.expand_path("..", __dir__)
+    context.repository_root
   end
 end

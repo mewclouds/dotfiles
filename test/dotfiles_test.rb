@@ -20,6 +20,25 @@ class DotfilesTest < Minitest::Test
     assert_match(/\A(?:windows|linux|unknown) \(.+\)\z/, Dotfiles.platform)
   end
 
+  def test_context_contains_runtime_information
+    context = Dotfiles::Context.new(
+      host_os: "linux-gnu",
+      ruby_version: "4.0.0",
+      repository_root: "/tmp/dotfiles"
+    )
+
+    assert_equal "linux", context.platform_name
+    assert_equal "linux (linux-gnu)", context.platform
+    assert_equal "4.0.0", context.ruby_version
+    assert_equal "/tmp/dotfiles", context.repository_root
+  end
+
+  def test_context_classifies_windows_hosts
+    context = Dotfiles::Context.new(host_os: "mingw32")
+
+    assert_equal "windows", context.platform_name
+  end
+
   def test_repository_root_is_based_on_the_library_location
     expected_root = File.expand_path("..", __dir__)
 
