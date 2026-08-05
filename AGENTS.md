@@ -11,6 +11,7 @@ Read `SPEC.md` for the project architecture and boundaries. Treat it as the sour
 - Keep changes small and scoped to the active task.
 - Inspect existing code before introducing new structure or abstractions.
 - Prefer simple implementations over speculative frameworks.
+- Add docstrings or documentation comments for public APIs, exported symbols, and non-obvious behavior in any language. Do not document obvious code that explains itself.
 - Do not fabricate repository state, command output, or test results.
 - Do not commit, push, tag, or discard user changes unless explicitly asked.
 

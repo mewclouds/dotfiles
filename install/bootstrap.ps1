@@ -1,3 +1,12 @@
+<#
+    .SYNOPSIS
+    Bootstraps the tools required to start the Ruby dotfiles orchestrator.
+
+    .DESCRIPTION
+    This script elevates when necessary, ensures PowerShell 7 is available,
+    installs the required command-line tools, authenticates GitHub over SSH,
+    and clones the public dotfiles repository.
+#>
 $ErrorActionPreference = 'Stop'
 
 $repositoryPath = Join-Path $HOME 'dotfiles'
@@ -62,7 +71,15 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 # Disable PS7 Telemetry
 [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'Machine')
 
+
 function Install-WingetPackage {
+    <#
+        .SYNOPSIS
+        Installs one package through WinGet and stops on failure.
+
+        .PARAMETER Id
+        The exact WinGet package identifier to install.
+    #>
     param(
         [Parameter(Mandatory = $true)]
         [string]$Id
