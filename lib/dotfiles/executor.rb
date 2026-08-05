@@ -22,6 +22,19 @@ module Dotfiles
       plan.actions.map { |action| execute_action(action) }
     end
 
+    # Reports whether an action is already satisfied or what would happen.
+    #
+    # @param action [Dotfiles::Action]
+    # @return [Symbol]
+    def status(action)
+      case action.name
+      when :link_file
+        link_status(action)
+      else
+        :unsupported
+      end
+    end
+
     private
 
     def execute_action(action)
@@ -34,8 +47,7 @@ module Dotfiles
     end
 
     def link_file(action)
-      source = File.expand_path(action.parameters.fetch(:source), @repository_root)
-      target = expand_target(action.parameters.fetch(:target))
+      source, target = file_paths(action)
 
       raise "Source file does not exist: #{source}" unless File.file?(source)
 
@@ -59,6 +71,30 @@ module Dotfiles
       FileUtils.mkdir_p(File.dirname(target))
       File.symlink(source, target)
       :linked
+    end
+
+    def link_status(action)
+      source, target = file_paths(action)
+
+      return :missing_source unless File.file?(source)
+      return :pending unless File.exist?(target) || File.symlink?(target)
+      return :blocked unless File.symlink?(target)
+
+      current_target = begin
+        File.realpath(target)
+      rescue Errno::ENOENT
+        nil
+      end
+
+      return :linked if current_target == File.realpath(source)
+
+      :replaceable
+    end
+
+    def file_paths(action)
+      source = File.expand_path(action.parameters.fetch(:source), @repository_root)
+      target = expand_target(action.parameters.fetch(:target))
+      [source, target]
     end
 
     def expand_target(target)

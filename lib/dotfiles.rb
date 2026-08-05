@@ -85,16 +85,18 @@ module Dotfiles
   # @return [void]
   def show_plan
     current_plan = plan
+    executor = Executor.new(repository_root: context.repository_root)
 
     puts "Execution plan"
     if current_plan.empty?
       puts "No actions planned."
     else
       current_plan.actions.each do |action|
+        state = executor.status(action)
         parameters = action.parameters.map { |key, value| "#{key}=#{value}" }.join(", ")
         suffix = parameters.empty? ? "" : ": #{parameters}"
 
-        puts "- #{action.description} (#{action.platform})#{suffix}"
+        puts "- [#{state}] #{action.description} (#{action.platform})#{suffix}"
       end
     end
   end

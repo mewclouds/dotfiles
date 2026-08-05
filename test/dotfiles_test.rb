@@ -162,6 +162,52 @@ class DotfilesTest < Minitest::Test
     end
   end
 
+  def test_executor_reports_pending_link
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      File.write(File.join(source_directory, "config"), "value\n")
+
+      action = Dotfiles::Action.new(
+        name: :link_file,
+        description: "Link test file",
+        parameters: {source: "config", target: "~/config"}
+      )
+
+      executor = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      )
+
+      assert_equal :pending, executor.status(action)
+    end
+  end
+
+  def test_executor_reports_blocked_link
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      File.write(File.join(source_directory, "config"), "new\n")
+      File.write(File.join(home_directory, "config"), "old\n")
+
+      action = Dotfiles::Action.new(
+        name: :link_file,
+        description: "Link test file",
+        parameters: {source: "config", target: "~/config"}
+      )
+
+      executor = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      )
+
+      assert_equal :blocked, executor.status(action)
+    end
+  end
+
   def test_executor_clean_mode_replaces_a_regular_file_with_a_symlink
     Dir.mktmpdir do |directory|
       source_directory = File.join(directory, "repository")
