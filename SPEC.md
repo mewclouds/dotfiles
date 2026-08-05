@@ -81,6 +81,13 @@ Platform bootstrap scripts should stay small.
 
 Their job is to prepare enough of the environment to start the Ruby orchestrator.
 
+## SSH signing
+
+`dotfiles apply` may interactively prepare a machine-specific SSH signing key.
+The setup may generate a local key, upload its public key to GitHub as a signing
+key, and add the private key to the SSH agent. It must never delete existing
+GitHub keys or store private keys in the repository.
+
 ## Platform behavior
 
 Ruby owns shared orchestration and decides what needs to happen.

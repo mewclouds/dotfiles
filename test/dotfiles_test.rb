@@ -2,6 +2,8 @@
 
 require "minitest/autorun"
 require "fileutils"
+require "json"
+require "stringio"
 require "tmpdir"
 require_relative "../lib/dotfiles"
 
@@ -260,6 +262,49 @@ class DotfilesTest < Minitest::Test
     refute Dotfiles.clean_option([])
   end
 
+  def test_signing_setup_generates_uploads_and_loads_a_new_key
+    Dir.mktmpdir do |directory|
+      runner = FakeCommandRunner.new(empty_agent: true)
+      context = Dotfiles::Context.new(host_os: "mingw32")
+      input = StringIO.new("y\nWindows Desktop\n")
+
+      Dotfiles::SigningSetup.new(
+        context,
+        input: input,
+        output: StringIO.new,
+        home_directory: directory,
+        runner: runner
+      ).run
+
+      assert_includes runner.commands, ["gh", "ssh-key", "add",
+        File.join(directory, ".ssh", "id_ed25519_signing.pub"),
+        "--type", "signing", "--title", "Windows Desktop"]
+      assert_includes runner.commands, ["ssh-add", File.join(directory, ".ssh", "id_ed25519_signing")]
+    end
+  end
+
+  def test_signing_setup_does_not_upload_or_reload_an_existing_key
+    Dir.mktmpdir do |directory|
+      key_path = File.join(directory, ".ssh", "id_ed25519_signing")
+      public_key = "ssh-ed25519 AAAAexisting signing@example"
+      FileUtils.mkdir_p(File.dirname(key_path))
+      File.write(key_path, "private")
+      File.write("#{key_path}.pub", "#{public_key}\n")
+
+      runner = FakeCommandRunner.new(github_key: public_key, loaded_key: public_key)
+      Dotfiles::SigningSetup.new(
+        Dotfiles::Context.new(host_os: "mingw32"),
+        input: StringIO.new,
+        output: StringIO.new,
+        home_directory: directory,
+        runner: runner
+      ).run
+
+      refute runner.commands.any? { |command| command.first(3) == ["gh", "ssh-key", "add"] }
+      refute runner.commands.include?(["ssh-add", File.join(directory, ".ssh", "id_ed25519_signing")])
+    end
+  end
+
   def test_action_parameters_cannot_be_modified_through_reader
     action = Dotfiles::Action.new(
       name: :install_tool,
@@ -294,5 +339,40 @@ class DotfilesTest < Minitest::Test
     end
 
     assert_equal "Unknown command: unknown", error.message
+  end
+
+  class FakeCommandRunner
+    attr_reader :commands
+
+    def initialize(github_key: nil, loaded_key: "", empty_agent: false)
+      @github_key = github_key
+      @loaded_key = loaded_key
+      @empty_agent = empty_agent
+      @commands = []
+    end
+
+    def capture(command)
+      @commands << command
+      return "" if command == ["gh", "auth", "status"]
+      return [{"key" => @github_key}].to_json if command == ["gh", "api", "user/ssh_signing_keys"] && @github_key
+      return "[]" if command == ["gh", "api", "user/ssh_signing_keys"]
+      if command == ["ssh-add", "-L"]
+        raise Dotfiles::SigningSetup::CommandRunner::Failure, "The agent has no identities." if @empty_agent
+
+        return @loaded_key
+      end
+
+      ""
+    end
+
+    def interactive(command)
+      @commands << command
+      if command.first == "ssh-keygen"
+        key_path = command.last
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, "private")
+        File.write("#{key_path}.pub", "ssh-ed25519 AAAAgenerated signing@example\n")
+      end
+    end
   end
 end

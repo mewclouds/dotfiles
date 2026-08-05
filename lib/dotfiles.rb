@@ -5,6 +5,7 @@ require_relative "dotfiles/action"
 require_relative "dotfiles/plan"
 require_relative "dotfiles/desired_state"
 require_relative "dotfiles/executor"
+require_relative "dotfiles/signing_setup"
 
 # Coordinates dotfiles setup actions
 module Dotfiles
@@ -64,8 +65,10 @@ module Dotfiles
   #
   # @return [void]
   def apply(clean: false)
-    results = Executor.new(repository_root: context.repository_root, clean: clean).execute(plan)
+    current_context = context
+    results = Executor.new(repository_root: current_context.repository_root, clean: clean).execute(plan)
     puts "Applied #{results.length} action(s)."
+    SigningSetup.new(current_context).run
   end
 
   # Parses the explicit clean option for the apply command.
