@@ -286,12 +286,15 @@ class DotfilesTest < Minitest::Test
   def test_signing_setup_does_not_upload_or_reload_an_existing_key
     Dir.mktmpdir do |directory|
       key_path = File.join(directory, ".ssh", "id_ed25519_signing")
-      public_key = "ssh-ed25519 AAAAexisting signing@example"
+      public_key = "ssh-ed25519 AAAAexisting local-comment"
       FileUtils.mkdir_p(File.dirname(key_path))
       File.write(key_path, "private")
       File.write("#{key_path}.pub", "#{public_key}\n")
 
-      runner = FakeCommandRunner.new(github_key: public_key, loaded_key: public_key)
+      runner = FakeCommandRunner.new(
+        github_key: "ssh-ed25519 AAAAexisting github-comment",
+        loaded_key: "ssh-ed25519 AAAAexisting agent-comment"
+      )
       Dotfiles::SigningSetup.new(
         Dotfiles::Context.new(host_os: "mingw32"),
         input: StringIO.new,

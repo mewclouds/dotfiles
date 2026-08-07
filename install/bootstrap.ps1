@@ -72,6 +72,14 @@ function Invoke-ElevatedProcess {
 }
 
 function Invoke-SystemBootstrap {
+    <#
+    .SYNOPSIS
+    Starts the administrator-required bootstrap phase.
+
+    .DESCRIPTION
+    The elevated child performs only system setup so the parent process can
+    continue with per-user tools after it returns.
+    #>
     if (-not $PSCommandPath) {
         throw 'Bootstrap must be run from a saved PowerShell script when elevation is required.'
     }

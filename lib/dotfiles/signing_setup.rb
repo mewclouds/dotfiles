@@ -62,7 +62,7 @@ module Dotfiles
     def github_has_signing_key?(public_key_path)
       public_key = File.read(public_key_path).strip
       keys = JSON.parse(@runner.capture(["gh", "api", "user/ssh_signing_keys"]))
-      keys.any? { |key| key["key"] == public_key }
+      keys.any? { |key| key_material(key["key"]) == key_material(public_key) }
     rescue JSON::ParserError => error
       raise "Could not read the SSH keys returned by GitHub CLI: #{error.message}"
     end
@@ -82,7 +82,7 @@ module Dotfiles
       public_key = File.read("#{key_path}.pub").strip
       loaded_keys = loaded_agent_keys
 
-      return if loaded_keys.lines.any? { |line| line.strip == public_key }
+      return if loaded_keys.lines.any? { |line| key_material(line) == key_material(public_key) }
 
       @runner.interactive(["ssh-add", key_path])
     rescue CommandRunner::Failure => error
@@ -95,6 +95,11 @@ module Dotfiles
       return "" if error.message.match?(/agent has no identities/i)
 
       raise
+    end
+
+    # SSH comments are labels, so only the algorithm and key material identify the key.
+    def key_material(public_key)
+      public_key.split.first(2).join(" ")
     end
 
     def default_title
@@ -121,8 +126,14 @@ module Dotfiles
 
     # Runs commands while preserving interactive terminal input when needed.
     class CommandRunner
+      # Signals that an external command could not complete successfully.
       Failure = Class.new(StandardError)
 
+      # Runs a command while capturing its output for inspection.
+      #
+      # @param command [Array<String>] executable and arguments
+      # @return [String] standard output from the command
+      # @raise [Failure] when the command exits unsuccessfully
       def capture(command)
         stdout, stderr, status = Open3.capture3(*command)
         raise Failure, stderr.empty? ? stdout : stderr unless status.success?
@@ -130,6 +141,11 @@ module Dotfiles
         stdout
       end
 
+      # Runs a command with the current terminal attached for interaction.
+      #
+      # @param command [Array<String>] executable and arguments
+      # @return [void]
+      # @raise [Failure] when the command exits unsuccessfully
       def interactive(command)
         raise Failure, "command failed: #{command.join(" ")}" unless system(*command)
       end

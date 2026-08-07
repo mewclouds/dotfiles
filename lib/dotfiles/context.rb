@@ -5,7 +5,17 @@ require "rbconfig"
 module Dotfiles
   # Describes the runtime and repository context used by the orchestrator.
   class Context
-    attr_reader :host_os, :platform_name, :ruby_version, :repository_root
+    # Ruby's raw operating-system identifier.
+    attr_reader :host_os
+
+    # Normalized platform name used for platform filtering.
+    attr_reader :platform_name
+
+    # Version of Ruby running the orchestrator.
+    attr_reader :ruby_version
+
+    # Absolute path to the repository containing the orchestrator.
+    attr_reader :repository_root
 
     # @param host_os [String] Ruby's raw operating-system identifier
     # @param ruby_version [String] the running Ruby version

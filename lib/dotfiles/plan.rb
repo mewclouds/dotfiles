@@ -22,11 +22,15 @@ module Dotfiles
       @actions.dup.freeze
     end
 
+    # Returns whether the plan contains no actions.
+    #
     # @return [Boolean]
     def empty?
       @actions.empty?
     end
 
+    # Returns the number of actions in the plan.
+    #
     # @return [Integer]
     def size
       @actions.size
