@@ -95,29 +95,86 @@ function Invoke-SystemBootstrap {
     Invoke-ElevatedProcess -FilePath $powerShellPath -ArgumentList $argumentList
 }
 
-function Install-WingetPackage {
+function Invoke-CheckedCommand {
     <#
     .SYNOPSIS
-    Installs one package through WinGet and stops on failure.
-
-    .PARAMETER Id
-    The exact WinGet package identifier to install.
+    Runs a native command and stops on failure.
 
     .DESCRIPTION
-    Centralizes WinGet installation and failure handling so every required
-    system package behaves consistently during bootstrap.
+    Native commands report failure through LASTEXITCODE instead of PowerShell
+    exceptions, so all bootstrap commands use this helper for consistent
+    error handling.
+
+    .PARAMETER Name
+    The executable or command name to run.
+
+    .PARAMETER Arguments
+    Arguments passed to the command.
+
+    .PARAMETER Description
+    Human-readable command description used in failure messages.
     #>
     param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [string[]]$Arguments = @(),
+
+        [string]$Description = $Name
+    )
+
+    $output = & $Name @Arguments
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -ne 0) {
+        throw "$Description failed with exit code $exitCode."
+    }
+
+    $output
+}
+
+function Install-BootstrapPackage {
+    <#
+    .SYNOPSIS
+    Installs a package through the selected Windows package manager.
+
+    .DESCRIPTION
+    Keeps package-manager-specific arguments in one place while sharing the
+    same native-command failure handling for WinGet and Scoop.
+
+    .PARAMETER Manager
+    Package manager to use: WinGet or Scoop.
+
+    .PARAMETER Id
+    Package identifier understood by the selected manager.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('WinGet', 'Scoop')]
+        [string]$Manager,
+
         [Parameter(Mandatory = $true)]
         [string]$Id
     )
 
-    Write-Host "Installing $Id..." -ForegroundColor Cyan
-    & winget install --id $Id --exact --accept-package-agreements --accept-source-agreements --silent
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "winget failed to install $Id with exit code $LASTEXITCODE."
+    switch ($Manager) {
+        'WinGet' {
+            $commandName = 'winget'
+            $arguments = @(
+                'install', '--id', $Id, '--exact',
+                '--accept-package-agreements', '--accept-source-agreements', '--silent'
+            )
+        }
+        'Scoop' {
+            $commandName = 'scoop'
+            $arguments = @('install', $Id)
+        }
     }
+
+    Write-Host "Installing $Id through $Manager..." -ForegroundColor Cyan
+    $description = "$Manager installation of $Id"
+    Invoke-CheckedCommand -Name $commandName -Arguments $arguments `
+        -Description $description | Out-Host
 }
 
 function Invoke-SystemOnlySetup {
@@ -155,7 +212,7 @@ function Invoke-SystemOnlySetup {
 
     if ($PSVersionTable.PSVersion.Major -lt 7) {
         Write-Host 'PowerShell 7 is required. Installing it now...' -ForegroundColor Yellow
-        Install-WingetPackage -Id 'Microsoft.PowerShell'
+        Install-BootstrapPackage -Manager WinGet -Id 'Microsoft.PowerShell'
         Write-Host 'PowerShell 7 was installed. Run this bootstrap again from pwsh.' -ForegroundColor Green
         return $false
     }
@@ -163,10 +220,10 @@ function Invoke-SystemOnlySetup {
     [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'Machine')
 
     # Requirements needed before the user-level setup can continue.
-    Install-WingetPackage -Id 'GitHub.cli'
-    Install-WingetPackage -Id 'Bitwarden.cli'
-    Install-WingetPackage -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
-    Install-WingetPackage -Id 'FiloSottile.age'
+    Install-BootstrapPackage -Manager WinGet -Id 'GitHub.cli'
+    Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.cli'
+    Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
+    Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
 
     return $true
 }
@@ -180,11 +237,6 @@ function Install-ScoopTooling {
     Scoop is intentionally run in the original non-elevated process so its
     shims, applications, and PATH changes belong to the current user.
     #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-        'PSAvoidUsingPositionalParameters',
-        '',
-        Justification = 'Scoop uses positional subcommands and package names by design.'
-    )]
     param()
 
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
@@ -196,16 +248,16 @@ function Install-ScoopTooling {
     $scoopShims = Join-Path $HOME 'scoop\shims'
     $env:Path = "$scoopShims;$env:Path"
 
-    Write-Host 'Installing Git through Scoop...' -ForegroundColor Cyan
-    scoop install git
+    Install-BootstrapPackage -Manager Scoop -Id 'git'
 
-    $bucketList = scoop bucket list | Out-String
+    $bucketList = Invoke-CheckedCommand -Name 'scoop' -Arguments @('bucket', 'list') `
+        -Description 'Scoop bucket list' | Out-String
     if ($bucketList -notmatch '(?m)^\s*extras\s') {
-        scoop bucket add extras
+        Invoke-CheckedCommand -Name 'scoop' -Arguments @('bucket', 'add', 'extras') `
+            -Description 'Scoop extras bucket setup' | Out-Host
     }
 
-    Write-Host 'Installing Visual C++ runtime...' -ForegroundColor Cyan
-    scoop install extras/vcredist2022
+    Install-BootstrapPackage -Manager Scoop -Id 'extras/vcredist2022'
 
     $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
