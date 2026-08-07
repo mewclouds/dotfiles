@@ -12,13 +12,21 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$repositoryRoot = Split-Path -Parent $PSScriptRoot
+$resolvedPath = if ([IO.Path]::IsPathRooted($Path)) {
+    $Path
+} else {
+    Join-Path $repositoryRoot $Path
+}
+$resolvedPath = (Resolve-Path $resolvedPath).Path
+
 if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
     throw 'PSScriptAnalyzer is required. Install it with: Install-Module PSScriptAnalyzer -Scope CurrentUser'
 }
 Import-Module PSScriptAnalyzer -ErrorAction Stop
 
-$settingsPath = Join-Path $Path 'PSScriptAnalyzerSettings.psd1'
-$files = Get-ChildItem -Path $Path -Recurse -Include *.ps1, *.psm1, *.psd1 |
+$settingsPath = Join-Path $resolvedPath 'PSScriptAnalyzerSettings.psd1'
+$files = Get-ChildItem -Path $resolvedPath -Recurse -Include *.ps1, *.psm1, *.psd1 |
     Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
 
 if (-not $files) {
