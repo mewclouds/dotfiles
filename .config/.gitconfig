@@ -1,0 +1,23 @@
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	name = Omar
+	email = 90123670+mewclouds@users.noreply.github.com
+[init]
+	defaultBranch = master
+[includeIf "gitdir:~/codeberg/"]
+	path = ~/.codeberg_gitconfig
+[include]
+	path = ~/.gitconfig.safe
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	defaultKeyCommand = ssh-add -L
+[commit]
+	gpgsign = true
+[tag]
+	gpgSign = true
+	

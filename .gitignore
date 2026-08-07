@@ -1,0 +1,26 @@
+# Local Ruby dependencies and tooling
+.bundle/
+vendor/bundle/
+.ruby-lsp/
+coverage/
+
+# Local editor and operating system files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Decrypted private state
+private/
+
+# Logs and temporary output
+*.log
+tmp/

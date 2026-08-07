@@ -10,6 +10,8 @@ It targets Windows and Linux and is intentionally custom rather than built aroun
 
 Ruby is the primary orchestrator. PowerShell, Bash, and external tools may be used where they are the better fit for platform-specific work.
 
+Ruby code is linted and formatted with Standard Ruby. The built-in `ruby -c` syntax check may also be used for a dependency-free syntax check.
+
 ## Goals
 
 - Bootstrap a fresh Windows or Linux machine.
@@ -79,6 +81,13 @@ Platform bootstrap scripts should stay small.
 
 Their job is to prepare enough of the environment to start the Ruby orchestrator.
 
+## SSH signing
+
+`dotfiles apply` may interactively prepare a machine-specific SSH signing key.
+The setup may generate a local key, upload its public key to GitHub as a signing
+key, and add the private key to the SSH agent. It must never delete existing
+GitHub keys or store private keys in the repository.
+
 ## Platform behavior
 
 Ruby owns shared orchestration and decides what needs to happen.
@@ -90,6 +99,17 @@ Individual actions may be implemented in Ruby, PowerShell, Bash, or external uti
 - Do not silently overwrite unrelated user files.
 - Keep private plaintext, keys, secrets, and temporary decrypted data out of Git.
 - Report failures clearly instead of presenting partial setup as success.
+
+## Ruby tooling
+
+Standard Ruby is the project's Ruby linter and formatter.
+
+```text
+bundle exec standardrb
+bundle exec standardrb --fix
+```
+
+Standard Ruby is preferred over introducing a large custom RuboCop configuration. Individual exceptions should remain local and justified.
 
 ## Deferred decisions
 
