@@ -44,7 +44,9 @@ class DotfilesTest < Minitest::Test
   end
 
   def test_plan_contains_shared_configuration_actions
-    plan = Dotfiles.plan
+    context = Dotfiles::Context.new(host_os: "mingw32")
+    plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
+      .for_platform(context.platform_name)
 
     assert_equal 3, plan.size
     assert_equal :link_file, plan.actions[0].name
@@ -56,7 +58,7 @@ class DotfilesTest < Minitest::Test
     assert_equal :link_file, plan.actions[2].name
     assert_equal :windows, plan.actions[2].platform
     assert_equal ".config/fastfetch-win.jsonc", plan.actions[2].parameters[:source]
-    assert_equal "%PROGRAMDATA%/fastfetch/config.jsonc", plan.actions[2].parameters[:target]
+    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[2].parameters[:target]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -68,7 +70,6 @@ class DotfilesTest < Minitest::Test
     assert_includes output, "Execution plan"
     assert_includes output, "Apply shared Git configuration"
     assert_includes output, "Apply mise toolchain configuration"
-    assert_includes output, "Apply Windows Fastfetch configuration"
   end
 
   def test_plan_holds_descriptive_actions

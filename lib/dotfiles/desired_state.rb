@@ -35,7 +35,7 @@ module Dotfiles
           platform: :windows,
           parameters: {
             source: ".config/fastfetch-win.jsonc",
-            target: "%PROGRAMDATA%/fastfetch/config.jsonc"
+            target: "%USERPROFILE%/.config/fastfetch/config.jsonc"
           }
         )
       ]
