@@ -62,6 +62,10 @@ module Dotfiles
     def github_has_signing_key?(public_key_path)
       public_key = File.read(public_key_path).strip
       keys = JSON.parse(@runner.capture(["gh", "api", "user/ssh_signing_keys"]))
+      unless keys.is_a?(Array) && keys.all? { |key| key.is_a?(Hash) && key["key"].is_a?(String) }
+        raise "GitHub returned an unexpected SSH signing-key response."
+      end
+
       keys.any? { |key| key_material(key["key"]) == key_material(public_key) }
     rescue JSON::ParserError => error
       raise "Could not read the SSH keys returned by GitHub CLI: #{error.message}"

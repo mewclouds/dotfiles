@@ -304,7 +304,8 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-gh config set telemetry disabled
+Invoke-CheckedCommand -Name 'gh' -Arguments @('config', 'set', 'telemetry', 'disabled') `
+    -Description 'GitHub CLI telemetry configuration' | Out-Null
 
 if (Test-Path $repositoryPath) {
     Write-Host "Repository already exists at $repositoryPath. Skipping clone." -ForegroundColor Yellow

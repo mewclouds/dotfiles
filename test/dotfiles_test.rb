@@ -309,6 +309,28 @@ class DotfilesTest < Minitest::Test
     end
   end
 
+  def test_signing_setup_rejects_an_invalid_github_key_response
+    Dir.mktmpdir do |directory|
+      key_path = File.join(directory, ".ssh", "id_ed25519_signing")
+      FileUtils.mkdir_p(File.dirname(key_path))
+      File.write(key_path, "private")
+      File.write("#{key_path}.pub", "ssh-ed25519 AAAAexisting local-comment\n")
+
+      runner = FakeCommandRunner.new(github_response: "{}")
+      error = assert_raises(RuntimeError) do
+        Dotfiles::SigningSetup.new(
+          Dotfiles::Context.new(host_os: "mingw32"),
+          input: StringIO.new,
+          output: StringIO.new,
+          home_directory: directory,
+          runner: runner
+        ).run
+      end
+
+      assert_match(/unexpected SSH signing-key response/, error.message)
+    end
+  end
+
   def test_action_parameters_cannot_be_modified_through_reader
     action = Dotfiles::Action.new(
       name: :install_tool,
@@ -348,16 +370,20 @@ class DotfilesTest < Minitest::Test
   class FakeCommandRunner
     attr_reader :commands
 
-    def initialize(github_key: nil, loaded_key: "", empty_agent: false)
+    def initialize(github_key: nil, loaded_key: "", empty_agent: false, github_response: nil)
       @github_key = github_key
       @loaded_key = loaded_key
       @empty_agent = empty_agent
+      @github_response = github_response
       @commands = []
     end
 
     def capture(command)
       @commands << command
       return "" if command == ["gh", "auth", "status"]
+      if command == ["gh", "api", "user/ssh_signing_keys"] && @github_response
+        return @github_response
+      end
       return [{"key" => @github_key}].to_json if command == ["gh", "api", "user/ssh_signing_keys"] && @github_key
       return "[]" if command == ["gh", "api", "user/ssh_signing_keys"]
       if command == ["ssh-add", "-L"]
