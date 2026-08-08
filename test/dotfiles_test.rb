@@ -48,7 +48,7 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 4, plan.size
+    assert_equal 6, plan.size
     assert_equal :link_file, plan.actions[0].name
     assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
     assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
@@ -64,6 +64,14 @@ class DotfilesTest < Minitest::Test
     assert_equal ".config/windows-terminal.json", plan.actions[3].parameters[:source]
     assert_equal "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json",
       plan.actions[3].parameters[:target]
+    assert_equal :link_file, plan.actions[4].name
+    assert_equal "scripts/shell/profile.ps1", plan.actions[4].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
+      plan.actions[4].parameters[:target]
+    assert_equal :link_file, plan.actions[5].name
+    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[5].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
+      plan.actions[5].parameters[:target]
   end
 
   def test_plan_command_reports_shared_configuration

@@ -46,6 +46,24 @@ module Dotfiles
             source: ".config/windows-terminal.json",
             target: "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
           }
+        ),
+        Action.new(
+          name: :link_file,
+          description: "Apply PowerShell profile",
+          platform: :windows,
+          parameters: {
+            source: "scripts/shell/profile.ps1",
+            target: "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
+          }
+        ),
+        Action.new(
+          name: :link_file,
+          description: "Apply PowerShell profile extensions",
+          platform: :windows,
+          parameters: {
+            source: "scripts/shell/ProfileExtensions.ps1",
+            target: "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1"
+          }
         )
       ]
     end
