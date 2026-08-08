@@ -3,7 +3,7 @@
 require "fileutils"
 
 module Dotfiles
-  # Executes supported file-linking actions without overwriting regular files.
+  # Applies planned state changes and reports the resulting state of each one.
   class Executor
     # @param repository_root [String] absolute repository path
     # @param home_directory [String] destination home directory
@@ -14,7 +14,7 @@ module Dotfiles
       @clean = clean
     end
 
-    # Executes every action in a plan.
+    # Applies every selected state change in order.
     #
     # @param plan [Dotfiles::Plan]
     # @return [Array<Symbol>] results for each executed action
@@ -22,7 +22,7 @@ module Dotfiles
       plan.actions.map { |action| execute_action(action) }
     end
 
-    # Reports whether an action is already satisfied or what would happen.
+    # Describes whether a state change is satisfied, pending, blocked, or unsupported.
     #
     # @param action [Dotfiles::Action]
     # @return [Symbol]
@@ -30,6 +30,8 @@ module Dotfiles
       case action.name
       when :link_file
         link_status(action)
+      when :copy_file
+        copy_status(action)
       else
         :unsupported
       end
@@ -41,6 +43,8 @@ module Dotfiles
       case action.name
       when :link_file
         link_file(action)
+      when :copy_file
+        copy_file(action)
       else
         raise "Unsupported action: #{action.name}"
       end
@@ -89,6 +93,27 @@ module Dotfiles
       return :linked if current_target == File.realpath(source)
 
       :replaceable
+    end
+
+    def copy_file(action)
+      source, target = file_paths(action)
+
+      raise "Source file does not exist: #{source}" unless File.file?(source)
+      raise "Refusing to replace existing non-file path: #{target}" if File.directory?(target)
+
+      FileUtils.mkdir_p(File.dirname(target))
+      FileUtils.rm_f(target)
+      FileUtils.cp(source, target)
+      :copied
+    end
+
+    def copy_status(action)
+      source, target = file_paths(action)
+
+      return :missing_source unless File.file?(source)
+      return :pending unless File.file?(target) && !File.symlink?(target)
+
+      FileUtils.compare_file(source, target) ? :copied : :pending
     end
 
     def file_paths(action)

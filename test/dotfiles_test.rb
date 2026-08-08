@@ -48,7 +48,7 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 3, plan.size
+    assert_equal 4, plan.size
     assert_equal :link_file, plan.actions[0].name
     assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
     assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
@@ -59,6 +59,11 @@ class DotfilesTest < Minitest::Test
     assert_equal :windows, plan.actions[2].platform
     assert_equal ".config/fastfetch-win.jsonc", plan.actions[2].parameters[:source]
     assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[2].parameters[:target]
+    assert_equal :copy_file, plan.actions[3].name
+    assert_equal :windows, plan.actions[3].platform
+    assert_equal ".config/windows-terminal.json", plan.actions[3].parameters[:source]
+    assert_equal "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json",
+      plan.actions[3].parameters[:target]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -198,6 +203,66 @@ class DotfilesTest < Minitest::Test
       )
 
       assert_equal :pending, executor.status(action)
+    end
+  end
+
+  def test_executor_force_copies_a_file_over_an_existing_file
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      File.write(File.join(source_directory, "settings.json"), "desired\n")
+      File.write(File.join(home_directory, "settings.json"), "default\n")
+
+      action = Dotfiles::Action.new(
+        name: :copy_file,
+        description: "Copy test file",
+        parameters: {source: "settings.json", target: "~/settings.json"}
+      )
+
+      result = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      ).execute(Dotfiles::Plan.new([action]))
+
+      assert_equal [:copied], result
+      assert_equal "desired\n", File.read(File.join(home_directory, "settings.json"))
+    end
+  end
+
+  def test_executor_force_copies_a_file_over_an_existing_symlink
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      other_directory = File.join(directory, "other")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      FileUtils.mkdir_p(other_directory)
+      File.write(File.join(source_directory, "settings.json"), "desired\n")
+      File.write(File.join(other_directory, "settings.json"), "linked\n")
+
+      target = File.join(home_directory, "settings.json")
+      begin
+        File.symlink(File.join(other_directory, "settings.json"), target)
+      rescue SystemCallError => error
+        skip "Symlinks are unavailable: #{error.message}"
+      end
+
+      action = Dotfiles::Action.new(
+        name: :copy_file,
+        description: "Copy test file",
+        parameters: {source: "settings.json", target: "~/settings.json"}
+      )
+
+      result = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      ).execute(Dotfiles::Plan.new([action]))
+
+      assert_equal [:copied], result
+      refute File.symlink?(target)
+      assert_equal "desired\n", File.read(target)
     end
   end
 

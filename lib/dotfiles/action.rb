@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Dotfiles
-  # Describes one requested setup action without defining its implementation.
+  # Represents one planned state change without coupling it to an implementation.
   class Action
-    # Stable identifier used by executors to select an implementation.
+    # Identifies the kind of state change the executor should perform.
     attr_reader :name
 
     # Human-readable explanation shown in plans and status output.
@@ -12,7 +12,7 @@ module Dotfiles
     # Platform to which this action applies.
     attr_reader :platform
 
-    # Implementation-specific values associated with the action.
+    # Values needed to carry out this particular state change.
     attr_reader :parameters
 
     # @param name [Symbol] stable identifier for the action

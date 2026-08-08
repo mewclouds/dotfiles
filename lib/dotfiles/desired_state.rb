@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module Dotfiles
-  # Describes the reusable configuration that should exist on each machine.
+  # Builds the declarative state description from which execution plans are made.
   class DesiredState
     # @param context [Dotfiles::Context] runtime and repository context
     def initialize(context)
       @context = context
     end
 
-    # Returns the actions required for the current desired state.
+    # Returns the state changes applicable to the current runtime context.
     #
     # @return [Array<Dotfiles::Action>]
     def actions
@@ -36,6 +36,15 @@ module Dotfiles
           parameters: {
             source: ".config/fastfetch-win.jsonc",
             target: "%USERPROFILE%/.config/fastfetch/config.jsonc"
+          }
+        ),
+        Action.new(
+          name: :copy_file,
+          description: "Apply Windows Terminal configuration",
+          platform: :windows,
+          parameters: {
+            source: ".config/windows-terminal.json",
+            target: "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
           }
         )
       ]

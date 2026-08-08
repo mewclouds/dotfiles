@@ -5,7 +5,7 @@ require "fileutils"
 require "open3"
 
 module Dotfiles
-  # Interactively prepares an SSH signing key for the current machine.
+  # Coordinates interactive preparation of machine-local Git signing state.
   class SigningSetup
     DEFAULT_KEY_NAME = "id_ed25519_signing"
 

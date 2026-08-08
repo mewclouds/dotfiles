@@ -7,11 +7,11 @@ require_relative "dotfiles/desired_state"
 require_relative "dotfiles/executor"
 require_relative "dotfiles/signing_setup"
 
-# Coordinates dotfiles setup actions
+# Provides the public orchestration API for inspecting and changing machine state.
 module Dotfiles
   module_function
 
-  # Runs the requested dotfiles command.
+  # Dispatches a command through the orchestration workflow and returns its process status.
   #
   # @param arguments [Array<String>] command-line arguments
   # @return [Integer] process exit status
@@ -44,7 +44,7 @@ module Dotfiles
     puts "Repository: #{current_context.repository_root}"
   end
 
-  # Builds the runtime and repository context for the current execution.
+  # Captures the runtime facts that determine how this execution should behave.
   #
   # @return [Dotfiles::Context]
   def context
@@ -59,7 +59,7 @@ module Dotfiles
     Plan.new(DesiredState.new(current_context).actions).for_platform(current_context.platform_name)
   end
 
-  # Executes the current plan without installing bootstrap prerequisites.
+  # Applies the resolved desired state and completes the interactive machine setup.
   #
   # @param clean [Boolean] whether existing regular files may be removed
   #
@@ -71,7 +71,7 @@ module Dotfiles
     SigningSetup.new(current_context).run
   end
 
-  # Parses the explicit clean option for the apply command.
+  # Validates the apply options and reports whether cleanup was explicitly requested.
   #
   # @param arguments [Array<String>] command-line options
   # @return [Boolean]
@@ -104,14 +104,14 @@ module Dotfiles
     end
   end
 
-  # Returns the current platform for compatibility with the status API.
+  # Provides the formatted platform identity used by the status output.
   #
   # @return [String]
   def platform
     context.platform
   end
 
-  # Returns the current repository root for compatibility with existing callers.
+  # Provides the repository location used by the orchestration components.
   #
   # @return [String]
   def repository_root

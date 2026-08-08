@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module Dotfiles
-  # Holds the actions required to reach the desired machine state.
+  # Collects and filters the state changes selected for an orchestration run.
   class Plan
     # @param actions [Array<Dotfiles::Action>] initial actions for the plan
     def initialize(actions = [])
       @actions = actions.dup
     end
 
-    # Adds an action to the plan.
+    # Appends a state change while preserving the plan's fluent construction API.
     #
     # @param action [Dotfiles::Action]
     # @return [Dotfiles::Plan] this plan
@@ -22,21 +22,21 @@ module Dotfiles
       @actions.dup.freeze
     end
 
-    # Returns whether the plan contains no actions.
+    # Reports whether this execution has any state changes to perform.
     #
     # @return [Boolean]
     def empty?
       @actions.empty?
     end
 
-    # Returns the number of actions in the plan.
+    # Reports how many state changes are selected.
     #
     # @return [Integer]
     def size
       @actions.size
     end
 
-    # Returns actions shared by all platforms and actions for the given platform.
+    # Selects shared and platform-specific state changes for the current host.
     #
     # @param platform [Symbol, String] friendly platform name
     # @return [Dotfiles::Plan]
