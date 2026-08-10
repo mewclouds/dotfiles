@@ -48,30 +48,39 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 6, plan.size
+    assert_equal 7, plan.size
     assert_equal :link_file, plan.actions[0].name
     assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
     assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
     assert_equal :link_file, plan.actions[1].name
     assert_equal ".config/mise/config.toml", plan.actions[1].parameters[:source]
     assert_equal "~/.config/mise/config.toml", plan.actions[1].parameters[:target]
-    assert_equal :link_file, plan.actions[2].name
-    assert_equal :windows, plan.actions[2].platform
-    assert_equal ".config/fastfetch-win.jsonc", plan.actions[2].parameters[:source]
-    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[2].parameters[:target]
-    assert_equal :copy_file, plan.actions[3].name
+    assert_equal :link_file, plan.actions[3].name
     assert_equal :windows, plan.actions[3].platform
-    assert_equal ".config/windows-terminal.json", plan.actions[3].parameters[:source]
+    assert_equal ".config/fastfetch-win.jsonc", plan.actions[3].parameters[:source]
+    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[3].parameters[:target]
+    assert_equal :copy_file, plan.actions[4].name
+    assert_equal :windows, plan.actions[4].platform
+    assert_equal ".config/windows-terminal.json", plan.actions[4].parameters[:source]
     assert_equal "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json",
-      plan.actions[3].parameters[:target]
-    assert_equal :link_file, plan.actions[4].name
-    assert_equal "scripts/shell/profile.ps1", plan.actions[4].parameters[:source]
-    assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
       plan.actions[4].parameters[:target]
     assert_equal :link_file, plan.actions[5].name
-    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[5].parameters[:source]
-    assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
+    assert_equal "scripts/shell/profile.ps1", plan.actions[5].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
       plan.actions[5].parameters[:target]
+    assert_equal :link_file, plan.actions[6].name
+    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[6].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
+      plan.actions[6].parameters[:target]
+  end
+
+  def test_plan_contains_the_mise_install_command
+    action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
+      .find { |candidate| candidate.name == :run_command }
+
+    assert_equal :run_command, action.name
+    assert_equal "Install mise tools", action.description
+    assert_equal ["mise", "install"], action.parameters[:command]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -131,7 +140,7 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 2, plan.size
+    assert_equal 3, plan.size
     refute plan.actions.any? { |action| action.description.include?("Fastfetch") }
   end
 
@@ -237,6 +246,46 @@ class DotfilesTest < Minitest::Test
       assert_equal [:copied], result
       assert_equal "desired\n", File.read(File.join(home_directory, "settings.json"))
     end
+  end
+
+  def test_executor_runs_a_command_action
+    action = Dotfiles::Action.new(
+      name: :run_command,
+      description: "Run test command",
+      parameters: {command: [RbConfig.ruby, "-e", "exit 0"]}
+    )
+
+    result = Dotfiles::Executor.new(repository_root: Dir.pwd).execute(Dotfiles::Plan.new([action]))
+
+    assert_equal [:executed], result
+  end
+
+  def test_executor_reports_a_failed_command
+    action = Dotfiles::Action.new(
+      name: :run_command,
+      description: "Run failing test command",
+      parameters: {command: [RbConfig.ruby, "-e", "exit 1"]}
+    )
+
+    error = assert_raises(RuntimeError) do
+      Dotfiles::Executor.new(repository_root: Dir.pwd).execute(Dotfiles::Plan.new([action]))
+    end
+
+    assert_match(/Command failed with exit code 1/, error.message)
+  end
+
+  def test_executor_rejects_an_invalid_command
+    action = Dotfiles::Action.new(
+      name: :run_command,
+      description: "Run invalid command",
+      parameters: {command: "ruby -e 'exit 0'"}
+    )
+
+    error = assert_raises(ArgumentError) do
+      Dotfiles::Executor.new(repository_root: Dir.pwd).execute(Dotfiles::Plan.new([action]))
+    end
+
+    assert_equal "Command must be a non-empty array of strings.", error.message
   end
 
   def test_executor_force_copies_a_file_over_an_existing_symlink

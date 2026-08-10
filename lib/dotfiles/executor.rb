@@ -32,6 +32,8 @@ module Dotfiles
         link_status(action)
       when :copy_file
         copy_status(action)
+      when :run_command
+        :planned
       else
         :unsupported
       end
@@ -45,6 +47,8 @@ module Dotfiles
         link_file(action)
       when :copy_file
         copy_file(action)
+      when :run_command
+        run_command(action)
       else
         raise "Unsupported action: #{action.name}"
       end
@@ -114,6 +118,23 @@ module Dotfiles
       return :pending unless File.file?(target) && !File.symlink?(target)
 
       FileUtils.compare_file(source, target) ? :copied : :pending
+    end
+
+    def run_command(action)
+      # Desired state is trusted repository code, so validation only protects the
+      # command shape for now.
+      command = action.parameters.fetch(:command)
+      validate_command(command)
+      return :executed if system(*command)
+
+      exit_code = $?.exitstatus || "unknown"
+      raise "Command failed with exit code #{exit_code}: #{command.join(" ")}"
+    end
+
+    def validate_command(command)
+      return if command.is_a?(Array) && !command.empty? && command.all? { |part| part.is_a?(String) }
+
+      raise ArgumentError, "Command must be a non-empty array of strings."
     end
 
     def file_paths(action)

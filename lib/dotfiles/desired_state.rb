@@ -30,6 +30,13 @@ module Dotfiles
           }
         ),
         Action.new(
+          name: :run_command,
+          description: "Install mise tools",
+          parameters: {
+            command: ["mise", "install"]
+          }
+        ),
+        Action.new(
           name: :link_file,
           description: "Apply Windows Fastfetch configuration",
           platform: :windows,
