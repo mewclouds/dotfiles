@@ -125,7 +125,7 @@ module Dotfiles
       # command shape for now.
       command = action.parameters.fetch(:command)
       validate_command(command)
-      return :executed if system(*command)
+      return :executed if system(*command, chdir: @repository_root)
 
       exit_code = $?.exitstatus || "unknown"
       raise "Command failed with exit code #{exit_code}: #{command.join(" ")}"

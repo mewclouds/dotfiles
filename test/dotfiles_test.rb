@@ -48,30 +48,30 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 7, plan.size
+    assert_equal 8, plan.size
     assert_equal :link_file, plan.actions[0].name
     assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
     assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
     assert_equal :link_file, plan.actions[1].name
     assert_equal ".config/mise/config.toml", plan.actions[1].parameters[:source]
     assert_equal "~/.config/mise/config.toml", plan.actions[1].parameters[:target]
-    assert_equal :link_file, plan.actions[3].name
-    assert_equal :windows, plan.actions[3].platform
-    assert_equal ".config/fastfetch-win.jsonc", plan.actions[3].parameters[:source]
-    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[3].parameters[:target]
-    assert_equal :copy_file, plan.actions[4].name
+    assert_equal :link_file, plan.actions[4].name
     assert_equal :windows, plan.actions[4].platform
-    assert_equal ".config/windows-terminal.json", plan.actions[4].parameters[:source]
+    assert_equal ".config/fastfetch-win.jsonc", plan.actions[4].parameters[:source]
+    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[4].parameters[:target]
+    assert_equal :copy_file, plan.actions[5].name
+    assert_equal :windows, plan.actions[5].platform
+    assert_equal ".config/windows-terminal.json", plan.actions[5].parameters[:source]
     assert_equal "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json",
-      plan.actions[4].parameters[:target]
-    assert_equal :link_file, plan.actions[5].name
-    assert_equal "scripts/shell/profile.ps1", plan.actions[5].parameters[:source]
-    assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
       plan.actions[5].parameters[:target]
     assert_equal :link_file, plan.actions[6].name
-    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[6].parameters[:source]
-    assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
+    assert_equal "scripts/shell/profile.ps1", plan.actions[6].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
       plan.actions[6].parameters[:target]
+    assert_equal :link_file, plan.actions[7].name
+    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[7].parameters[:source]
+    assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
+      plan.actions[7].parameters[:target]
   end
 
   def test_plan_contains_the_mise_install_command
@@ -81,6 +81,14 @@ class DotfilesTest < Minitest::Test
     assert_equal :run_command, action.name
     assert_equal "Install mise tools", action.description
     assert_equal ["mise", "install"], action.parameters[:command]
+  end
+
+  def test_plan_contains_the_windows_power_command
+    action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
+      .find { |candidate| candidate.description == "Configure Windows power behavior" }
+
+    assert_equal :windows, action.platform
+    assert_equal ["cmd.exe", "/c", ".\\scripts\\system\\power.bat"], action.parameters[:command]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -272,6 +280,27 @@ class DotfilesTest < Minitest::Test
     end
 
     assert_match(/Command failed with exit code 1/, error.message)
+  end
+
+  def test_executor_runs_commands_from_the_repository_root
+    Dir.mktmpdir do |repository_root|
+      action = Dotfiles::Action.new(
+        name: :run_command,
+        description: "Check command directory",
+        parameters: {
+          command: [
+            RbConfig.ruby,
+            "-e",
+            "exit(File.expand_path(Dir.pwd) == File.expand_path(ARGV.fetch(0)) ? 0 : 1)",
+            repository_root
+          ]
+        }
+      )
+
+      result = Dotfiles::Executor.new(repository_root: repository_root).execute(Dotfiles::Plan.new([action]))
+
+      assert_equal [:executed], result
+    end
   end
 
   def test_executor_rejects_an_invalid_command

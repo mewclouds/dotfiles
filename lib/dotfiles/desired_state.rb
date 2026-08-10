@@ -37,6 +37,14 @@ module Dotfiles
           }
         ),
         Action.new(
+          name: :run_command,
+          description: "Configure Windows power behavior",
+          platform: :windows,
+          parameters: {
+            command: ["cmd.exe", "/c", ".\\scripts\\system\\power.bat"]
+          }
+        ),
+        Action.new(
           name: :link_file,
           description: "Apply Windows Fastfetch configuration",
           platform: :windows,
