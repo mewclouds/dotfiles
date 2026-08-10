@@ -1,123 +1,171 @@
-# Architecture
+# How this is put together
 
-## Role of Ruby
+This document exists because I do not want the architecture of this project to
+live only in my head.
 
-Ruby is the primary orchestrator, or director, of the setup process. It owns the decisions about:
+I have done a lot of this setup manually: install a few tools, copy or link a
+few files, run a script, fix something, and eventually forget exactly what I
+did. The purpose of this project is to make that process repeatable without
+turning it into a huge framework.
 
-- what machine it is running on,
-- which configuration is applicable,
-- what the desired state should be,
-- which actions are required, and
-- how those actions should be coordinated and verified.
+It is also a Ruby learning project. Ruby is not here because every operation
+needs to be written in Ruby. It is here because I want one place that can make
+the decisions and direct the rest of the setup.
 
-Ruby does not need to implement every action itself. An action may be implemented with Ruby filesystem APIs, PowerShell, Bash, or an external command when that is a better fit for the platform or tool involved.
+## Ruby is the director
 
-The important boundary is responsibility, not language:
+Ruby is responsible for deciding:
+
+- what kind of machine it is running on,
+- which configuration applies,
+- what the desired state is,
+- which actions are needed, and
+- whether those actions succeeded.
+
+The action itself can still be implemented by whatever fits best. That might
+be Ruby filesystem code, PowerShell, Bash, or an external command. The useful
+boundary is not “everything must be Ruby”; it is “Ruby decides what should
+happen, and the best tool makes it happen.”
 
 ```text
 Ruby decides what should happen.
 The best-fit implementation performs it.
-Ruby observes and reports the result.
+Ruby checks and reports the result.
 ```
 
-## High-level flow
+## The broad flow
 
 ```mermaid
 flowchart TD
     START([Fresh Machine]) --> BOOTSTRAP[Run Platform Bootstrap]
-    BOOTSTRAP --> TOOLS[Prepare Required Runtime and Tools]
-    TOOLS --> REPOSITORY[Acquire Dotfiles Repository]
-    REPOSITORY --> ORCHESTRATOR[Start Ruby Orchestrator]
+    BOOTSTRAP --> TOOLS[Prepare Required Tools]
+    TOOLS --> REPOSITORY[Acquire This Repository]
+    REPOSITORY --> RUBY[Start Ruby]
 
-    ORCHESTRATOR --> PUBLIC[Load Public Configuration]
+    RUBY --> PUBLIC[Load Public Configuration]
     PUBLIC --> PRIVATE{Private State Available?}
-
-    PRIVATE -->|Yes| AUTH[Authenticate to Secret Store]
-    AUTH --> UNLOCK[Unlock Encrypted Private State]
+    PRIVATE -->|Yes| AUTH[Authenticate to Bitwarden]
+    AUTH --> UNLOCK[Decrypt Private State]
     UNLOCK --> CONFIG[Load Available Configuration]
     PRIVATE -->|No| CONFIG
 
     CONFIG --> CONTEXT[Determine Machine Context]
     CONTEXT --> DESIRED[Resolve Desired State]
     DESIRED --> PLAN[Build Execution Plan]
-    PLAN --> ACTIONS[Execute Required Actions]
+    PLAN --> ACTIONS[Execute Actions]
 
     ACTIONS --> IMPLEMENTATION{Best-Fit Implementation}
-    IMPLEMENTATION -->|Shared Ruby logic| RUBY[Run Ruby Implementation]
-    IMPLEMENTATION -->|Windows-specific| POWERSHELL[Run PowerShell or Windows Tool]
-    IMPLEMENTATION -->|Linux-specific| BASH[Run Bash or Linux Tool]
-    IMPLEMENTATION -->|External capability| EXTERNAL[Run External Command]
+    IMPLEMENTATION -->|Ruby| RUBY_ACTION[Run Ruby Logic]
+    IMPLEMENTATION -->|Windows| WINDOWS[Run PowerShell or Windows Tool]
+    IMPLEMENTATION -->|Linux| LINUX[Run Bash or Linux Tool]
+    IMPLEMENTATION -->|External Tool| EXTERNAL[Run External Command]
 
-    RUBY --> VERIFY[Verify Result]
-    POWERSHELL --> VERIFY
-    BASH --> VERIFY
+    RUBY_ACTION --> VERIFY[Verify Result]
+    WINDOWS --> VERIFY
+    LINUX --> VERIFY
     EXTERNAL --> VERIFY
 
-    VERIFY --> RESULT{Desired State Reached?}
+    VERIFY --> RESULT{Did It Reach the Desired State?}
     RESULT -->|Yes| DONE([Machine Ready])
-    RESULT -->|No| FAILURE[Report Specific Failure]
+    RESULT -->|No| FAILURE[Report the Failure]
 ```
 
-## Execution layers
+The diagram is intentionally about responsibilities rather than exact
+commands. For example, it does not care whether Ruby calls `winget`, invokes a
+PowerShell script, or uses a Ruby library. That is an implementation decision.
+
+## The pieces
 
 ### Bootstrap
 
-The platform bootstrap is intentionally small. Its job is to prepare enough of the machine to start Ruby:
+The bootstrap is the first small bridge onto a new machine. It installs or
+enables enough tools to start the rest of the project, handles platform-specific
+elevation, and acquires the repository.
 
-- install or enable required runtimes and tools,
-- perform platform-specific elevation when necessary,
-- acquire the repository, and
-- start the Ruby entrypoint.
-
-Bootstrap should not become the main configuration engine. Once Ruby is available, decisions about desired state belong in the orchestrator.
+After Ruby is available, the bootstrap should get out of the way. I do not want
+the bootstrap script to slowly become a second configuration engine.
 
 ### Context
 
-The context describes the runtime environment, including the host operating system, Ruby version, and repository location. It allows the same desired-state definition to select shared and platform-specific actions without embedding host detection throughout the codebase.
+`Context` collects the facts that affect a run: the host operating system, the
+Ruby version, and the repository location. Keeping those facts in one object
+means the rest of the code does not need to rediscover the platform everywhere.
 
 ### Desired state
 
-Desired state describes what the machine should look like. It should remain declarative where practical. A configuration action generally identifies:
+`DesiredState` is the part that describes what I want the machine to look like.
+It contains actions such as:
 
-- an action type,
-- a human-readable description,
-- parameters such as a source and target.
+- link this public configuration file,
+- copy this configuration file,
+- run this command on Windows, or
+- install the tools described by the mise configuration.
 
-The action does not need to assume that every operation is a file copy. The parameters should describe the relationship required by the action, while the executor decides how that relationship is established.
+The declarations are kept readable and ordered. Each action has a stable ID so
+the plan can identify it later.
 
 ### Plan
 
-The plan is the resolved set of actions for the current context. The `plan` command is read-only and exists to make the orchestrator's decisions visible before applying them.
+`Plan` is the resolved set of actions for the current machine. Internally it is
+keyed by action ID, which makes duplicate IDs an immediate error while keeping
+the original insertion order for execution.
 
-Platform filtering happens before execution so a Windows-only action is not sent to a Linux implementation, and shared actions remain reusable across platforms.
+The `plan` command is deliberately read-only. It is there so I can see what
+Ruby thinks it should do before allowing it to change anything.
 
 ### Executor
 
-The executor turns planned actions into machine changes and reports their results. For managed configuration links, the normal behavior is to create or maintain a symlink so edits made through the target path remain edits to the repository source.
+`Executor` turns the plan into actual machine changes and reports what happened.
+For managed configuration, symlinks are usually the right answer because edits
+made through the target path should continue editing the repository source.
 
-Existing managed configuration may be replaced intentionally because the project is designed to establish a fresh machine's desired state. The executor should still refuse or clearly report unrelated conflicts unless the user explicitly requests cleanup behavior.
+Some files are different. Windows Terminal settings are copied because editing
+them through the GUI does not behave well when the file is symlinked.
+
+The executor is allowed to replace configuration that this repository manages.
+That is intentional: the project is meant to establish the desired state of a
+new machine. It should still refuse unrelated conflicts unless cleanup was
+explicitly requested.
+
+Command actions keep local state in `.local/state.json`. Their fingerprints
+include the action definition and any declared input files, so a command can be
+skipped when it has already run without silently ignoring a changed script or
+configuration file.
 
 ### Platform implementations
 
-Platform-specific code is an implementation detail behind the plan. PowerShell is appropriate for Windows-native package management, services, registry operations, and Windows APIs. Bash or other native tools may be appropriate on Linux. Ruby remains responsible for coordinating these operations and interpreting their results.
+Platform-specific code is not a failure of the architecture. PowerShell is the
+natural place for Windows-native behavior, and Bash or other tools may be the
+natural place for Linux behavior. Ruby still owns the decision to use them and
+interprets the result afterward.
 
 ## Public and private state
 
-Public configuration is stored directly in the repository. `.gitconfig` is intentionally public configuration, including the configured Git identity.
+Public configuration lives directly in the repository. `.gitconfig` is public
+by design, including the configured Git identity.
 
-Private state will be kept under `private/` and stored in encrypted form. Decrypted private files, credentials, keys, and machine-specific secrets must remain outside Git. Bitwarden is intended to provide access to encryption identities or other secrets without placing them in the repository.
+Private state lives in `private/` while it is being edited and is stored in an
+encrypted `private.age` archive for Git. The Windows encryption helper uses an
+age identity retrieved from the Bitwarden note `dotfiles-age-keys`. The identity
+itself never belongs in the repository.
 
-## Verification and failure handling
+The private Windows setup has its own `private/setup.ps1` entrypoint. That keeps
+private, machine-specific setup separate from the public Ruby orchestration.
 
-Every meaningful action should either report a successful result or fail with a specific, actionable error. A partially applied machine should not be presented as ready.
+## Verification
 
-The development workflow reinforces this boundary:
+The project is being built in small pieces, so verification is part of the
+workflow rather than a final ceremony:
 
 ```mermaid
 flowchart LR
-    CHANGE[Change Code or Configuration] --> TEST[Run Tests]
+    CHANGE[Change Something] --> TEST[Run Tests]
     TEST --> RUBY_CHECK[Run Standard Ruby]
     RUBY_CHECK --> PS_CHECK[Run PowerShell Checks]
-    PS_CHECK --> REVIEW[Review Plan and Diff]
-    REVIEW --> COMMIT[Commit Verified Change]
+    PS_CHECK --> REVIEW[Read the Plan and Diff]
+    REVIEW --> COMMIT[Commit the Change]
 ```
+
+The goal is not to pretend the setup is perfect. The goal is to make each new
+piece understandable enough that I can see what it does, verify it, and keep
+building from there.
