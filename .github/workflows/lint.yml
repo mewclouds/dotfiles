@@ -1,0 +1,31 @@
+name: Quality check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1.321.0
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+
+      - name: Lint Ruby
+        run: bundle exec standardrb
+      
+      # ubuntu-latest image contains PowerShell 7 and PSScriptAnalyzer 1.25.0 OOTB
+      - name: Check PowerShell formatting
+        shell: pwsh
+        run: ./scripts/PSFormat.ps1 -Check
+
+      - name: Lint PowerShell
+        shell: pwsh
+        run: ./scripts/PSLint.ps1
