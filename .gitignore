@@ -21,6 +21,9 @@ Thumbs.db
 # Decrypted private state
 private/
 
+# Local orchestration state
+.local/
+
 # Logs and temporary output
 *.log
 tmp/

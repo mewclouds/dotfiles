@@ -133,6 +133,17 @@ class DotfilesTest < Minitest::Test
     assert_empty plan.actions
   end
 
+  def test_plan_rejects_duplicate_action_ids
+    first = Dotfiles::Action.new(id: "duplicate", name: :first, description: "First")
+    second = Dotfiles::Action.new(id: "duplicate", name: :second, description: "Second")
+
+    error = assert_raises(RuntimeError) do
+      Dotfiles::Plan.new([first, second])
+    end
+
+    assert_equal "Duplicate action ID: duplicate", error.message
+  end
+
   def test_plan_filters_platform_specific_actions
     shared = Dotfiles::Action.new(name: :shared, description: "Shared")
     windows = Dotfiles::Action.new(name: :windows, description: "Windows", platform: :windows)
@@ -257,29 +268,110 @@ class DotfilesTest < Minitest::Test
   end
 
   def test_executor_runs_a_command_action
-    action = Dotfiles::Action.new(
-      name: :run_command,
-      description: "Run test command",
-      parameters: {command: [RbConfig.ruby, "-e", "exit 0"]}
-    )
+    Dir.mktmpdir do |repository_root|
+      action = Dotfiles::Action.new(
+        id: "test_command",
+        name: :run_command,
+        description: "Run test command",
+        parameters: {command: [RbConfig.ruby, "-e", "exit 0"]}
+      )
 
-    result = Dotfiles::Executor.new(repository_root: Dir.pwd).execute(Dotfiles::Plan.new([action]))
+      result = Dotfiles::Executor.new(repository_root: repository_root).execute(Dotfiles::Plan.new([action]))
 
-    assert_equal [:executed], result
+      assert_equal [:executed], result
+    end
   end
 
   def test_executor_reports_a_failed_command
-    action = Dotfiles::Action.new(
-      name: :run_command,
-      description: "Run failing test command",
-      parameters: {command: [RbConfig.ruby, "-e", "exit 1"]}
-    )
+    Dir.mktmpdir do |repository_root|
+      action = Dotfiles::Action.new(
+        id: "failing_test_command",
+        name: :run_command,
+        description: "Run failing test command",
+        parameters: {command: [RbConfig.ruby, "-e", "exit 1"]}
+      )
 
-    error = assert_raises(RuntimeError) do
-      Dotfiles::Executor.new(repository_root: Dir.pwd).execute(Dotfiles::Plan.new([action]))
+      error = assert_raises(RuntimeError) do
+        Dotfiles::Executor.new(repository_root: repository_root).execute(Dotfiles::Plan.new([action]))
+      end
+
+      assert_match(/Command failed with exit code 1/, error.message)
     end
+  end
 
-    assert_match(/Command failed with exit code 1/, error.message)
+  def test_executor_skips_a_command_with_a_matching_fingerprint
+    Dir.mktmpdir do |repository_root|
+      marker = File.join(repository_root, "runs")
+      File.write(marker, "0")
+      action = Dotfiles::Action.new(
+        id: "count_command",
+        name: :run_command,
+        description: "Count command runs",
+        parameters: {
+          command: [
+            RbConfig.ruby,
+            "-e",
+            "path = ARGV.fetch(0); File.write(path, (File.read(path).to_i + 1).to_s)",
+            marker
+          ]
+        }
+      )
+      executor = Dotfiles::Executor.new(repository_root: repository_root)
+
+      assert_equal [:executed], executor.execute(Dotfiles::Plan.new([action]))
+      reloaded_executor = Dotfiles::Executor.new(repository_root: repository_root)
+      assert_equal [:already_applied], reloaded_executor.execute(Dotfiles::Plan.new([action]))
+      assert_equal "1", File.read(marker)
+      state = JSON.parse(File.read(File.join(repository_root, ".local", "state.json")))
+      assert_equal "completed", state.dig("actions", "count_command", "status")
+    end
+  end
+
+  def test_executor_reruns_a_command_when_an_input_changes
+    Dir.mktmpdir do |repository_root|
+      input_path = File.join(repository_root, "input.txt")
+      counter_path = File.join(repository_root, "runs")
+      File.write(input_path, "first\n")
+      File.write(counter_path, "0")
+      action = Dotfiles::Action.new(
+        id: "input_sensitive_command",
+        name: :run_command,
+        description: "Run input-sensitive command",
+        parameters: {
+          command: [
+            RbConfig.ruby,
+            "-e",
+            "path = ARGV.fetch(0); File.write(path, (File.read(path).to_i + 1).to_s)",
+            counter_path
+          ],
+          inputs: ["input.txt"]
+        }
+      )
+      executor = Dotfiles::Executor.new(repository_root: repository_root)
+
+      assert_equal [:executed], executor.execute(Dotfiles::Plan.new([action]))
+      File.write(input_path, "second\n")
+
+      assert_equal [:executed], executor.execute(Dotfiles::Plan.new([action]))
+      assert_equal "2", File.read(counter_path)
+    end
+  end
+
+  def test_executor_rejects_a_malformed_state_entry
+    Dir.mktmpdir do |repository_root|
+      state_directory = File.join(repository_root, ".local")
+      FileUtils.mkdir_p(state_directory)
+      File.write(
+        File.join(state_directory, "state.json"),
+        JSON.generate("version" => 1, "actions" => {"broken" => {"status" => "completed"}})
+      )
+
+      error = assert_raises(RuntimeError) do
+        Dotfiles::Executor.new(repository_root: repository_root)
+      end
+
+      assert_equal "Invalid orchestration state entry: broken", error.message
+    end
   end
 
   def test_executor_runs_commands_from_the_repository_root

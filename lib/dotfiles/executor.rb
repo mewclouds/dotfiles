@@ -8,10 +8,13 @@ module Dotfiles
     # @param repository_root [String] absolute repository path
     # @param home_directory [String] destination home directory
     # @param clean [Boolean] whether existing regular files may be removed
-    def initialize(repository_root:, home_directory: Dir.home, clean: false)
+    # @param state_path [String] local command execution state path
+    def initialize(repository_root:, home_directory: Dir.home, clean: false,
+      state_path: File.join(repository_root, ".local", "state.json"))
       @repository_root = repository_root
       @home_directory = home_directory
       @clean = clean
+      @state_store = StateStore.new(state_path)
     end
 
     # Applies every selected state change in order.
@@ -33,7 +36,7 @@ module Dotfiles
       when :copy_file
         copy_status(action)
       when :run_command
-        :planned
+        command_status(action)
       else
         :unsupported
       end
@@ -125,10 +128,21 @@ module Dotfiles
       # command shape for now.
       command = action.parameters.fetch(:command)
       validate_command(command)
-      return :executed if system(*command, chdir: @repository_root)
+      fingerprint = action.fingerprint(repository_root: @repository_root)
+      return :already_applied if @state_store.completed?(action, fingerprint)
 
-      exit_code = $?.exitstatus || "unknown"
-      raise "Command failed with exit code #{exit_code}: #{command.join(" ")}"
+      unless system(*command, chdir: @repository_root)
+        exit_code = $?.exitstatus || "unknown"
+        raise "Command failed with exit code #{exit_code}: #{command.join(" ")}"
+      end
+
+      @state_store.record(action, fingerprint)
+      :executed
+    end
+
+    def command_status(action)
+      fingerprint = action.fingerprint(repository_root: @repository_root)
+      @state_store.completed?(action, fingerprint) ? :already_applied : :planned
     end
 
     def validate_command(command)

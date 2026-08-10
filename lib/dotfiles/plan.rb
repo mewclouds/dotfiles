@@ -5,7 +5,8 @@ module Dotfiles
   class Plan
     # @param actions [Array<Dotfiles::Action>] initial actions for the plan
     def initialize(actions = [])
-      @actions = actions.dup
+      @actions = {}
+      actions.each { |action| add(action) }
     end
 
     # Appends a state change while preserving the plan's fluent construction API.
@@ -13,13 +14,15 @@ module Dotfiles
     # @param action [Dotfiles::Action]
     # @return [Dotfiles::Plan] this plan
     def add(action)
-      @actions << action
+      raise "Duplicate action ID: #{action.id}" if @actions.key?(action.id)
+
+      @actions[action.id] = action
       self
     end
 
     # @return [Array<Dotfiles::Action>] a read-only view of the planned actions
     def actions
-      @actions.dup.freeze
+      @actions.values.dup.freeze
     end
 
     # Reports whether this execution has any state changes to perform.
@@ -41,7 +44,7 @@ module Dotfiles
     # @param platform [Symbol, String] friendly platform name
     # @return [Dotfiles::Plan]
     def for_platform(platform)
-      selected_actions = @actions.select do |action|
+      selected_actions = @actions.values.select do |action|
         action.platform == :shared || action.platform.to_s == platform.to_s
       end
 

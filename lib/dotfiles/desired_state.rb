@@ -14,6 +14,7 @@ module Dotfiles
     def actions
       [
         Action.new(
+          id: "shared_git_config",
           name: :link_file,
           description: "Apply shared Git configuration",
           parameters: {
@@ -22,6 +23,7 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "mise_config",
           name: :link_file,
           description: "Apply mise toolchain configuration",
           parameters: {
@@ -30,21 +32,26 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "mise_install",
           name: :run_command,
           description: "Install mise tools",
           parameters: {
-            command: ["mise", "install"]
+            command: ["mise", "install"],
+            inputs: [".config/mise/config.toml"]
           }
         ),
         Action.new(
+          id: "windows_power_configuration",
           name: :run_command,
           description: "Configure Windows power behavior",
           platform: :windows,
           parameters: {
-            command: ["cmd.exe", "/c", ".\\scripts\\system\\power.bat"]
+            command: ["cmd.exe", "/c", ".\\scripts\\system\\power.bat"],
+            inputs: ["scripts/system/power.bat"]
           }
         ),
         Action.new(
+          id: "windows_fastfetch_config",
           name: :link_file,
           description: "Apply Windows Fastfetch configuration",
           platform: :windows,
@@ -54,6 +61,7 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "windows_terminal_config",
           name: :copy_file,
           description: "Apply Windows Terminal configuration",
           platform: :windows,
@@ -63,6 +71,7 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "powershell_profile",
           name: :link_file,
           description: "Apply PowerShell profile",
           platform: :windows,
@@ -72,6 +81,7 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "powershell_profile_extensions",
           name: :link_file,
           description: "Apply PowerShell profile extensions",
           platform: :windows,

@@ -2,6 +2,7 @@
 
 require_relative "dotfiles/context"
 require_relative "dotfiles/action"
+require_relative "dotfiles/state_store"
 require_relative "dotfiles/plan"
 require_relative "dotfiles/desired_state"
 require_relative "dotfiles/executor"
