@@ -68,7 +68,12 @@ module Dotfiles
   def apply(clean: false)
     current_context = context
     results = Executor.new(repository_root: current_context.repository_root, clean: clean).execute(plan)
-    puts "Applied #{results.length} action(s)."
+    changed_results = [:linked, :copied, :executed]
+    applied_count = results.count { |result| changed_results.include?(result) }
+    skipped_count = results.length - applied_count
+
+    puts "Applied #{applied_count} action(s)."
+    puts "Skipped #{skipped_count} already-satisfied action(s)." if skipped_count.positive?
     SigningSetup.new(current_context).run
   end
 

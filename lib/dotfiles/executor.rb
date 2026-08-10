@@ -107,6 +107,7 @@ module Dotfiles
 
       raise "Source file does not exist: #{source}" unless File.file?(source)
       raise "Refusing to replace existing non-file path: #{target}" if File.directory?(target)
+      return :already_copied if File.file?(target) && !File.symlink?(target) && FileUtils.compare_file(source, target)
 
       FileUtils.mkdir_p(File.dirname(target))
       FileUtils.rm_f(target)
@@ -120,7 +121,7 @@ module Dotfiles
       return :missing_source unless File.file?(source)
       return :pending unless File.file?(target) && !File.symlink?(target)
 
-      FileUtils.compare_file(source, target) ? :copied : :pending
+      FileUtils.compare_file(source, target) ? :already_copied : :pending
     end
 
     def run_command(action)

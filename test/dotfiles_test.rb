@@ -267,6 +267,30 @@ class DotfilesTest < Minitest::Test
     end
   end
 
+  def test_executor_skips_copying_an_unchanged_file
+    Dir.mktmpdir do |directory|
+      source_directory = File.join(directory, "repository")
+      home_directory = File.join(directory, "home")
+      FileUtils.mkdir_p(source_directory)
+      FileUtils.mkdir_p(home_directory)
+      File.write(File.join(source_directory, "settings.json"), "desired\n")
+      File.write(File.join(home_directory, "settings.json"), "desired\n")
+
+      action = Dotfiles::Action.new(
+        name: :copy_file,
+        description: "Copy test file",
+        parameters: {source: "settings.json", target: "~/settings.json"}
+      )
+
+      result = Dotfiles::Executor.new(
+        repository_root: source_directory,
+        home_directory: home_directory
+      ).execute(Dotfiles::Plan.new([action]))
+
+      assert_equal [:already_copied], result
+    end
+  end
+
   def test_executor_runs_a_command_action
     Dir.mktmpdir do |repository_root|
       action = Dotfiles::Action.new(

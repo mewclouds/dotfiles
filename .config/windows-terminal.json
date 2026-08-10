@@ -36,8 +36,8 @@
             "colorScheme": "Evergarden Spring",
             "font": 
             {
-                "face": "Monocraft",
-                "size": 12
+                "face": "Monaspace Neon NF",
+                "size": 13
             }
         },
         "list": 
@@ -59,18 +59,6 @@
                 "hidden": false,
                 "name": "PowerShell",
                 "source": "Windows.Terminal.PowershellCore"
-            },
-            {
-                "guid": "{5fd9b0c2-8626-5c4e-945a-eb237868a8aa}",
-                "hidden": false,
-                "name": "Developer Command Prompt for VS 18",
-                "source": "Windows.Terminal.VisualStudio"
-            },
-            {
-                "guid": "{1992ac8b-2ded-5bf6-8f3c-23e018565cac}",
-                "hidden": false,
-                "name": "Developer PowerShell for VS 18",
-                "source": "Windows.Terminal.VisualStudio"
             }
         ]
     },
@@ -123,7 +111,7 @@
                 "experimental.rainbowFrame": false,
                 "frame": null,
                 "unfocusedFrame": null,
-                "useMica": false
+                "useMica": true
             }
         }
     ]
