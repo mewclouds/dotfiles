@@ -47,31 +47,42 @@ class DotfilesTest < Minitest::Test
     context = Dotfiles::Context.new(host_os: "mingw32")
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
+    actions_by_id = plan.actions.to_h { |action| [action.id, action] }
 
-    assert_equal 8, plan.size
-    assert_equal :link_file, plan.actions[0].name
-    assert_equal ".config/.gitconfig", plan.actions[0].parameters[:source]
-    assert_equal "~/.gitconfig", plan.actions[0].parameters[:target]
-    assert_equal :link_file, plan.actions[1].name
-    assert_equal ".config/mise/config.toml", plan.actions[1].parameters[:source]
-    assert_equal "~/.config/mise/config.toml", plan.actions[1].parameters[:target]
-    assert_equal :link_file, plan.actions[4].name
-    assert_equal :windows, plan.actions[4].platform
-    assert_equal ".config/fastfetch-win.jsonc", plan.actions[4].parameters[:source]
-    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", plan.actions[4].parameters[:target]
-    assert_equal :copy_file, plan.actions[5].name
-    assert_equal :windows, plan.actions[5].platform
-    assert_equal ".config/windows-terminal.json", plan.actions[5].parameters[:source]
+    git_config = actions_by_id.fetch("shared_git_config")
+    assert_equal :link_file, git_config.name
+    assert_equal ".config/.gitconfig", git_config.parameters[:source]
+    assert_equal "~/.gitconfig", git_config.parameters[:target]
+
+    mise_config = actions_by_id.fetch("mise_config")
+    assert_equal :link_file, mise_config.name
+    assert_equal ".config/mise/config.toml", mise_config.parameters[:source]
+    assert_equal "~/.config/mise/config.toml", mise_config.parameters[:target]
+
+    fastfetch_config = actions_by_id.fetch("windows_fastfetch_config")
+    assert_equal :link_file, fastfetch_config.name
+    assert_equal :windows, fastfetch_config.platform
+    assert_equal ".config/fastfetch-win.jsonc", fastfetch_config.parameters[:source]
+    assert_equal "%USERPROFILE%/.config/fastfetch/config.jsonc", fastfetch_config.parameters[:target]
+
+    terminal_config = actions_by_id.fetch("windows_terminal_config")
+    assert_equal :copy_file, terminal_config.name
+    assert_equal :windows, terminal_config.platform
+    assert_equal ".config/windows-terminal.json", terminal_config.parameters[:source]
     assert_equal "%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json",
-      plan.actions[5].parameters[:target]
-    assert_equal :link_file, plan.actions[6].name
-    assert_equal "scripts/shell/profile.ps1", plan.actions[6].parameters[:source]
+      terminal_config.parameters[:target]
+
+    profile = actions_by_id.fetch("powershell_profile")
+    assert_equal :link_file, profile.name
+    assert_equal "scripts/shell/profile.ps1", profile.parameters[:source]
     assert_equal "%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1",
-      plan.actions[6].parameters[:target]
-    assert_equal :link_file, plan.actions[7].name
-    assert_equal "scripts/shell/ProfileExtensions.ps1", plan.actions[7].parameters[:source]
+      profile.parameters[:target]
+
+    profile_extensions = actions_by_id.fetch("powershell_profile_extensions")
+    assert_equal :link_file, profile_extensions.name
+    assert_equal "scripts/shell/ProfileExtensions.ps1", profile_extensions.parameters[:source]
     assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
-      plan.actions[7].parameters[:target]
+      profile_extensions.parameters[:target]
   end
 
   def test_plan_contains_the_mise_install_command
@@ -84,11 +95,21 @@ class DotfilesTest < Minitest::Test
   end
 
   def test_plan_contains_the_windows_power_command
-    action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
-      .find { |candidate| candidate.description == "Configure Windows power behavior" }
+    context = Dotfiles::Context.new(host_os: "mingw32")
+    action = Dotfiles::DesiredState.new(context).actions
+      .find { |candidate| candidate.id == "windows_low_ac_configuration" }
 
     assert_equal :windows, action.platform
     assert_equal ["cmd.exe", "/c", ".\\scripts\\system\\power.bat"], action.parameters[:command]
+  end
+
+  def test_plan_contains_the_windows_battery_power_command
+    context = Dotfiles::Context.new(host_os: "mingw32")
+    action = Dotfiles::DesiredState.new(context).actions
+      .find { |candidate| candidate.id == "windows_battery_power_configuration" }
+
+    assert_equal :windows, action.platform
+    assert_equal ["cmd.exe", "/c", ".\\scripts\\system\\battery.bat"], action.parameters[:command]
   end
 
   def test_plan_command_reports_shared_configuration
@@ -571,8 +592,32 @@ class DotfilesTest < Minitest::Test
         runner: runner
       ).run
 
+      assert_includes runner.commands, ["gh", "auth", "refresh", "-h", "github.com", "-s", "admin:ssh_signing_key"]
       refute runner.commands.any? { |command| command.first(3) == ["gh", "ssh-key", "add"] }
       refute runner.commands.include?(["ssh-add", File.join(directory, ".ssh", "id_ed25519_signing")])
+    end
+  end
+
+  def test_signing_setup_reports_a_missing_signing_key_scope
+    Dir.mktmpdir do |directory|
+      key_path = File.join(directory, ".ssh", "id_ed25519_signing")
+      FileUtils.mkdir_p(File.dirname(key_path))
+      File.write(key_path, "private")
+      File.write("#{key_path}.pub", "ssh-ed25519 AAAAexisting local-comment\n")
+
+      runner = FakeCommandRunner.new(auth_refresh_failure: true)
+      error = assert_raises(RuntimeError) do
+        Dotfiles::SigningSetup.new(
+          Dotfiles::Context.new(host_os: "mingw32"),
+          input: StringIO.new,
+          output: StringIO.new,
+          home_directory: directory,
+          runner: runner
+        ).run
+      end
+
+      assert_match(/could not obtain the SSH signing-key permission/, error.message)
+      refute runner.commands.include?(["gh", "api", "user/ssh_signing_keys"])
     end
   end
 
@@ -637,11 +682,12 @@ class DotfilesTest < Minitest::Test
   class FakeCommandRunner
     attr_reader :commands
 
-    def initialize(github_key: nil, loaded_key: "", empty_agent: false, github_response: nil)
+    def initialize(github_key: nil, loaded_key: "", empty_agent: false, github_response: nil, auth_refresh_failure: false)
       @github_key = github_key
       @loaded_key = loaded_key
       @empty_agent = empty_agent
       @github_response = github_response
+      @auth_refresh_failure = auth_refresh_failure
       @commands = []
     end
 
@@ -664,6 +710,10 @@ class DotfilesTest < Minitest::Test
 
     def interactive(command)
       @commands << command
+      if command.first(3) == ["gh", "auth", "refresh"] && @auth_refresh_failure
+        raise Dotfiles::SigningSetup::CommandRunner::Failure, "required scope was not granted"
+      end
+
       if command.first == "ssh-keygen"
         key_path = command.last
         FileUtils.mkdir_p(File.dirname(key_path))

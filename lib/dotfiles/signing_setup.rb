@@ -60,6 +60,7 @@ module Dotfiles
     end
 
     def github_has_signing_key?(public_key_path)
+      ensure_github_signing_key_scope
       public_key = File.read(public_key_path).strip
       keys = JSON.parse(@runner.capture(["gh", "api", "user/ssh_signing_keys"]))
       unless keys.is_a?(Array) && keys.all? { |key| key.is_a?(Hash) && key["key"].is_a?(String) }
@@ -69,6 +70,14 @@ module Dotfiles
       keys.any? { |key| key_material(key["key"]) == key_material(public_key) }
     rescue JSON::ParserError => error
       raise "Could not read the SSH keys returned by GitHub CLI: #{error.message}"
+    end
+
+    def ensure_github_signing_key_scope
+      # Bootstrap authentication omits this admin scope because it is only needed to manage signing keys.
+      @runner.interactive(["gh", "auth", "refresh", "-h", "github.com", "-s", "admin:ssh_signing_key"])
+    rescue CommandRunner::Failure => error
+      raise "GitHub CLI could not obtain the SSH signing-key permission. " \
+        "Run `gh auth refresh -h github.com -s admin:ssh_signing_key` and try again.\n#{error.message}"
     end
 
     def upload_key(public_key_path)
