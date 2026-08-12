@@ -258,6 +258,7 @@ function Install-ScoopTooling {
     }
 
     Install-BootstrapPackage -Manager Scoop -Id 'extras/vcredist2022'
+    Install-BootstrapPackage -Manager Scoop -Id 'mise'
 
     $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
