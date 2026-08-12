@@ -224,6 +224,8 @@ function Invoke-SystemOnlySetup {
     Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.CLI'
     Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
     Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
+    Install-BootstrapPackage -Manager WinGet -Id 'Fastfetch-cli.Fastfetch'
+    Install-BootstrapPackage -Manager WinGet -Id 'gerardog.gsudo'
 
     return $true
 }
