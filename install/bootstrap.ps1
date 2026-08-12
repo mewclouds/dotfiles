@@ -221,7 +221,7 @@ function Invoke-SystemOnlySetup {
 
     # Requirements needed before the user-level setup can continue.
     Install-BootstrapPackage -Manager WinGet -Id 'GitHub.cli'
-    Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.cli'
+    Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.CLI'
     Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
     Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
 
