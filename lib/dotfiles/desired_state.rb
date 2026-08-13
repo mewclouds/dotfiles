@@ -23,6 +23,14 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "repository_git_hooks",
+          name: :run_command,
+          description: "Configure repository Git hooks",
+          parameters: {
+            command: ["git", "config", "core.hooksPath", ".githooks"]
+          }
+        ),
+        Action.new(
           id: "mise_config",
           name: :link_file,
           description: "Apply mise toolchain configuration",

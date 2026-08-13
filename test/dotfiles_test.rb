@@ -54,6 +54,10 @@ class DotfilesTest < Minitest::Test
     assert_equal ".config/.gitconfig", git_config.parameters[:source]
     assert_equal "~/.gitconfig", git_config.parameters[:target]
 
+    git_hooks = actions_by_id.fetch("repository_git_hooks")
+    assert_equal :run_command, git_hooks.name
+    assert_equal ["git", "config", "core.hooksPath", ".githooks"], git_hooks.parameters[:command]
+
     mise_config = actions_by_id.fetch("mise_config")
     assert_equal :link_file, mise_config.name
     assert_equal ".config/mise/config.toml", mise_config.parameters[:source]
@@ -85,9 +89,18 @@ class DotfilesTest < Minitest::Test
       profile_extensions.parameters[:target]
   end
 
+  def test_plan_contains_the_repository_git_hooks_command
+    action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
+      .find { |candidate| candidate.id == "repository_git_hooks" }
+
+    assert_equal :run_command, action.name
+    assert_equal "Configure repository Git hooks", action.description
+    assert_equal ["git", "config", "core.hooksPath", ".githooks"], action.parameters[:command]
+  end
+
   def test_plan_contains_the_mise_install_command
     action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
-      .find { |candidate| candidate.name == :run_command }
+      .find { |candidate| candidate.id == "mise_install" }
 
     assert_equal :run_command, action.name
     assert_equal "Install mise tools", action.description
@@ -120,6 +133,7 @@ class DotfilesTest < Minitest::Test
     assert_empty error
     assert_includes output, "Execution plan"
     assert_includes output, "Apply shared Git configuration"
+    assert_includes output, "Configure repository Git hooks"
     assert_includes output, "Apply mise toolchain configuration"
     assert_includes output, "Prepare SSH signing key after apply"
     assert_includes output, "not run automatically"
@@ -193,7 +207,7 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 3, plan.size
+    assert_equal 4, plan.size
     refute plan.actions.any? { |action| action.description.include?("Fastfetch") }
   end
 
