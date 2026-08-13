@@ -121,6 +121,19 @@ class DotfilesTest < Minitest::Test
     assert_includes output, "Execution plan"
     assert_includes output, "Apply shared Git configuration"
     assert_includes output, "Apply mise toolchain configuration"
+    assert_includes output, "Prepare SSH signing key after apply"
+    assert_includes output, "not run automatically"
+  end
+
+  def test_signing_setup_confirmation_defaults_to_no
+    output = StringIO.new
+
+    refute Dotfiles.signing_setup_requested?(input: StringIO.new("\n"), output: output)
+    assert_equal "Prepare SSH signing key now? [y/N] ", output.string
+  end
+
+  def test_signing_setup_confirmation_accepts_yes
+    assert Dotfiles.signing_setup_requested?(input: StringIO.new("yes\n"), output: StringIO.new)
   end
 
   def test_plan_holds_descriptive_actions

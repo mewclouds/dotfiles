@@ -60,7 +60,7 @@ module Dotfiles
     Plan.new(DesiredState.new(current_context).actions).for_platform(current_context.platform_name)
   end
 
-  # Applies the resolved desired state and completes the interactive machine setup.
+  # Applies the resolved desired state and optionally prepares SSH signing.
   #
   # @param clean [Boolean] whether existing regular files may be removed
   #
@@ -74,7 +74,7 @@ module Dotfiles
 
     puts "Applied #{applied_count} action(s)."
     puts "Skipped #{skipped_count} already-satisfied action(s)." if skipped_count.positive?
-    SigningSetup.new(current_context).run
+    SigningSetup.new(current_context).run if signing_setup_requested?
   end
 
   # Validates the apply options and reports whether cleanup was explicitly requested.
@@ -108,6 +108,21 @@ module Dotfiles
         puts "- [#{state}] #{action.description} (#{action.platform})#{suffix}"
       end
     end
+
+    puts "- [optional] Prepare SSH signing key after apply (interactive; not run automatically)"
+  end
+
+  # Asks whether this apply should perform the separate interactive signing setup.
+  #
+  # @param input [IO] source for the confirmation response
+  # @param output [IO] destination for the confirmation prompt
+  # @return [Boolean] whether signing setup was requested
+  def signing_setup_requested?(input: $stdin, output: $stdout)
+    output.print("Prepare SSH signing key now? [y/N] ")
+    answer = input.gets
+    return false if answer.nil?
+
+    %w[y yes].include?(answer.strip.downcase)
   end
 
   # Provides the formatted platform identity used by the status output.
