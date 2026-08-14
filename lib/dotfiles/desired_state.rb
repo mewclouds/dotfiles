@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require "yaml"
+
 module Dotfiles
   # Builds the declarative state description from which execution plans are made.
   class DesiredState
+    PRIVATE_MANIFEST_PATH = "private/actions.yml"
+
     # @param context [Dotfiles::Context] runtime and repository context
     def initialize(context)
       @context = context
@@ -12,6 +16,12 @@ module Dotfiles
     #
     # @return [Array<Dotfiles::Action>]
     def actions
+      public_actions + private_actions
+    end
+
+    private
+
+    def public_actions
       [
         Action.new(
           id: "shared_git_config",
@@ -119,6 +129,40 @@ module Dotfiles
           }
         )
       ]
+    end
+
+    # Loads private actions from private/actions.yml when available and applicable to the machine.
+    #
+    # @return [Array<Dotfiles::Action>]
+    def private_actions
+      manifest_path = File.join(@context.repository_root, PRIVATE_MANIFEST_PATH)
+      return [] unless File.file?(manifest_path)
+
+      data = YAML.safe_load_file(manifest_path)
+      raw_actions = data.is_a?(Hash) ? data.fetch("actions", []) : []
+      return [] unless raw_actions.is_a?(Array)
+
+      raw_actions.filter_map do |entry|
+        next unless entry.is_a?(Hash)
+        next unless machine_matches?(entry["machine"])
+
+        parameters = entry["parameters"].is_a?(Hash) ? entry["parameters"].transform_keys(&:to_sym) : {}
+
+        Action.new(
+          id: entry.fetch("id"),
+          name: entry.fetch("name").to_sym,
+          description: entry.fetch("description"),
+          platform: entry.fetch("platform", "shared").to_sym,
+          parameters: parameters
+        )
+      end
+    end
+
+    def machine_matches?(machine_filter)
+      return true if machine_filter.nil?
+
+      targets = Array(machine_filter).map { |item| item.to_s.downcase }
+      targets.include?(@context.hostname.to_s.downcase)
     end
   end
 end

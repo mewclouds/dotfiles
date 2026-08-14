@@ -24,7 +24,7 @@ Ruby is responsible for deciding:
 
 The action itself can still be implemented by whatever fits best. That might
 be Ruby filesystem code, PowerShell, Bash, or an external command. The useful
-boundary is not “everything must be Ruby”; it is “Ruby decides what should
+boundary is not “everything must be Ruby”, but rather “Ruby decides what should
 happen, and the best tool makes it happen.”
 
 ```text
@@ -88,7 +88,7 @@ the bootstrap script to slowly become a second configuration engine.
 ### Context
 
 `Context` collects the facts that affect a run: the host operating system, the
-Ruby version, and the repository location. Keeping those facts in one object
+Ruby version, the machine hostname, and the repository location. Keeping those facts in one object
 means the rest of the code does not need to rediscover the platform everywhere.
 
 ### Desired state
@@ -98,8 +98,9 @@ It contains actions such as:
 
 - link this public configuration file,
 - copy this configuration file,
-- run this command on Windows, or
-- install the tools described by the mise configuration.
+- run this command on Windows,
+- install the tools described by the mise configuration, or
+- load private and machine-specific actions from `private/actions.yml`.
 
 The declarations are kept readable and ordered. Each action has a stable ID so
 the plan can identify it later.
@@ -118,9 +119,8 @@ Ruby thinks it should do before allowing it to change anything.
 `Executor` turns the plan into actual machine changes and reports what happened.
 For managed configuration, symlinks are usually the right answer because edits
 made through the target path should continue editing the repository source.
-
-Some files are different. Windows Terminal settings are copied because editing
-them through the GUI does not behave well when the file is symlinked.
+Where files are copied instead, that is an intentional exception for applications
+that do not tolerate symlinks well.
 
 The executor is allowed to replace configuration that this repository manages.
 That is intentional: the project is meant to establish the desired state of a
@@ -145,12 +145,14 @@ Public configuration lives directly in the repository. `.gitconfig` is public
 by design, including the configured Git identity.
 
 Private state lives in `private/` while it is being edited and is stored in an
-encrypted `private.age` archive for Git. The Windows encryption helper uses an
+encrypted `private.age` archive for Git. The encryption workflow uses an
 age identity retrieved from the Bitwarden note `dotfiles-age-keys`. The identity
 itself never belongs in the repository.
 
-The private Windows setup has its own `private/setup.ps1` entrypoint. That keeps
-private, machine-specific setup separate from the public Ruby orchestration.
+When decrypted, private configuration can define actions in `private/actions.yml`.
+Ruby reads this manifest, filters actions by platform and machine hostname, and
+merges them directly into the desired state plan. This gives private actions the
+same plan visibility, execution safety, and state tracking as public actions.
 
 ## Verification
 

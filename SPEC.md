@@ -59,15 +59,15 @@ Public state may include dotfiles, orchestration code, platform scripts, bootstr
 
 Private state may include machine definitions, hostnames, private configuration, private scripts, and sensitive machine-specific information.
 
+When decrypted, private configuration can declare additional state changes in `private/actions.yml`. These actions use the same schema as public actions and support optional machine hostname targeting.
+
 Private state must never be committed as plaintext.
 
 ## Encryption
 
-Private files may be stored as an encrypted archive in the repository.
+Private files are stored as an encrypted archive in `private.age` in the repository root.
 
-Use an established encryption tool (age is the intended as of right now) and format rather than implementing cryptography directly.
-
-Decryption keys or identities should be stored outside Git, such as in Bitwarden.
+Decryption uses `age` with an identity key stored outside Git in Bitwarden under the note `dotfiles-age-keys`. The decrypted archive is extracted into `private/`.
 
 ```text
 private workspace -> archive -> encrypt -> Git
@@ -114,8 +114,4 @@ Standard Ruby is preferred over introducing a large custom RuboCop configuration
 ## Deferred decisions
 
 - Final repository layout.
-- CLI name and command structure.
-- Machine configuration schema.
-- Exact encryption implementation.
-- Archive format.
 - Ruby installation strategy on each platform.

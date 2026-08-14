@@ -39,6 +39,7 @@ The current commands are intentionally small:
 ruby .\bin\dotfiles status
 ruby .\bin\dotfiles plan
 ruby .\bin\dotfiles apply
+ruby .\bin\dotfiles decrypt
 ```
 
 ## Documentation

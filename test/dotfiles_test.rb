@@ -44,6 +44,128 @@ class DotfilesTest < Minitest::Test
     assert_equal "windows", context.platform_name
   end
 
+  def test_context_contains_hostname
+    context = Dotfiles::Context.new(hostname: "synthetic-custom-host")
+
+    assert_equal "synthetic-custom-host", context.hostname
+  end
+
+  def test_context_defaults_to_system_hostname
+    assert_equal Socket.gethostname, Dotfiles::Context.new.hostname
+  end
+
+  def test_desired_state_loads_private_actions_from_yaml_manifest
+    Dir.mktmpdir do |repo_root|
+      private_dir = File.join(repo_root, "private")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "actions.yml"), <<~YAML)
+        actions:
+          - id: custom_private_link
+            name: link_file
+            description: Apply custom private link
+            platform: windows
+            parameters:
+              source: private/test.txt
+              target: ~/test.txt
+      YAML
+
+      context = Dotfiles::Context.new(repository_root: repo_root, host_os: "mingw32")
+      actions = Dotfiles::DesiredState.new(context).actions
+      action = actions.find { |candidate| candidate.id == "custom_private_link" }
+
+      assert action
+      assert_equal :link_file, action.name
+      assert_equal "Apply custom private link", action.description
+      assert_equal :windows, action.platform
+      assert_equal "private/test.txt", action.parameters[:source]
+      assert_equal "~/test.txt", action.parameters[:target]
+    end
+  end
+
+  def test_desired_state_filters_private_actions_by_machine_hostname
+    Dir.mktmpdir do |repo_root|
+      private_dir = File.join(repo_root, "private")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "actions.yml"), <<~YAML)
+        actions:
+          - id: host_a_only
+            name: run_command
+            description: Run on Host A only
+            machine: synthetic-host-a
+            parameters:
+              command: ["echo", "a"]
+          - id: host_b_only
+            name: run_command
+            description: Run on Host B only
+            machine: synthetic-host-b
+            parameters:
+              command: ["echo", "b"]
+          - id: all_hosts
+            name: run_command
+            description: Run on all hosts
+            parameters:
+              command: ["echo", "all"]
+      YAML
+
+      host_a_context = Dotfiles::Context.new(repository_root: repo_root, hostname: "synthetic-host-a")
+      host_a_actions = Dotfiles::DesiredState.new(host_a_context).actions.map(&:id)
+
+      assert_includes host_a_actions, "host_a_only"
+      assert_includes host_a_actions, "all_hosts"
+      refute_includes host_a_actions, "host_b_only"
+
+      host_b_context = Dotfiles::Context.new(repository_root: repo_root, hostname: "SYNTHETIC-HOST-B")
+      host_b_actions = Dotfiles::DesiredState.new(host_b_context).actions.map(&:id)
+
+      assert_includes host_b_actions, "host_b_only"
+      assert_includes host_b_actions, "all_hosts"
+      refute_includes host_b_actions, "host_a_only"
+    end
+  end
+
+  def test_desired_state_filters_private_actions_by_machine_array
+    Dir.mktmpdir do |repo_root|
+      private_dir = File.join(repo_root, "private")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "actions.yml"), <<~YAML)
+        actions:
+          - id: cluster_action
+            name: run_command
+            description: Run on cluster hosts
+            machine:
+              - synthetic-host-a
+              - synthetic-host-b
+            parameters:
+              command: ["echo", "cluster"]
+      YAML
+
+      matching_context = Dotfiles::Context.new(repository_root: repo_root, hostname: "synthetic-host-b")
+      matching_actions = Dotfiles::DesiredState.new(matching_context).actions.map(&:id)
+      assert_includes matching_actions, "cluster_action"
+
+      non_matching_context = Dotfiles::Context.new(repository_root: repo_root, hostname: "synthetic-host-c")
+      non_matching_actions = Dotfiles::DesiredState.new(non_matching_context).actions.map(&:id)
+      refute_includes non_matching_actions, "cluster_action"
+    end
+  end
+
+  def test_desired_state_handles_missing_or_empty_private_manifest_gracefully
+    Dir.mktmpdir do |repo_root|
+      context = Dotfiles::Context.new(repository_root: repo_root)
+      actions = Dotfiles::DesiredState.new(context).actions
+
+      refute_empty actions
+      refute actions.any? { |action| action.id.start_with?("private_") }
+
+      private_dir = File.join(repo_root, "private")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "actions.yml"), "")
+
+      actions = Dotfiles::DesiredState.new(context).actions
+      refute_empty actions
+    end
+  end
+
   def test_plan_contains_shared_configuration_actions
     context = Dotfiles::Context.new(host_os: "mingw32")
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)

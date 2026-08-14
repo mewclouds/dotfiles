@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rbconfig"
+require "socket"
 
 module Dotfiles
   # Captures the runtime facts used to resolve and execute the desired state.
@@ -17,18 +18,24 @@ module Dotfiles
     # Repository location used to resolve project-relative resources.
     attr_reader :repository_root
 
+    # Machine network hostname used for host-specific targeting.
+    attr_reader :hostname
+
     # @param host_os [String] Ruby's raw operating-system identifier
     # @param ruby_version [String] the running Ruby version
     # @param repository_root [String] the repository's absolute path
+    # @param hostname [String] the machine hostname
     def initialize(
       host_os: RbConfig::CONFIG.fetch("host_os"),
       ruby_version: RUBY_VERSION,
-      repository_root: File.expand_path("../..", __dir__)
+      repository_root: File.expand_path("../..", __dir__),
+      hostname: Socket.gethostname
     )
       @host_os = host_os
       @platform_name = determine_platform(host_os)
       @ruby_version = ruby_version
       @repository_root = repository_root
+      @hostname = hostname
     end
 
     # Returns the friendly platform name and Ruby's raw host identifier.
