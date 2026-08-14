@@ -125,6 +125,19 @@ class DotfilesTest < Minitest::Test
     assert_equal ["cmd.exe", "/c", ".\\scripts\\system\\battery.bat"], action.parameters[:command]
   end
 
+  def test_plan_contains_the_windows_appx_bloat_removal_command
+    context = Dotfiles::Context.new(host_os: "mingw32")
+    action = Dotfiles::DesiredState.new(context).actions
+      .find { |candidate| candidate.id == "windows_appx_bloat_removal" }
+
+    assert_equal :windows, action.platform
+    assert_equal :run_command, action.name
+    assert_equal "Remove Windows AppX bloat", action.description
+    assert_equal ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\scripts\\system\\Remove-AppxBloat.ps1"],
+      action.parameters[:command]
+    assert_equal ["scripts/system/Remove-AppxBloat.ps1"], action.parameters[:inputs]
+  end
+
   def test_plan_command_reports_shared_configuration
     output, error = capture_io do
       assert_equal 0, Dotfiles.run(["plan"])

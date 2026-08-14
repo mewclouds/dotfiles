@@ -69,6 +69,16 @@ module Dotfiles
           }
         ),
         Action.new(
+          id: "windows_appx_bloat_removal",
+          name: :run_command,
+          description: "Remove Windows AppX bloat",
+          platform: :windows,
+          parameters: {
+            command: ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".\\scripts\\system\\Remove-AppxBloat.ps1"],
+            inputs: ["scripts/system/Remove-AppxBloat.ps1"]
+          }
+        ),
+        Action.new(
           id: "windows_fastfetch_config",
           name: :link_file,
           description: "Apply Windows Fastfetch configuration",
