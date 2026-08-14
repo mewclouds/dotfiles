@@ -2,7 +2,7 @@
 
 require "json"
 require "fileutils"
-require "open3"
+require_relative "command_runner"
 
 module Dotfiles
   # Coordinates interactive preparation of machine-local Git signing state.
@@ -137,31 +137,6 @@ module Dotfiles
       (answer.nil? || answer.empty?) ? default : answer
     end
 
-    # Runs commands while preserving interactive terminal input when needed.
-    class CommandRunner
-      # Signals that an external command could not complete successfully.
-      Failure = Class.new(StandardError)
-
-      # Runs a command while capturing its output for inspection.
-      #
-      # @param command [Array<String>] executable and arguments
-      # @return [String] standard output from the command
-      # @raise [Failure] when the command exits unsuccessfully
-      def capture(command)
-        stdout, stderr, status = Open3.capture3(*command)
-        raise Failure, stderr.empty? ? stdout : stderr unless status.success?
-
-        stdout
-      end
-
-      # Runs a command with the current terminal attached for interaction.
-      #
-      # @param command [Array<String>] executable and arguments
-      # @return [void]
-      # @raise [Failure] when the command exits unsuccessfully
-      def interactive(command)
-        raise Failure, "command failed: #{command.join(" ")}" unless system(*command)
-      end
-    end
+    CommandRunner = Dotfiles::CommandRunner
   end
 end

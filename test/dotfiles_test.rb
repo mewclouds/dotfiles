@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "fileutils"
 require "json"
+require "rbconfig"
 require "stringio"
 require "tmpdir"
 require_relative "../lib/dotfiles"
@@ -719,15 +720,262 @@ class DotfilesTest < Minitest::Test
     assert_equal "Unknown command: unknown", error.message
   end
 
+  def test_private_state_skips_when_private_directory_already_exists_and_is_non_empty
+    Dir.mktmpdir do |repo_root|
+      private_dir = File.join(repo_root, "private")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "setup.ps1"), "existing\n")
+      File.write(File.join(repo_root, "private.age"), "encrypted")
+
+      runner = FakeCommandRunner.new
+      output = StringIO.new
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        output: output,
+        runner: runner
+      ).decrypt
+
+      assert_equal :already_present, result
+      assert_includes output.string, "Private state already present; skipping decryption."
+      assert_empty runner.commands
+      assert_equal "existing\n", File.read(File.join(private_dir, "setup.ps1"))
+    end
+  end
+
+  def test_private_state_returns_missing_archive_when_archive_is_absent
+    Dir.mktmpdir do |repo_root|
+      runner = FakeCommandRunner.new
+      output = StringIO.new
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        output: output,
+        runner: runner
+      ).decrypt
+
+      assert_equal :missing_archive, result
+      assert_empty runner.commands
+    end
+  end
+
+  def test_private_state_decrypts_and_extracts_when_not_present
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new
+      output = StringIO.new
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        output: output,
+        runner: runner
+      ).decrypt
+
+      assert_equal :decrypted, result
+      assert_includes output.string, "Private state decrypted successfully."
+      assert runner.commands.any? { |cmd| cmd.first(3) == ["bw", "get", "notes"] }
+      assert runner.commands.any? { |cmd| cmd.first == "age" }
+      assert runner.commands.any? { |cmd| cmd.first == "tar" }
+      assert File.file?(File.join(repo_root, "private", "setup.ps1"))
+    end
+  end
+
+  def test_private_state_reports_bitwarden_retrieval_failure
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(bw_failure: true)
+
+      error = assert_raises(RuntimeError) do
+        Dotfiles::PrivateState.new(
+          repository_root: repo_root,
+          output: StringIO.new,
+          runner: runner
+        ).decrypt
+      end
+
+      assert_match(/Bitwarden CLI failed to retrieve/, error.message)
+    end
+  end
+
+  def test_private_state_prompts_and_unlocks_when_vault_is_locked
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(bw_status: "locked")
+      input = StringIO.new("master_pass123\n")
+      output = StringIO.new
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        input: input,
+        output: output,
+        runner: runner
+      ).decrypt
+
+      assert_equal :decrypted, result
+      assert runner.commands.any? { |cmd| cmd.first(2) == ["bw", "unlock"] }
+      assert runner.commands.any? { |cmd| cmd.first(3) == ["bw", "get", "notes"] }
+      assert File.file?(File.join(repo_root, "private", "setup.ps1"))
+    end
+  end
+
+  def test_private_state_handles_unauthenticated_bitwarden_flow
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(bw_status: "unauthenticated")
+      input = StringIO.new("master_pass123\n")
+      output = StringIO.new
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        input: input,
+        output: output,
+        runner: runner
+      ).decrypt
+
+      assert_equal :decrypted, result
+      assert runner.commands.any? { |cmd| cmd.first(2) == ["bw", "login"] }
+      assert runner.commands.any? { |cmd| cmd.first(2) == ["bw", "unlock"] }
+      assert runner.commands.any? { |cmd| cmd.first(3) == ["bw", "get", "notes"] }
+      assert File.file?(File.join(repo_root, "private", "setup.ps1"))
+    end
+  end
+
+  def test_private_state_rejects_empty_master_password
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(bw_status: "locked")
+      input = StringIO.new("\n")
+
+      error = assert_raises(RuntimeError) do
+        Dotfiles::PrivateState.new(
+          repository_root: repo_root,
+          input: input,
+          output: StringIO.new,
+          runner: runner
+        ).decrypt
+      end
+
+      assert_equal "Master password cannot be empty.", error.message
+    end
+  end
+
+  def test_private_state_reports_age_decryption_failure
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(age_failure: true)
+
+      error = assert_raises(RuntimeError) do
+        Dotfiles::PrivateState.new(
+          repository_root: repo_root,
+          output: StringIO.new,
+          runner: runner
+        ).decrypt
+      end
+
+      assert_match(/Failed to decrypt private state archive/, error.message)
+    end
+  end
+
+  def test_private_state_extracts_root_relative_archive
+    Dir.mktmpdir do |repo_root|
+      archive_path = File.join(repo_root, "private.age")
+      File.write(archive_path, "encrypted_bytes")
+      runner = FakeCommandRunner.new(root_relative_tar: true)
+
+      result = Dotfiles::PrivateState.new(
+        repository_root: repo_root,
+        output: StringIO.new,
+        runner: runner
+      ).decrypt
+
+      assert_equal :decrypted, result
+      assert File.file?(File.join(repo_root, "private", "setup.ps1"))
+    end
+  end
+
+  def test_decrypt_command_dispatches_successfully
+    Dir.mktmpdir do |repo_root|
+      runner = FakeCommandRunner.new
+      output = StringIO.new
+      private_state = Dotfiles::PrivateState.new(repository_root: repo_root, output: output, runner: runner)
+
+      assert_equal 0, Dotfiles.run(["decrypt"], private_state: private_state)
+    end
+  end
+
+  def test_unlock_command_alias_dispatches_successfully
+    Dir.mktmpdir do |repo_root|
+      runner = FakeCommandRunner.new
+      output = StringIO.new
+      private_state = Dotfiles::PrivateState.new(repository_root: repo_root, output: output, runner: runner)
+
+      assert_equal 0, Dotfiles.run(["unlock"], private_state: private_state)
+    end
+  end
+
+  def test_command_runner_captures_successful_output
+    runner = Dotfiles::CommandRunner.new
+    output = runner.capture([RbConfig.ruby, "-e", "puts 'runner test'"])
+
+    assert_equal "runner test\n", output
+  end
+
+  def test_command_runner_capture_raises_failure_on_error
+    runner = Dotfiles::CommandRunner.new
+    error = assert_raises(Dotfiles::CommandRunner::Failure) do
+      runner.capture([RbConfig.ruby, "-e", "warn 'capture failure'; exit 1"])
+    end
+
+    assert_includes error.message, "capture failure"
+  end
+
+  def test_command_runner_capture_provides_fallback_message_when_streams_are_empty
+    runner = Dotfiles::CommandRunner.new
+    error = assert_raises(Dotfiles::CommandRunner::Failure) do
+      runner.capture([RbConfig.ruby, "-e", "exit 1"])
+    end
+
+    assert_includes error.message, "command failed (1)"
+  end
+
+  def test_command_runner_interactive_executes_successfully
+    runner = Dotfiles::CommandRunner.new
+    assert_silent do
+      runner.interactive([RbConfig.ruby, "-e", "exit 0"])
+    end
+  end
+
+  def test_command_runner_interactive_raises_failure_on_error
+    runner = Dotfiles::CommandRunner.new
+    error = assert_raises(Dotfiles::CommandRunner::Failure) do
+      runner.interactive([RbConfig.ruby, "-e", "exit 1"])
+    end
+
+    assert_includes error.message, "command failed"
+  end
+
   class FakeCommandRunner
     attr_reader :commands
 
-    def initialize(github_key: nil, loaded_key: "", empty_agent: false, github_response: nil, auth_refresh_failure: false)
+    def initialize(github_key: nil, loaded_key: "", empty_agent: false, github_response: nil,
+      auth_refresh_failure: false, bw_failure: false, bw_identity: nil, bw_status: "unlocked",
+      age_failure: false, root_relative_tar: false)
       @github_key = github_key
       @loaded_key = loaded_key
       @empty_agent = empty_agent
       @github_response = github_response
       @auth_refresh_failure = auth_refresh_failure
+      @bw_failure = bw_failure
+      @bw_identity = bw_identity
+      @bw_status = bw_status
+      @age_failure = age_failure
+      @root_relative_tar = root_relative_tar
       @commands = []
     end
 
@@ -740,9 +988,38 @@ class DotfilesTest < Minitest::Test
       return [{"key" => @github_key}].to_json if command == ["gh", "api", "user/ssh_signing_keys"] && @github_key
       return "[]" if command == ["gh", "api", "user/ssh_signing_keys"]
       if command == ["ssh-add", "-L"]
-        raise Dotfiles::SigningSetup::CommandRunner::Failure, "The agent has no identities." if @empty_agent
+        raise Dotfiles::CommandRunner::Failure, "The agent has no identities." if @empty_agent
 
         return @loaded_key
+      end
+      if command == ["bw", "status"]
+        return {"status" => @bw_status}.to_json
+      end
+      if command.first(2) == ["bw", "unlock"]
+        return "session_key_123"
+      end
+      if command.first(3) == ["bw", "get", "notes"]
+        raise Dotfiles::CommandRunner::Failure, "vault is locked" if @bw_failure
+
+        return @bw_identity || "AGE-SECRET-KEY-1TEST..."
+      end
+      if command.first == "age"
+        raise Dotfiles::CommandRunner::Failure, "decryption failed" if @age_failure
+
+        output_file = command[command.index("-o") + 1]
+        File.write(output_file, "fake_zip_content")
+        return ""
+      end
+      if command.first == "tar"
+        dest_dir = command[command.index("-C") + 1]
+        if @root_relative_tar
+          File.write(File.join(dest_dir, "setup.ps1"), "# root relative private setup")
+        else
+          private_dir = File.join(dest_dir, "private")
+          FileUtils.mkdir_p(private_dir)
+          File.write(File.join(private_dir, "setup.ps1"), "# private setup")
+        end
+        return ""
       end
 
       ""
@@ -750,8 +1027,13 @@ class DotfilesTest < Minitest::Test
 
     def interactive(command)
       @commands << command
+      if command.first(2) == ["bw", "login"]
+        @bw_status = "locked"
+        return true
+      end
+
       if command.first(3) == ["gh", "auth", "refresh"] && @auth_refresh_failure
-        raise Dotfiles::SigningSetup::CommandRunner::Failure, "required scope was not granted"
+        raise Dotfiles::CommandRunner::Failure, "required scope was not granted"
       end
 
       if command.first == "ssh-keygen"

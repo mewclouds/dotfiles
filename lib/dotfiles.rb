@@ -2,11 +2,13 @@
 
 require_relative "dotfiles/context"
 require_relative "dotfiles/action"
+require_relative "dotfiles/command_runner"
 require_relative "dotfiles/state_store"
 require_relative "dotfiles/plan"
 require_relative "dotfiles/desired_state"
 require_relative "dotfiles/executor"
 require_relative "dotfiles/signing_setup"
+require_relative "dotfiles/private_state"
 
 # Provides the public orchestration API for inspecting and changing machine state.
 module Dotfiles
@@ -15,8 +17,9 @@ module Dotfiles
   # Dispatches a command through the orchestration workflow and returns its process status.
   #
   # @param arguments [Array<String>] command-line arguments
+  # @param private_state [Dotfiles::PrivateState, nil] custom private state instance
   # @return [Integer] process exit status
-  def run(arguments = [])
+  def run(arguments = [], private_state: nil)
     command = arguments.fetch(0, "status")
 
     case command
@@ -25,7 +28,9 @@ module Dotfiles
     when "plan"
       show_plan
     when "apply"
-      apply(clean: clean_option(arguments.drop(1)))
+      apply(clean: clean_option(arguments.drop(1)), private_state: private_state)
+    when "decrypt", "unlock"
+      decrypt_private_state(private_state: private_state)
     else
       raise "Unknown command: #{command}"
     end
@@ -60,13 +65,15 @@ module Dotfiles
     Plan.new(DesiredState.new(current_context).actions).for_platform(current_context.platform_name)
   end
 
-  # Applies the resolved desired state and optionally prepares SSH signing.
+  # Applies the resolved desired state, decrypts private state, and optionally prepares SSH signing.
   #
   # @param clean [Boolean] whether existing regular files may be removed
+  # @param private_state [Dotfiles::PrivateState, nil] custom private state instance
   #
   # @return [void]
-  def apply(clean: false)
+  def apply(clean: false, private_state: nil)
     current_context = context
+    decrypt_private_state(private_state: private_state)
     results = Executor.new(repository_root: current_context.repository_root, clean: clean).execute(plan)
     changed_results = [:linked, :copied, :executed]
     applied_count = results.count { |result| changed_results.include?(result) }
@@ -75,6 +82,14 @@ module Dotfiles
     puts "Applied #{applied_count} action(s)."
     puts "Skipped #{skipped_count} already-satisfied action(s)." if skipped_count.positive?
     SigningSetup.new(current_context).run if signing_setup_requested?
+  end
+
+  # Decrypts the private-state archive when available without overwriting existing state.
+  #
+  # @param private_state [Dotfiles::PrivateState, nil] custom private state instance
+  # @return [Symbol] result of the decryption attempt
+  def decrypt_private_state(private_state: nil)
+    (private_state || PrivateState.new(repository_root: repository_root)).decrypt
   end
 
   # Validates the apply options and reports whether cleanup was explicitly requested.
