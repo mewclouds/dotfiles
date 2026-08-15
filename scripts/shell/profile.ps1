@@ -22,6 +22,18 @@ if (-not (Test-Path $profileExtensionsPath -PathType Leaf)) {
 
 . $profileExtensionsPath
 
+# Optional private files
+$privateProfilePath = Join-Path $profileDirectory 'PrivateProfile.ps1'
+$privateExtensionsPath = Join-Path $profileDirectory 'PrivateProfileExtensions.ps1'
+
+if (Test-Path $privateProfilePath -PathType Leaf) {
+    . $privateProfilePath
+}
+
+if (-not (Test-Path $privateExtensionsPath -PathType Leaf)) {
+    . $privateExtensionsPath
+}
+
 if ((CommandExists gsudo) -and (Get-Module -ListAvailable -Name 'gsudoModule')) {
     Import-Module 'gsudoModule'
 }
