@@ -24,6 +24,14 @@ module Dotfiles
     def public_actions
       [
         Action.new(
+          id: "install_ruby_gems",
+          name: :run_command,
+          description: "Install ruby gems with bundle install",
+          parameters: {
+            command: ["bundle", "install"]
+          }
+        ),
+        Action.new(
           id: "shared_git_config",
           name: :link_file,
           description: "Apply shared Git configuration",

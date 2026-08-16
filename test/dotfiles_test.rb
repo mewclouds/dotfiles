@@ -172,6 +172,11 @@ class DotfilesTest < Minitest::Test
       .for_platform(context.platform_name)
     actions_by_id = plan.actions.to_h { |action| [action.id, action] }
 
+    install_ruby_gems = actions_by_id.fetch("install_ruby_gems")
+    assert_equal :run_command, install_ruby_gems.name
+    assert_equal "Install ruby gems with bundle install", install_ruby_gems.description
+    assert_equal ["bundle", "install"], install_ruby_gems.parameters[:command]
+
     git_config = actions_by_id.fetch("shared_git_config")
     assert_equal :link_file, git_config.name
     assert_equal ".config/.gitconfig", git_config.parameters[:source]
@@ -210,6 +215,15 @@ class DotfilesTest < Minitest::Test
     assert_equal "scripts/shell/ProfileExtensions.ps1", profile_extensions.parameters[:source]
     assert_equal "%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1",
       profile_extensions.parameters[:target]
+  end
+
+  def test_plan_contains_the_install_ruby_gems_command
+    action = Dotfiles::DesiredState.new(Dotfiles::Context.new).actions
+      .find { |candidate| candidate.id == "install_ruby_gems" }
+
+    assert_equal :run_command, action.name
+    assert_equal "Install ruby gems with bundle install", action.description
+    assert_equal ["bundle", "install"], action.parameters[:command]
   end
 
   def test_plan_contains_the_repository_git_hooks_command
@@ -268,6 +282,7 @@ class DotfilesTest < Minitest::Test
 
     assert_empty error
     assert_includes output, "Execution plan"
+    assert_includes output, "Install ruby gems with bundle install"
     assert_includes output, "Apply shared Git configuration"
     assert_includes output, "Configure repository Git hooks"
     assert_includes output, "Apply mise toolchain configuration"
@@ -343,7 +358,7 @@ class DotfilesTest < Minitest::Test
     plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
       .for_platform(context.platform_name)
 
-    assert_equal 4, plan.size
+    assert_equal 5, plan.size
     refute plan.actions.any? { |action| action.description.include?("Fastfetch") }
   end
 
