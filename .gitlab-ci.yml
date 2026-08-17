@@ -32,7 +32,7 @@ lint:powershell:
   # Unlike ubuntu-latest on GitHub Actions, this image does not ship
   # PSScriptAnalyzer. It is installed via Save-Module into the workspace so
   # GitLab CI can cache it between runs.
-  image: mcr.microsoft.com/powershell:lts
+  image: mcr.microsoft.com/powershell:latest
   cache:
     key: powershell-psscriptanalyzer
     paths:
