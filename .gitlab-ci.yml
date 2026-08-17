@@ -1,0 +1,59 @@
+# Mirrors .github/workflows/lint.yml for GitLab.
+#
+# Workflow rules prevent duplicate pipelines: MR pipelines run on merge request
+# events; branch pipelines are suppressed when an open MR already exists.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - lint
+
+lint:ruby:
+  stage: lint
+  image: ruby:4.0
+  cache:
+    key:
+      files:
+        - Gemfile.lock
+    paths:
+      - vendor/ruby
+  before_script:
+    - bundle config set --local path 'vendor/ruby'
+    - bundle install --jobs $(nproc)
+  script:
+    - bundle exec standardrb
+
+lint:powershell:
+  stage: lint
+  # Unlike ubuntu-latest on GitHub Actions, this image does not ship
+  # PSScriptAnalyzer. It is installed via Save-Module into the workspace so
+  # GitLab CI can cache it between runs.
+  image: mcr.microsoft.com/powershell:lts
+  cache:
+    key: powershell-psscriptanalyzer
+    paths:
+      - .ps_modules
+  before_script:
+    - |
+      pwsh -NoProfile -Command '
+        if (-not (Test-Path ./.ps_modules/PSScriptAnalyzer)) {
+          Save-Module PSScriptAnalyzer -Path ./.ps_modules -Force
+        }
+      '
+  script:
+    # PSModulePath must be prepended in each pwsh invocation because environment
+    # changes do not persist across separate process calls in GitLab CI scripts.
+    - |
+      pwsh -NoProfile -Command '
+        $env:PSModulePath = "$pwd/.ps_modules:" + $env:PSModulePath
+        ./scripts/PSFormat.ps1 -Check
+      '
+    - |
+      pwsh -NoProfile -Command '
+        $env:PSModulePath = "$pwd/.ps_modules:" + $env:PSModulePath
+        ./scripts/PSLint.ps1
+      '
