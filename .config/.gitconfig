@@ -6,18 +6,14 @@
 [user]
 	name = Omar
 	email = 90123670+mewclouds@users.noreply.github.com
+	signingkey = ~/.ssh/id_ed25519_signing.pub
 [init]
 	defaultBranch = master
-[includeIf "gitdir:~/codeberg/"]
-	path = ~/.codeberg_gitconfig
 [include]
 	path = ~/.gitconfig.safe
 [gpg]
 	format = ssh
-[gpg "ssh"]
-	defaultKeyCommand = ssh-add -L
 [commit]
 	gpgsign = true
 [tag]
 	gpgSign = true
-	
