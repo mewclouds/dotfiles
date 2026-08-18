@@ -30,7 +30,7 @@ if (Test-Path $privateProfilePath -PathType Leaf) {
     . $privateProfilePath
 }
 
-if (-not (Test-Path $privateExtensionsPath -PathType Leaf)) {
+if (Test-Path $privateExtensionsPath -PathType Leaf) {
     . $privateExtensionsPath
 }
 
