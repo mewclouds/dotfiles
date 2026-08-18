@@ -96,6 +96,53 @@ function Sync-TerminalConfig {
 
 #endregion
 
+#region gitutils
+
+function glog {
+    git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' `
+        --abbrev-commit --date=relative
+}
+
+function gst() { git status -sb }
+
+# Undoes the last commit, keeping its changes staged
+function gundo { git reset --soft HEAD~1 }
+
+# Hard-resets the working tree, discarding uncommitted changes
+function greset {
+    param(
+        [string]$Ref = 'HEAD'
+    )
+
+    git reset --hard $Ref
+}
+
+# Restages current changes into the last commit without changing its message
+function gamend { git commit --amend --no-edit }
+
+# Lists local branches by most recently committed, with upstream tracking info
+function gbranches { git branch -vv --sort=-committerdate }
+
+# Stashes changes, including untracked files
+function gstash { git stash push -u }
+
+# Switches to an existing branch, or creates it if it doesn't exist yet
+function gco {
+    param(
+        [Parameter(Mandatory = $true, Position = 0, ValueFromRemainingArguments = $true)]
+        [string[]]$Name
+    )
+
+    $branch = $Name -join ' '
+    if (git show-ref --verify --quiet "refs/heads/$branch") {
+        git switch $branch
+    } else {
+        git switch -c $branch
+    }
+}
+
+#endregion
+
 # region sysutils
 function syshealth {
     $checks = 'sfc /scannow; DISM /Online /Cleanup-Image /CheckHealth; ' +

@@ -4,6 +4,6 @@ set -e
 echo "Running pre-commit checks..."
 
 bundle exec standardrb
-cmd.exe //c lintPS.bat
+cmd.exe //c ".\lintPS.bat"
 
 echo "Pre-commit checks passed!"
