@@ -34,14 +34,14 @@ lint:powershell:
   # GitLab CI can cache it between runs.
   image: mcr.microsoft.com/powershell:7.5-ubuntu-22.04
   cache:
-    key: powershell-psscriptanalyzer
+    key: powershell-psscriptanalyzer-1.25.0
     paths:
       - .ps_modules
   before_script:
     - |
       pwsh -NoProfile -Command '
-        if (-not (Test-Path ./.ps_modules/PSScriptAnalyzer)) {
-          Save-Module PSScriptAnalyzer -Path ./.ps_modules -Force
+        if (-not (Test-Path ./.ps_modules/PSScriptAnalyzer/1.25.0)) {
+          Save-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Path ./.ps_modules -Force
         }
       '
   script:

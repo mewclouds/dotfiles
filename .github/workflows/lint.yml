@@ -21,7 +21,12 @@ jobs:
       - name: Lint Ruby
         run: bundle exec standardrb
       
-      # ubuntu-latest image contains PowerShell 7 and PSScriptAnalyzer 1.25.0 OOTB
+      # ubuntu-latest ships PowerShell 7 OOTB; pin PSScriptAnalyzer explicitly so
+      # CI doesn't silently drift onto whatever version the runner image bakes in.
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser
+
       - name: Check PowerShell formatting
         shell: pwsh
         run: ./scripts/PSFormat.ps1 -Check

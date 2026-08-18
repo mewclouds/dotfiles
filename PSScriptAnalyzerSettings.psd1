@@ -5,6 +5,9 @@
         'PSAvoidUsingWriteHost'
         'PSAvoidUsingInvokeExpression'
         'PSUseShouldProcessForStateChangingFunctions'
+        # Intermittent NullReferenceException from CommandInfo.get_Parameters();
+        # see https://github.com/PowerShell/PSScriptAnalyzer/issues/1708
+        'PSUseCorrectCasing'
     )
 
     IncludeDefaultRules = $true
@@ -50,10 +53,6 @@
         }
 
         PSAvoidTrailingWhitespace = @{
-            Enable = $true
-        }
-
-        PSUseCorrectCasing = @{
             Enable = $true
         }
     }
