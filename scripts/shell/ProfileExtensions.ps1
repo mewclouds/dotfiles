@@ -98,11 +98,13 @@ function Sync-TerminalConfig {
 
 #region gitutils
 
+# Pretty commit graph
 function glog {
     git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' `
         --abbrev-commit --date=relative
 }
 
+# Short branch-aware status
 function gst() { git status -sb }
 
 # Undoes the last commit, keeping its changes staged
@@ -144,6 +146,8 @@ function gco {
 #endregion
 
 # region sysutils
+
+# Runs the broad system health check
 function syshealth {
     $checks = 'sfc /scannow; DISM /Online /Cleanup-Image /CheckHealth; ' +
     'DISM /Online /Cleanup-Image /ScanHealth'
@@ -195,6 +199,112 @@ function mccoloring {
     $coloredText = $coloredText.Replace('&r', "$escape[0m")
     $coloredText.Replace('&n', "`r`n")
 }
+#endregion
+
+#region help
+
+# Parses the functions defined in a profile script and prints them grouped by
+# region, using the one-line comment above each function as its description.
+function Show-CommandReference {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [string]$Title = 'Commands'
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return
+    }
+
+    # Meta functions describe the help system itself, not a usable command.
+    $excludedNames = @('Show-CommandReference', 'Profile-Help', 'Private-Help')
+
+    $lines = Get-Content -LiteralPath $Path
+    $aliases = @{}
+    foreach ($line in $lines) {
+        if ($line -match '^\s*Set-Alias\s+(?:-Name\s+)?(\S+)\s+-Value\s+(\S+)') {
+            $aliases[$matches[2]] = $matches[1]
+        }
+    }
+
+    $region = 'General'
+    $entries = [System.Collections.Generic.List[object]]::new()
+
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+
+        if ($line -match '^\s*#\s*region\s+(.+)$') {
+            $region = $matches[1].Trim()
+            continue
+        }
+        if ($line -match '^\s*#\s*endregion') {
+            $region = 'General'
+            continue
+        }
+        if ($line -notmatch '^\s*function\s+([A-Za-z][\w-]*)') {
+            continue
+        }
+
+        $name = $matches[1]
+        if ($excludedNames -contains $name) {
+            continue
+        }
+
+        $description = ''
+        $previous = $i - 1
+        while ($previous -ge 0 -and
+            ($lines[$previous].Trim() -eq '' -or $lines[$previous].Trim() -match '^#\s*(region|endregion)\b')) {
+            $previous--
+        }
+        if ($previous -ge 0 -and $lines[$previous].Trim() -match '^#\s+(\S.*)$') {
+            $description = $matches[1].Trim()
+        }
+
+        $entries.Add([PSCustomObject]@{
+                Region = $region
+                Name = $name
+                Alias = $aliases[$name]
+                Description = $description
+            })
+    }
+
+    if (-not $entries.Count) {
+        return
+    }
+
+    Write-Host (mccoloring "&n&ocean$Title")
+
+    foreach ($group in ($entries | Group-Object Region | Sort-Object Name)) {
+        Write-Host (mccoloring "&sky$($group.Name)")
+        $nameWidth = ($group.Group.Name | Measure-Object -Property Length -Maximum).Maximum
+
+        foreach ($entry in ($group.Group | Sort-Object Name)) {
+            $label = $entry.Name.PadRight($nameWidth)
+            $aliasText = if ($entry.Alias) { " ($($entry.Alias))" } else { '' }
+            Write-Host (mccoloring "  &leaf$label&coral$aliasText  &sand$($entry.Description)")
+        }
+    }
+    Write-Host ''
+}
+
+# Lists the interactive commands available in this shell, plus Private-Help's
+# commands too if PrivateProfileExtensions.ps1 defines one.
+function Profile-Help {
+    [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '')]
+    param()
+
+    $selfPath = (Get-Command Profile-Help).ScriptBlock.File
+    Show-CommandReference -Path $selfPath -Title 'Profile Commands'
+
+    $privateHelp = Get-Command Private-Help -CommandType Function -ErrorAction SilentlyContinue
+    if ($privateHelp) {
+        & $privateHelp
+    }
+}
+
 #endregion
 
 #region winutil
