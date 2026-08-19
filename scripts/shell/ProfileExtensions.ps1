@@ -18,11 +18,48 @@ function CommandExists {
     [bool](Get-Command $Command -ErrorAction SilentlyContinue)
 }
 
+# Restarts this shell in a fresh process
+function reload {
+    # Dot-sourcing $PROFILE re-runs script text but can't undo already-loaded
+    # modules or PSReadLine's in-memory history, so spawning a new process is
+    # the only way to get a genuinely clean reload.
+    $pwshPath = (Get-Process -Id $PID).Path
+
+    if ($env:WT_SESSION -and (CommandExists wt)) {
+        # Launch by profile name, not by exe path, so the tab keeps the
+        # configured one instead of a generic one.
+        Start-Process wt -ArgumentList "-w 0 nt -p `"PowerShell`" -d `"$PWD`""
+    } else {
+        Start-Process -FilePath $pwshPath -WorkingDirectory $PWD
+    }
+
+    exit
+}
+
 # Open the current directory in the file explorer
 function here() { Invoke-Item . }
 
 # Unix-like which command
 function which($name) { Get-Command $name | Select-Object -ExpandProperty Definition }
+
+# Lists PATH entries, one per line, colored by where each one is defined
+function path {
+    $userPaths = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ }
+    $machinePaths = [Environment]::GetEnvironmentVariable('Path', 'Machine') -split ';' | Where-Object { $_ }
+
+    Write-Host (mccoloring '&leaf User &ocean Machine &coral Session-only')
+
+    $env:Path -split ';' | Where-Object { $_ } | ForEach-Object {
+        $color = if ($userPaths -contains $_) {
+            '&leaf'
+        } elseif ($machinePaths -contains $_) {
+            '&ocean'
+        } else {
+            '&coral'
+        }
+        Write-Host (mccoloring "$color$_")
+    }
+}
 
 # Unix-like touch command
 function touch {
@@ -41,8 +78,25 @@ function touch {
     }
 }
 
+# Creates a directory if needed and moves into it
+function mkcd {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    Set-Location $Path
+}
+
 # Easily go to home DIR
 function ~ { Set-Location $HOME }
+
+# Moves up one directory
+function .. { Set-Location .. }
+
+# Moves up two directories
+function ... { Set-Location ..\.. }
 
 # Invokes an admin window in the current dir
 function su {
@@ -252,15 +306,18 @@ function Show-CommandReference {
             continue
         }
 
-        $description = ''
+        $descriptionLines = [System.Collections.Generic.List[string]]::new()
         $previous = $i - 1
-        while ($previous -ge 0 -and
-            ($lines[$previous].Trim() -eq '' -or $lines[$previous].Trim() -match '^#\s*(region|endregion)\b')) {
+        while ($previous -ge 0 -and $lines[$previous].Trim() -eq '') { $previous-- }
+        while ($previous -ge 0) {
+            $trimmedPrevious = $lines[$previous].Trim()
+            if ($trimmedPrevious -notmatch '^#\s+(\S.*)$' -or $trimmedPrevious -match '^#\s*(region|endregion)\b') {
+                break
+            }
+            $descriptionLines.Insert(0, $matches[1].Trim())
             $previous--
         }
-        if ($previous -ge 0 -and $lines[$previous].Trim() -match '^#\s+(\S.*)$') {
-            $description = $matches[1].Trim()
-        }
+        $description = $descriptionLines -join ' '
 
         $entries.Add([PSCustomObject]@{
                 Region = $region
