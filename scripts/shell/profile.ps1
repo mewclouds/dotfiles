@@ -120,3 +120,7 @@ if ($null -ne $PSStyle) {
 }
 
 Initialize-PSReadLine
+
+if (CommandExists zoxide) {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
