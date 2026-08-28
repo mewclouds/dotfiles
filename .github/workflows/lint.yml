@@ -19,7 +19,7 @@ jobs:
           bundler-cache: true
 
       - name: Lint Ruby
-        run: bundle exec standardrb
+        run: bundle exec rubocop
       
       # ubuntu-latest ships PowerShell 7 OOTB; pin PSScriptAnalyzer explicitly so
       # CI doesn't silently drift onto whatever version the runner image bakes in.

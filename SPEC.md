@@ -102,14 +102,16 @@ Individual actions may be implemented in Ruby, PowerShell, Bash, or external uti
 
 ## Ruby tooling
 
-Standard Ruby is the project's Ruby linter and formatter.
+RuboCop is the project's Ruby linter and formatter.
 
 ```text
-bundle exec standardrb
-bundle exec standardrb --fix
+bundle exec rubocop
+bundle exec rubocop -a
 ```
 
-Standard Ruby is preferred over introducing a large custom RuboCop configuration. Individual exceptions should remain local and justified.
+Rules live in `.rubocop.yml` and stay small: the defaults plus a short list of
+explicit project choices (tabs, line length, etc.). Individual exceptions
+should remain local and justified.
 
 ## Deferred decisions
 

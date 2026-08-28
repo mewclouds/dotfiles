@@ -25,7 +25,7 @@ lint:ruby:
     - bundle config set --local path 'vendor/ruby'
     - bundle install --jobs $(nproc)
   script:
-    - bundle exec standardrb
+    - bundle exec rubocop
 
 lint:powershell:
   stage: lint

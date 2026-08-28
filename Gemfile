@@ -1,4 +1,7 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
 
-gem "standard"
-gem "minitest"
+source 'https://rubygems.org'
+
+gem 'minitest'
+gem 'rubocop'
+gem 'solargraph'

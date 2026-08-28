@@ -1,0 +1,25 @@
+# RuboCop config. Migrated from standard, which is intentionally
+# unconfigurable; these are the project's own rule choices.
+AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+
+# Standard never enforced these and they are refactor suggestions, not style
+# rules. Re-enable individually when wanted.
+Metrics:
+  Enabled: false
+
+# Four-space indentation, one level per nesting step.
+Layout/IndentationWidth:
+  Width: 4
+
+Layout/LineLength:
+  Max: 120
+
+# Ruby has defaulted to UTF-8 source since 2.0. These cops reject non-ASCII
+# identifiers and comments, which would forbid UTF-8 content.
+Naming/AsciiIdentifiers:
+  Enabled: false
+
+Style/AsciiComments:
+  Enabled: false

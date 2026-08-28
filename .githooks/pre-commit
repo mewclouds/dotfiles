@@ -3,7 +3,7 @@ set -e
 
 echo "Running pre-commit checks..."
 
-bundle exec standardrb
+bundle exec rubocop
 cmd.exe //c ".\lintPS.bat"
 
 echo "Pre-commit checks passed!"

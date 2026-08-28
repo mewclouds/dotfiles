@@ -73,7 +73,7 @@ Install the dependencies, then run the tests and Ruby checks:
 ```text
 bundle install
 bundle exec ruby -Itest test/dotfiles_test.rb
-bundle exec standardrb
+bundle exec rubocop
 ```
 
 This is a work in progress. The structure will probably change as I learn more
