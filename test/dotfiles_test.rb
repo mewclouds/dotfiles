@@ -215,6 +215,18 @@ class DotfilesTest < Minitest::Test
         assert_equal 'scripts/shell/ProfileExtensions.ps1', profile_extensions.parameters[:source]
         assert_equal '%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1',
                      profile_extensions.parameters[:target]
+
+        zed_settings = actions_by_id.fetch('zed_settings')
+        assert_equal :link_file, zed_settings.name
+        assert_equal :windows, zed_settings.platform
+        assert_equal '.config/zed/settings.json', zed_settings.parameters[:source]
+        assert_equal '%APPDATA%/Zed/settings.json', zed_settings.parameters[:target]
+
+        zed_theme = actions_by_id.fetch('zed_evergarden_theme')
+        assert_equal :link_file, zed_theme.name
+        assert_equal :windows, zed_theme.platform
+        assert_equal '.config/zed/themes/evergarden.json', zed_theme.parameters[:source]
+        assert_equal '%APPDATA%/Zed/themes/evergarden.json', zed_theme.parameters[:target]
     end
 
     def test_plan_contains_the_install_ruby_gems_command

@@ -138,6 +138,26 @@ module Dotfiles
                         source: 'scripts/shell/ProfileExtensions.ps1',
                         target: '%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1'
                     }
+                ),
+                Action.new(
+                    id: 'zed_settings',
+                    name: :link_file,
+                    description: 'Apply Zed settings',
+                    platform: :windows,
+                    parameters: {
+                        source: '.config/zed/settings.json',
+                        target: '%APPDATA%/Zed/settings.json'
+                    }
+                ),
+                Action.new(
+                    id: 'zed_evergarden_theme',
+                    name: :link_file,
+                    description: 'Apply Zed evergarden theme',
+                    platform: :windows,
+                    parameters: {
+                        source: '.config/zed/themes/evergarden.json',
+                        target: '%APPDATA%/Zed/themes/evergarden.json'
+                    }
                 )
             ]
         end
