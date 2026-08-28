@@ -8,6 +8,7 @@ module Dotfiles
         PRIVATE_MANIFEST_PATH = 'private/actions.yml'
         WINDOWS_TERMINAL_TARGET =
             '%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
+        RUBY_DEVKIT_BASH = File.join(RbConfig::CONFIG['bindir'], '..', 'msys64', 'usr', 'bin', 'bash.exe')
 
         # @param context [Dotfiles::Context] runtime and repository context
         def initialize(context)
@@ -25,6 +26,20 @@ module Dotfiles
 
         def public_actions
             [
+                # RubyInstaller's bundled MSYS2 ships with no pacman keyring, so pacman
+                # cannot install anything (including libyaml, needed by psych) until the
+                # keyring is initialized once. Both steps require admin rights.
+                Action.new(
+                    id: 'ruby_devkit_libyaml',
+                    name: :run_command,
+                    description: 'Install libyaml headers for the Ruby DevKit via pacman',
+                    platform: :windows,
+                    parameters: {
+                        command: ['gsudo', RUBY_DEVKIT_BASH, '-lc',
+                                  'pacman-key --init && pacman-key --populate msys2 && ' \
+                                  'pacman -Sy --noconfirm mingw-w64-ucrt-x86_64-libyaml']
+                    }
+                ),
                 Action.new(
                     id: 'install_ruby_gems',
                     name: :run_command,
