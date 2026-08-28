@@ -9,32 +9,32 @@
 {
   "icon_theme": "Catppuccin Frappé",
   "project_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "git_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "cli_default_open_behavior": "new_window",
   "session": {
-    "trust_all_worktrees": true
+    "trust_all_worktrees": true,
   },
   "terminal": {
     "font_size": 13.0,
-    "font_family": "Monaspace Krypton NF"
+    "font_family": "MesloLGS Nerd Font",
   },
   "telemetry": {
     "diagnostics": false,
-    "metrics": false
+    "metrics": false,
   },
   "git": {
     "inline_blame": {
-      "enabled": true
-    }
+      "enabled": true,
+    },
   },
   "minimap": {
-    "show": "never"
+    "show": "never",
   },
-  "buffer_font_family": "Cartograph CF",
+  "buffer_font_family": "CaskaydiaCove Nerd Font",
   "linked_edits": true,
   "show_whitespaces": "selection",
   "line_ending": "prefer_crlf",
@@ -45,13 +45,13 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Evergarden Winter (skye)"
+    "dark": "Evergarden Winter (skye)",
   },
   "auto_install_extensions": {
     "catppuccin-icons": true,
     "html": true,
     "powershell": true,
     "ruby": true,
-    "windows-batch": true
-  }
+    "windows-batch": true,
+  },
 }
