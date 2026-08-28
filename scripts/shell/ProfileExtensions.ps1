@@ -190,7 +190,8 @@ function gco {
     )
 
     $branch = $Name -join ' '
-    if (git show-ref --verify --quiet "refs/heads/$branch") {
+    git show-ref --verify --quiet "refs/heads/$branch"
+    if ($LASTEXITCODE -eq 0) {
         git switch $branch
     } else {
         git switch -c $branch
