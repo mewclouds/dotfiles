@@ -40,7 +40,6 @@ module Dotfiles
 
             public_key_path = "#{key_path}.pub"
             upload_key(public_key_path) unless github_has_signing_key?(public_key_path)
-            add_key_to_agent(key_path)
         end
 
         private
@@ -89,25 +88,6 @@ module Dotfiles
                                 '--type', 'signing',
                                 '--title', @key_title
                             ])
-        end
-
-        def add_key_to_agent(key_path)
-            public_key = File.read("#{key_path}.pub").strip
-            loaded_keys = loaded_agent_keys
-
-            return if loaded_keys.lines.any? { |line| key_material(line) == key_material(public_key) }
-
-            @runner.interactive(['ssh-add', key_path])
-        rescue CommandRunner::Failure => e
-            raise "Could not access the SSH agent. Start it and try again.\n#{e.message}"
-        end
-
-        def loaded_agent_keys
-            @runner.capture(['ssh-add', '-L'])
-        rescue CommandRunner::Failure => e
-            return '' if e.message.match?(/agent has no identities/i)
-
-            raise
         end
 
         # SSH comments are labels, so only the algorithm and key material identify the key.

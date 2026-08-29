@@ -758,9 +758,9 @@ class DotfilesTest < Minitest::Test
         refute Dotfiles.clean_option([])
     end
 
-    def test_signing_setup_generates_uploads_and_loads_a_new_key
+    def test_signing_setup_generates_and_uploads_a_new_key
         Dir.mktmpdir do |directory|
-            runner = FakeCommandRunner.new(empty_agent: true)
+            runner = FakeCommandRunner.new
             context = Dotfiles::Context.new(host_os: 'mingw32')
             input = StringIO.new("y\nWindows Desktop\n")
 
@@ -775,11 +775,10 @@ class DotfilesTest < Minitest::Test
             assert_includes runner.commands, ['gh', 'ssh-key', 'add',
                                               File.join(directory, '.ssh', 'id_ed25519_signing.pub'),
                                               '--type', 'signing', '--title', 'Windows Desktop']
-            assert_includes runner.commands, ['ssh-add', File.join(directory, '.ssh', 'id_ed25519_signing')]
         end
     end
 
-    def test_signing_setup_does_not_upload_or_reload_an_existing_key
+    def test_signing_setup_does_not_reupload_an_existing_key
         Dir.mktmpdir do |directory|
             key_path = File.join(directory, '.ssh', 'id_ed25519_signing')
             public_key = 'ssh-ed25519 AAAAexisting local-comment'
@@ -787,10 +786,7 @@ class DotfilesTest < Minitest::Test
             File.write(key_path, 'private')
             File.write("#{key_path}.pub", "#{public_key}\n")
 
-            runner = FakeCommandRunner.new(
-                github_key: 'ssh-ed25519 AAAAexisting github-comment',
-                loaded_key: 'ssh-ed25519 AAAAexisting agent-comment'
-            )
+            runner = FakeCommandRunner.new(github_key: 'ssh-ed25519 AAAAexisting github-comment')
             Dotfiles::SigningSetup.new(
                 Dotfiles::Context.new(host_os: 'mingw32'),
                 input: StringIO.new,
@@ -802,7 +798,6 @@ class DotfilesTest < Minitest::Test
             assert_includes runner.commands,
                             ['gh', 'auth', 'refresh', '-h', 'github.com', '-s', 'admin:ssh_signing_key']
             refute(runner.commands.any? { |command| command.first(3) == %w[gh ssh-key add] })
-            refute runner.commands.include?(['ssh-add', File.join(directory, '.ssh', 'id_ed25519_signing')])
         end
     end
 
@@ -1130,12 +1125,10 @@ class DotfilesTest < Minitest::Test
     class FakeCommandRunner
         attr_reader :commands
 
-        def initialize(github_key: nil, loaded_key: '', empty_agent: false, github_response: nil,
+        def initialize(github_key: nil, github_response: nil,
                        auth_refresh_failure: false, bw_failure: false, bw_identity: nil, bw_status: 'unlocked',
                        age_failure: false, root_relative_tar: false)
             @github_key = github_key
-            @loaded_key = loaded_key
-            @empty_agent = empty_agent
             @github_response = github_response
             @auth_refresh_failure = auth_refresh_failure
             @bw_failure = bw_failure
@@ -1154,11 +1147,6 @@ class DotfilesTest < Minitest::Test
                                                                      'user/ssh_signing_keys'] && @github_key
             return '[]' if command == ['gh', 'api', 'user/ssh_signing_keys']
 
-            if command == ['ssh-add', '-L']
-                raise Dotfiles::CommandRunner::Failure, 'The agent has no identities.' if @empty_agent
-
-                return @loaded_key
-            end
             return { 'status' => @bw_status }.to_json if command == %w[bw status]
             return 'session_key_123' if command.first(2) == %w[bw unlock]
 
