@@ -18,6 +18,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repositoryPath = Join-Path $HOME 'dotfiles'
+$bootstrapScriptUrl = 'https://raw.githubusercontent.com/mewclouds/dotfiles/main/install/bootstrap.ps1'
 
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -78,10 +79,14 @@ function Invoke-SystemBootstrap {
 
     .DESCRIPTION
     The elevated child performs only system setup so the parent process can
-    continue with per-user tools after it returns.
+    continue with per-user tools after it returns. Start-Process requires a
+    file path to elevate, which does not exist when this script runs through
+    `irm | iex`, so that case downloads a temporary copy of itself first.
     #>
-    if (-not $PSCommandPath) {
-        throw 'Bootstrap must be run from a saved PowerShell script when elevation is required.'
+    $scriptPath = $PSCommandPath
+    if (-not $scriptPath) {
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) 'dotfiles-bootstrap.ps1'
+        Invoke-RestMethod -Uri $bootstrapScriptUrl -OutFile $scriptPath
     }
 
     Write-Host 'Running administrator-required setup...' -ForegroundColor Cyan
@@ -90,7 +95,7 @@ function Invoke-SystemBootstrap {
     } else {
         'powershell.exe'
     }
-    $quotedScriptPath = '"' + $PSCommandPath + '"'
+    $quotedScriptPath = '"' + $scriptPath + '"'
     $argumentList = "-NoProfile -ExecutionPolicy Bypass -File $quotedScriptPath -SystemOnly"
     Invoke-ElevatedProcess -FilePath $powerShellPath -ArgumentList $argumentList
 }
