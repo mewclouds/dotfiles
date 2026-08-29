@@ -243,7 +243,6 @@ function Install-ScoopTooling {
 
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Write-Host 'Installing Scoop for the current user...' -ForegroundColor Cyan
-        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
         Invoke-RestMethod -Uri 'https://get.scoop.sh' | Invoke-Expression
     }
 
@@ -261,6 +260,22 @@ function Install-ScoopTooling {
 
     Install-BootstrapPackage -Manager Scoop -Id 'extras/vcredist2022'
     Install-BootstrapPackage -Manager Scoop -Id 'mise'
+
+    # Scoop prints these as manual follow-up steps after installing git and 7zip; the
+    # target registry keys are all under HKEY_CURRENT_USER, so no elevation is needed.
+    $gitAppDirectory = Join-Path $HOME 'scoop\apps\git\current'
+    $sevenZipAppDirectory = Join-Path $HOME 'scoop\apps\7zip\current'
+    Invoke-CheckedCommand -Name 'reg' `
+        -Arguments @('import', (Join-Path $gitAppDirectory 'install-associations.reg')) `
+        -Description 'Git file association registration' | Out-Null
+    Invoke-CheckedCommand -Name 'reg' `
+        -Arguments @('import', (Join-Path $gitAppDirectory 'install-context.reg')) `
+        -Description 'Git context menu registration' | Out-Null
+    Invoke-CheckedCommand -Name 'reg' `
+        -Arguments @('import', (Join-Path $sevenZipAppDirectory 'install-context.reg')) `
+        -Description '7-Zip context menu registration' | Out-Null
+    Invoke-CheckedCommand -Name 'git' -Arguments @('config', '--system', 'credential.helper', 'manager') `
+        -Description 'Git system credential helper configuration' | Out-Null
 
     $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
