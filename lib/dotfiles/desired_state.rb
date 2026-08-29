@@ -28,14 +28,14 @@ module Dotfiles
             [
                 # RubyInstaller's bundled MSYS2 ships with no pacman keyring, so pacman
                 # cannot install anything (including libyaml, needed by psych) until the
-                # keyring is initialized once. Both steps require admin rights.
+                # keyring is initialized once.
                 Action.new(
                     id: 'ruby_devkit_libyaml',
                     name: :run_command,
                     description: 'Install libyaml headers for the Ruby DevKit via pacman',
                     platform: :windows,
                     parameters: {
-                        command: ['gsudo', RUBY_DEVKIT_BASH, '-lc',
+                        command: [RUBY_DEVKIT_BASH, '-lc',
                                   'pacman-key --init && pacman-key --populate msys2 && ' \
                                   'pacman -Sy --noconfirm mingw-w64-ucrt-x86_64-libyaml']
                     }
