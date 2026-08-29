@@ -372,13 +372,23 @@ class DotfilesTest < Minitest::Test
         assert_equal [shared, linux], plan.for_platform(:linux).actions
     end
 
-    def test_linux_plan_excludes_windows_fastfetch_configuration
-        context = Dotfiles::Context.new(host_os: 'linux-gnu')
-        plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
-                             .for_platform(context.platform_name)
+    def test_linux_plan_filters_actions_by_platform
+        Dir.mktmpdir do |repo_root|
+            context = Dotfiles::Context.new(repository_root: repo_root, host_os: 'linux-gnu')
+            plan = Dotfiles::Plan.new(Dotfiles::DesiredState.new(context).actions)
+                                 .for_platform(context.platform_name)
+            action_ids = plan.actions.map(&:id)
 
-        assert_equal 5, plan.size
-        refute(plan.actions.any? { |action| action.description.include?('Fastfetch') })
+            shared_ids = %w[install_ruby_gems shared_git_config repository_git_hooks mise_config mise_install]
+            shared_ids.each { |id| assert_includes action_ids, id }
+
+            windows_only_ids = %w[
+                ruby_devkit_libyaml windows_battery_power_configuration windows_low_ac_configuration
+                windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
+                powershell_profile powershell_profile_extensions zed_settings zed_evergarden_theme
+            ]
+            windows_only_ids.each { |id| refute_includes action_ids, id }
+        end
     end
 
     def test_executor_links_a_file_without_overwriting
