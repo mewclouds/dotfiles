@@ -21,17 +21,23 @@ module Dotfiles
         # Values needed to carry out this particular state change.
         attr_reader :parameters
 
+        # Privilege this action needs to run: :admin or :any.
+        attr_reader :elevation
+
         # @param name [Symbol] action type used by the executor
         # @param description [String] human-readable explanation of the action
         # @param id [String, nil] stable identity, defaulting to the action name
         # @param platform [Symbol] platform the action applies to
         # @param parameters [Hash] action-specific data for a future executor
-        def initialize(name:, description:, id: nil, platform: :shared, parameters: {})
+        # @param elevation [Symbol] :admin if the executor must run this with administrator
+        #   rights, :any if the current process's privilege level is fine
+        def initialize(name:, description:, id: nil, platform: :shared, parameters: {}, elevation: :any)
             @id = (id || name).to_s.freeze
             @name = name
             @description = description
             @platform = platform
             @parameters = parameters.dup.freeze
+            @elevation = elevation
         end
 
         # Creates a deterministic digest of the action definition and its inputs.

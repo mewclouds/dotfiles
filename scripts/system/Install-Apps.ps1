@@ -8,6 +8,12 @@ script) its `type` selects: winget, scoop, choco, npm, or script. An entry
 that fails - including one that is already installed - is reported and
 skipped rather than stopping the rest of the manifest.
 
+This script must run unelevated: Scoop refuses to install correctly under
+an administrator token, so it errors out rather than silently misbehaving.
+Choco is the one type that needs admin rights, so it elevates itself
+per-entry (one UAC prompt per choco install) instead of requiring the
+whole run to be elevated.
+
 .PARAMETER ManifestPath
 Path to the JSON manifest describing which apps to install and how.
 #>
@@ -24,6 +30,12 @@ if (-not $ManifestPath) {
     $ManifestPath = Join-Path $PSScriptRoot '..\..\private\apps.json'
 }
 
+function Test-IsAdministrator {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]$identity
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
 function Install-WingetApp {
     param([Parameter(Mandatory = $true)][string]$Id)
 
@@ -36,8 +48,34 @@ function Install-WingetApp {
     }
 }
 
+function Add-ScoopBucketIfMissing {
+    # scoop.exe is a positional external CLI, not a cmdlet with named parameters.
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPositionalParameters', '')]
+    param([Parameter(Mandatory = $true)][string]$Bucket)
+
+    $bucketList = & scoop bucket list | Out-String
+    if ($bucketList -notmatch "(?m)^\s*$Bucket\s") {
+        & scoop bucket add $Bucket
+        if ($LASTEXITCODE -ne 0) {
+            throw "scoop bucket add exited with code $LASTEXITCODE for '$Bucket'."
+        }
+    }
+}
+
 function Install-ScoopApp {
     param([Parameter(Mandatory = $true)][string]$Name)
+
+    # Scoop installs per-user and refuses to behave correctly when elevated,
+    # so this has to fail loudly rather than let scoop misbehave silently.
+    if (Test-IsAdministrator) {
+        throw "Scoop must not run elevated (installing '$Name'). Run this script without administrator rights."
+    }
+
+    # Names like "nerd-fonts/Meslo-NF" need their bucket added first, or
+    # scoop fails outright instead of prompting.
+    if ($Name -match '^(?<bucket>[^/]+)/') {
+        Add-ScoopBucketIfMissing -Bucket $Matches.bucket
+    }
 
     & scoop install $Name
     if ($LASTEXITCODE -ne 0) {
@@ -48,9 +86,19 @@ function Install-ScoopApp {
 function Install-ChocoApp {
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    & choco install $Name -y
-    if ($LASTEXITCODE -ne 0) {
-        throw "choco install exited with code $LASTEXITCODE for '$Name'."
+    if (Test-IsAdministrator) {
+        & choco install $Name -y
+        if ($LASTEXITCODE -ne 0) {
+            throw "choco install exited with code $LASTEXITCODE for '$Name'."
+        }
+        return
+    }
+
+    # Choco needs admin rights. Elevate just this install instead of requiring
+    # the whole manifest run to be elevated, which would break Scoop above.
+    $process = Start-Process -FilePath 'choco' -ArgumentList @('install', $Name, '-y') -Verb RunAs -Wait -PassThru
+    if ($process.ExitCode -ne 0) {
+        throw "Elevated choco install exited with code $($process.ExitCode) for '$Name'."
     }
 }
 

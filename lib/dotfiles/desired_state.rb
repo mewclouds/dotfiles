@@ -55,7 +55,8 @@ module Dotfiles
                     parameters: {
                         source: '.config/.gitconfig',
                         target: '~/.gitconfig'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'repository_git_hooks',
@@ -72,7 +73,8 @@ module Dotfiles
                     parameters: {
                         source: '.config/mise/config.toml',
                         target: '~/.config/mise/config.toml'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'mise_install',
@@ -112,7 +114,8 @@ module Dotfiles
                         command: ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                                   '.\\scripts\\system\\Remove-AppxBloat.ps1'],
                         inputs: ['scripts/system/Remove-AppxBloat.ps1']
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'windows_fastfetch_config',
@@ -122,7 +125,8 @@ module Dotfiles
                     parameters: {
                         source: '.config/fastfetch-win.jsonc',
                         target: '%USERPROFILE%/.config/fastfetch/config.jsonc'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'windows_terminal_config',
@@ -142,7 +146,8 @@ module Dotfiles
                     parameters: {
                         source: 'scripts/shell/profile.ps1',
                         target: '%USERPROFILE%/Documents/PowerShell/Microsoft.PowerShell_profile.ps1'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'powershell_profile_extensions',
@@ -152,7 +157,8 @@ module Dotfiles
                     parameters: {
                         source: 'scripts/shell/ProfileExtensions.ps1',
                         target: '%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'zed_settings',
@@ -162,7 +168,8 @@ module Dotfiles
                     parameters: {
                         source: '.config/zed/settings.json',
                         target: '%APPDATA%/Zed/settings.json'
-                    }
+                    },
+                    elevation: :admin
                 ),
                 Action.new(
                     id: 'zed_evergarden_theme',
@@ -172,7 +179,8 @@ module Dotfiles
                     parameters: {
                         source: '.config/zed/themes/evergarden.json',
                         target: '%APPDATA%/Zed/themes/evergarden.json'
-                    }
+                    },
+                    elevation: :admin
                 )
             ]
         end
@@ -199,7 +207,8 @@ module Dotfiles
                     name: entry.fetch('name').to_sym,
                     description: entry.fetch('description'),
                     platform: entry.fetch('platform', 'shared').to_sym,
-                    parameters: parameters
+                    parameters: parameters,
+                    elevation: entry.fetch('elevation', 'any').to_sym
                 )
             end
         end

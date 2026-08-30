@@ -2,10 +2,45 @@
 
 require 'English'
 require 'fileutils'
+require 'json'
+require 'tmpdir'
 
 module Dotfiles
     # Applies planned state changes and reports the resulting state of each one.
     class Executor
+        # Elevates a command through a single UAC prompt without elevating the
+        # rest of the run. The command is handed over as a JSON file rather than
+        # CLI arguments: PowerShell's parameter binder treats any argument
+        # starting with "-" (e.g. "-NoProfile", "-Command") as a potential named
+        # parameter, which breaks positional/remaining-argument binding for
+        # commands that are themselves PowerShell invocations.
+        # The heredoc delimiter is quoted to disable Ruby's escape processing:
+        # an unquoted delimiter collapses '\"' to '"' before it ever reaches
+        # PowerShell, silently breaking the embedded-quote escaping below.
+        ELEVATOR_SCRIPT = <<~'POWERSHELL'
+            param([Parameter(Mandatory = $true)][string]$PayloadPath)
+
+            $payload = Get-Content -Raw -Path $PayloadPath | ConvertFrom-Json
+
+            # Start-Process's -ArgumentList does not quote array elements that
+            # contain spaces, so a multi-word argument (e.g. a "-Command" script)
+            # gets split into separate tokens for the child process. Quoting each
+            # element and joining into one string avoids that.
+            $quotedArguments = @($payload.arguments) | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }
+            $startParameters = @{
+                FilePath = $payload.file_path
+                ArgumentList = ($quotedArguments -join ' ')
+                Verb = 'RunAs'
+                Wait = $true
+                PassThru = $true
+            }
+            if ($payload.working_directory) {
+                $startParameters.WorkingDirectory = $payload.working_directory
+            }
+            $process = Start-Process @startParameters
+            exit $process.ExitCode
+        POWERSHELL
+
         # @param repository_root [String] absolute repository path
         # @param home_directory [String] destination home directory
         # @param clean [Boolean] whether existing regular files may be removed
@@ -16,6 +51,7 @@ module Dotfiles
             @home_directory = home_directory
             @clean = clean
             @state_store = StateStore.new(state_path)
+            @elevator_script_path = File.join(Dir.tmpdir, 'dotfiles-elevate.ps1')
         end
 
         # Applies every selected state change in order.
@@ -81,8 +117,30 @@ module Dotfiles
             end
 
             FileUtils.mkdir_p(File.dirname(target))
-            File.symlink(source, target)
+            create_symlink(source, target, action.elevation)
             :linked
+        end
+
+        def create_symlink(source, target, elevation)
+            return File.symlink(source, target) unless elevation == :admin
+
+            # Windows only grants SeCreateSymbolicLinkPrivilege to standard users
+            # when Developer Mode is on, so this machine needs elevation for it.
+            #
+            # The paths are embedded directly in the script text rather than
+            # passed as trailing arguments: "-Command" does not bind trailing
+            # CLI arguments to $args the way "-File" does, so they would
+            # otherwise be silently ignored instead of reaching New-Item.
+            script = "New-Item -ItemType SymbolicLink -Path '#{powershell_quote(target)}' " \
+                     "-Target '#{powershell_quote(source)}' -Force | Out-Null"
+            command = ['powershell.exe', '-NoProfile', '-Command', script]
+            return if run_elevated(command)
+
+            raise "Elevated symlink creation failed: #{target}"
+        end
+
+        def powershell_quote(value)
+            value.gsub("'", "''")
         end
 
         def link_status(action)
@@ -134,13 +192,38 @@ module Dotfiles
             fingerprint = action.fingerprint(repository_root: @repository_root)
             return :already_applied if @state_store.completed?(action, fingerprint)
 
-            unless system(*command, chdir: @repository_root)
+            succeeded = if action.elevation == :admin
+                            run_elevated(command)
+                        else
+                            system(*command, chdir: @repository_root)
+                        end
+
+            unless succeeded
                 exit_code = $CHILD_STATUS.exitstatus || 'unknown'
                 raise "Command failed with exit code #{exit_code}: #{command.join(' ')}"
             end
 
             @state_store.record(action, fingerprint)
             :executed
+        end
+
+        # Runs a command with a single UAC prompt, regardless of whether the
+        # current process is already elevated. Start-Process auto-approves
+        # elevation requests from an already-elevated parent, so this is safe
+        # to call unconditionally rather than branching on current privilege.
+        def run_elevated(command)
+            payload_path = File.join(Dir.tmpdir, "dotfiles-elevate-#{$PROCESS_ID}.json")
+            payload = {
+                'file_path' => command.first,
+                'arguments' => command.drop(1),
+                'working_directory' => @repository_root
+            }
+            File.write(payload_path, JSON.generate(payload))
+            File.write(@elevator_script_path, ELEVATOR_SCRIPT)
+            system('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                   @elevator_script_path, '-PayloadPath', payload_path)
+        ensure
+            FileUtils.rm_f(payload_path) if payload_path
         end
 
         def command_status(action)
