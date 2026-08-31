@@ -212,10 +212,17 @@ module Dotfiles
         # elevation requests from an already-elevated parent, so this is safe
         # to call unconditionally rather than branching on current privilege.
         def run_elevated(command)
+            resolved_command = command.each_with_index.map do |argument, index|
+                if index.positive? && command[index - 1] == '-File'
+                    File.expand_path(argument, @repository_root)
+                else
+                    argument
+                end
+            end
             payload_path = File.join(Dir.tmpdir, "dotfiles-elevate-#{$PROCESS_ID}.json")
             payload = {
-                'file_path' => command.first,
-                'arguments' => command.drop(1),
+                'file_path' => resolved_command.first,
+                'arguments' => resolved_command.drop(1),
                 'working_directory' => @repository_root
             }
             File.write(payload_path, JSON.generate(payload))

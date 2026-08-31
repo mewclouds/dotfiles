@@ -34,6 +34,7 @@ module Dotfiles
                     name: :run_command,
                     description: 'Install libyaml headers for the Ruby DevKit via pacman',
                     platform: :windows,
+                    elevation: :admin,
                     parameters: {
                         command: [RUBY_DEVKIT_BASH, '-lc',
                                   'pacman-key --init && pacman-key --populate msys2 && ' \
