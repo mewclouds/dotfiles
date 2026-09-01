@@ -6,6 +6,7 @@ module Dotfiles
     # Builds the declarative state description from which execution plans are made.
     class DesiredState
         PRIVATE_MANIFEST_PATH = 'private/actions.yml'
+        WINDOWS_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
         WINDOWS_TERMINAL_TARGET =
             '%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
         RUBY_DEVKIT_BASH = File.join(RbConfig::CONFIG['bindir'], '..', 'msys64', 'usr', 'bin', 'bash.exe')
@@ -112,7 +113,7 @@ module Dotfiles
                     description: 'Remove Windows AppX bloat',
                     platform: :windows,
                     parameters: {
-                        command: ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                        command: [WINDOWS_POWERSHELL, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                                   '.\\scripts\\system\\Remove-AppxBloat.ps1'],
                         inputs: ['scripts/system/Remove-AppxBloat.ps1']
                     },

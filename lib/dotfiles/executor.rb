@@ -8,6 +8,7 @@ require 'tmpdir'
 module Dotfiles
     # Applies planned state changes and reports the resulting state of each one.
     class Executor
+        WINDOWS_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
         # Elevates a command through a single UAC prompt without elevating the
         # rest of the run. The command is handed over as a JSON file rather than
         # CLI arguments: PowerShell's parameter binder treats any argument
@@ -133,7 +134,7 @@ module Dotfiles
             # otherwise be silently ignored instead of reaching New-Item.
             script = "New-Item -ItemType SymbolicLink -Path '#{powershell_quote(target)}' " \
                      "-Target '#{powershell_quote(source)}' -Force | Out-Null"
-            command = ['powershell.exe', '-NoProfile', '-Command', script]
+            command = [WINDOWS_POWERSHELL, '-NoProfile', '-Command', script]
             return if run_elevated(command)
 
             raise "Elevated symlink creation failed: #{target}"
@@ -227,8 +228,8 @@ module Dotfiles
             }
             File.write(payload_path, JSON.generate(payload))
             File.write(@elevator_script_path, ELEVATOR_SCRIPT)
-            system('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-                   @elevator_script_path, '-PayloadPath', payload_path)
+            system(WINDOWS_POWERSHELL, '-NoProfile', '-ExecutionPolicy',
+                   'Bypass', '-File', @elevator_script_path, '-PayloadPath', payload_path)
         ensure
             FileUtils.rm_f(payload_path) if payload_path
         end

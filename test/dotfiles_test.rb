@@ -283,7 +283,7 @@ class DotfilesTest < Minitest::Test
         assert_equal :run_command, action.name
         assert_equal 'Remove Windows AppX bloat', action.description
         expected_command = [
-            'powershell.exe',
+            'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe',
             '-NoProfile',
             '-ExecutionPolicy',
             'Bypass',
