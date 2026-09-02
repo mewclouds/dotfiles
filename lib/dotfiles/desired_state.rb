@@ -88,26 +88,6 @@ module Dotfiles
                     }
                 ),
                 Action.new(
-                    id: 'windows_battery_power_configuration',
-                    name: :run_command,
-                    description: 'Configure Windows battery power plan behavior',
-                    platform: :windows,
-                    parameters: {
-                        command: ['cmd.exe', '/c', '.\\scripts\\system\\battery.bat'],
-                        inputs: ['scripts/system/battery.bat']
-                    }
-                ),
-                Action.new(
-                    id: 'windows_low_ac_configuration',
-                    name: :run_command,
-                    description: 'Configure Windows lower consumption A/C power plan',
-                    platform: :windows,
-                    parameters: {
-                        command: ['cmd.exe', '/c', '.\\scripts\\system\\power.bat'],
-                        inputs: ['scripts/system/power.bat']
-                    }
-                ),
-                Action.new(
                     id: 'windows_appx_bloat_removal',
                     name: :run_command,
                     description: 'Remove Windows AppX bloat',

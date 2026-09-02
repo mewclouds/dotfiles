@@ -256,24 +256,6 @@ class DotfilesTest < Minitest::Test
         assert_equal %w[mise install], action.parameters[:command]
     end
 
-    def test_plan_contains_the_windows_power_command
-        context = Dotfiles::Context.new(host_os: 'mingw32')
-        action = Dotfiles::DesiredState.new(context).actions
-                                       .find { |candidate| candidate.id == 'windows_low_ac_configuration' }
-
-        assert_equal :windows, action.platform
-        assert_equal ['cmd.exe', '/c', '.\\scripts\\system\\power.bat'], action.parameters[:command]
-    end
-
-    def test_plan_contains_the_windows_battery_power_command
-        context = Dotfiles::Context.new(host_os: 'mingw32')
-        action = Dotfiles::DesiredState.new(context).actions
-                                       .find { |candidate| candidate.id == 'windows_battery_power_configuration' }
-
-        assert_equal :windows, action.platform
-        assert_equal ['cmd.exe', '/c', '.\\scripts\\system\\battery.bat'], action.parameters[:command]
-    end
-
     def test_plan_contains_the_windows_appx_bloat_removal_command
         context = Dotfiles::Context.new(host_os: 'mingw32')
         action = Dotfiles::DesiredState.new(context).actions
@@ -383,8 +365,7 @@ class DotfilesTest < Minitest::Test
             shared_ids.each { |id| assert_includes action_ids, id }
 
             windows_only_ids = %w[
-                ruby_devkit_libyaml windows_battery_power_configuration windows_low_ac_configuration
-                windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
+                ruby_devkit_libyaml windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
                 powershell_profile powershell_profile_extensions zed_settings zed_evergarden_theme
             ]
             windows_only_ids.each { |id| refute_includes action_ids, id }
