@@ -27,6 +27,21 @@ lint:ruby:
   script:
     - bundle exec rubocop
 
+test:ruby:
+  stage: lint
+  image: ruby:4.0
+  cache:
+    key:
+      files:
+        - Gemfile.lock
+    paths:
+      - vendor/ruby
+  before_script:
+    - bundle config set --local path 'vendor/ruby'
+    - bundle install --jobs $(nproc)
+  script:
+    - bundle exec ruby test/dotfiles_test.rb
+
 lint:powershell:
   stage: lint
   # Unlike ubuntu-latest on GitHub Actions, this image does not ship

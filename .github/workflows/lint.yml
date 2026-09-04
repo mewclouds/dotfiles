@@ -20,6 +20,9 @@ jobs:
 
       - name: Lint Ruby
         run: bundle exec rubocop
+
+      - name: Run Ruby tests
+        run: bundle exec ruby test/dotfiles_test.rb
       
       # ubuntu-latest ships PowerShell 7 OOTB; pin PSScriptAnalyzer explicitly so
       # CI doesn't silently drift onto whatever version the runner image bakes in.
