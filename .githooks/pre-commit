@@ -4,6 +4,7 @@ set -e
 echo "Running pre-commit checks..."
 
 bundle exec rubocop
+bundle exec ruby test/dotfiles_test.rb
 cmd.exe //c ".\lintPS.bat"
 
 echo "Pre-commit checks passed!"
