@@ -69,6 +69,16 @@ module Dotfiles
                     }
                 ),
                 Action.new(
+                    id: 'install_psscriptanalyzer',
+                    name: :run_command,
+                    description: 'Install PSScriptAnalyzer PowerShell module',
+                    parameters: {
+                        command: ['pwsh', '-NoProfile', '-Command',
+                                  'if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) ' \
+                                  '{ Install-Module PSScriptAnalyzer -Scope CurrentUser }']
+                    }
+                ),
+                Action.new(
                     id: 'mise_config',
                     name: :link_file,
                     description: 'Apply mise toolchain configuration',
