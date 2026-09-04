@@ -7,7 +7,7 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "icon_theme": "Catppuccin Frappé",
+  "icon_theme": "Material Icon Theme",
   "project_panel": {
     "dock": "left",
   },
@@ -45,7 +45,7 @@
   "theme": {
     "mode": "dark",
     "light": "One Light",
-    "dark": "Evergarden Winter (skye)",
+    "dark": "Dracula",
   },
   "auto_install_extensions": {
     "catppuccin-icons": true,
