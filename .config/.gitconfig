@@ -9,8 +9,6 @@
 	signingkey = ~/.ssh/id_ed25519_signing.pub
 [init]
 	defaultBranch = master
-[include]
-	path = ~/.gitconfig.safe
 [gpg]
 	format = ssh
 [commit]
