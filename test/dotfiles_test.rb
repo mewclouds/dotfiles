@@ -401,6 +401,41 @@ class DotfilesTest < Minitest::Test
         end
     end
 
+    def test_executor_links_an_admin_action_without_elevating
+        Dir.mktmpdir do |directory|
+            source_directory = File.join(directory, 'repository')
+            home_directory = File.join(directory, 'home')
+            FileUtils.mkdir_p(source_directory)
+            File.write(File.join(source_directory, 'config'), "value\n")
+
+            # An :admin action swallows EACCES and falls back to an elevated
+            # helper, so probe first rather than letting the suite raise a UAC
+            # prompt on a machine that cannot create symlinks unprivileged.
+            begin
+                probe = File.join(directory, 'probe')
+                File.symlink(File.join(source_directory, 'config'), probe)
+                File.delete(probe)
+            rescue SystemCallError => e
+                skip "Symlinks are unavailable: #{e.message}"
+            end
+
+            action = Dotfiles::Action.new(
+                name: :link_file,
+                description: 'Link test file that declares elevation',
+                parameters: { source: 'config', target: '~/config' },
+                elevation: :admin
+            )
+
+            result = Dotfiles::Executor.new(
+                repository_root: source_directory,
+                home_directory: home_directory
+            ).execute(Dotfiles::Plan.new([action]))
+
+            assert_equal [:linked], result
+            assert File.symlink?(File.join(home_directory, 'config'))
+        end
+    end
+
     def test_executor_refuses_to_replace_a_regular_file
         Dir.mktmpdir do |directory|
             source_directory = File.join(directory, 'repository')

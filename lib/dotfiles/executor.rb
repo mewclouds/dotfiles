@@ -122,11 +122,17 @@ module Dotfiles
             :linked
         end
 
+        # Creates the link directly and elevates only when the OS refuses. Linux
+        # never refuses, and neither does Windows with Developer Mode on, so
+        # :admin is a fallback hint rather than an instruction to elevate.
         def create_symlink(source, target, elevation)
-            return File.symlink(source, target) unless elevation == :admin
+            File.symlink(source, target)
+        rescue Errno::EACCES
+            raise unless elevation == :admin
 
-            # Windows only grants SeCreateSymbolicLinkPrivilege to standard users
-            # when Developer Mode is on, so this machine needs elevation for it.
+            # Windows withholds SeCreateSymbolicLinkPrivilege from standard users
+            # unless Developer Mode is on. That denial is the only thing that
+            # reaches this fallback.
             #
             # The paths are embedded directly in the script text rather than
             # passed as trailing arguments: "-Command" does not bind trailing

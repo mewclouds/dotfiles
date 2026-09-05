@@ -117,3 +117,5 @@ should remain local and justified.
 
 - Final repository layout.
 - Ruby installation strategy on each platform.
+- Meaning of `elevation: :admin` on Linux. Symlinks no longer need it, but
+  `run_command` still routes it through Windows PowerShell.
