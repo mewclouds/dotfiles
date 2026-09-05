@@ -3,8 +3,9 @@
     Bootstraps the tools required to start the Ruby dotfiles orchestrator.
 
     .DESCRIPTION
-    Runs administrator-required setup in a separate elevated process, then
-    installs user-level tools through Scoop and clones the dotfiles repository.
+    Runs administrator-required setup through WinGet in a separate elevated
+    process, then installs user-level tools through Scoop, clones the dotfiles
+    repository, and hands off to the Ruby orchestrator.
 
     .PARAMETER SystemOnly
     Runs only administrator-required setup. This is used internally by the
@@ -225,6 +226,7 @@ function Invoke-SystemOnlySetup {
     [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'Machine')
 
     # Requirements needed before the user-level setup can continue.
+    Install-BootstrapPackage -Manager WinGet -Id 'Git.Git'
     Install-BootstrapPackage -Manager WinGet -Id 'GitHub.cli'
     Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.CLI'
     Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
@@ -246,6 +248,13 @@ function Install-ScoopTooling {
     #>
     param()
 
+    # The elevated child installed Git through WinGet, but this process still
+    # holds the environment it started with. Scoop needs Git on PATH before it
+    # can add a bucket, so re-read the stored PATH first.
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = "$machinePath;$userPath"
+
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Write-Host 'Installing Scoop for the current user...' -ForegroundColor Cyan
         Invoke-RestMethod -Uri 'https://get.scoop.sh' | Invoke-Expression
@@ -254,7 +263,7 @@ function Install-ScoopTooling {
     $scoopShims = Join-Path $HOME 'scoop\shims'
     $env:Path = "$scoopShims;$env:Path"
 
-    Install-BootstrapPackage -Manager Scoop -Id 'git'
+    Install-BootstrapPackage -Manager Scoop -Id '7zip'
 
     $bucketList = Invoke-CheckedCommand -Name 'scoop' -Arguments @('bucket', 'list') `
         -Description 'Scoop bucket list' | Out-String
@@ -266,24 +275,13 @@ function Install-ScoopTooling {
     Install-BootstrapPackage -Manager Scoop -Id 'extras/vcredist2022'
     Install-BootstrapPackage -Manager Scoop -Id 'mise'
 
-    # Scoop prints these as manual follow-up steps after installing git and 7zip; the
-    # target registry keys are all under HKEY_CURRENT_USER, so no elevation is needed.
-    $gitAppDirectory = Join-Path $HOME 'scoop\apps\git\current'
-    $sevenZipAppDirectory = Join-Path $HOME 'scoop\apps\7zip\current'
-    Invoke-CheckedCommand -Name 'reg' `
-        -Arguments @('import', (Join-Path $gitAppDirectory 'install-associations.reg')) `
-        -Description 'Git file association registration' | Out-Null
-    Invoke-CheckedCommand -Name 'reg' `
-        -Arguments @('import', (Join-Path $gitAppDirectory 'install-context.reg')) `
-        -Description 'Git context menu registration' | Out-Null
+    # Scoop prints this as a manual follow-up step after installing 7zip; the
+    # target registry key is under HKEY_CURRENT_USER, so no elevation is needed.
+    $sevenZipAppDirectory = Join-Path $HOME 'scoop\\apps\\7zip\\current'
     Invoke-CheckedCommand -Name 'reg' `
         -Arguments @('import', (Join-Path $sevenZipAppDirectory 'install-context.reg')) `
         -Description '7-Zip context menu registration' | Out-Null
-    Invoke-CheckedCommand -Name 'git' -Arguments @('config', '--system', 'credential.helper', 'manager') `
-        -Description 'Git system credential helper configuration' | Out-Null
 
-    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = "$scoopShims;$machinePath;$userPath"
 }
 
@@ -306,7 +304,7 @@ Invoke-SystemBootstrap
 Install-ScoopTooling
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw 'Git was installed through Scoop but is not available on PATH.'
+    throw 'Git was installed through WinGet but is not available on PATH.'
 }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {

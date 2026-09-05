@@ -15,3 +15,7 @@
 	gpgsign = true
 [tag]
 	gpgSign = true
+# Roaming default: plain appends also work on network/virtual filesystems
+# where the Windows atomic-append API fails; harmless on local NTFS.
+[windows]
+	appendAtomically = false
