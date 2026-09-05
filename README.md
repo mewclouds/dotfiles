@@ -36,6 +36,7 @@ apply and verify it
 The current commands are intentionally small:
 
 ```powershell
+ruby .\bin\dotfiles help
 ruby .\bin\dotfiles status
 ruby .\bin\dotfiles plan
 ruby .\bin\dotfiles apply

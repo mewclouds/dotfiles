@@ -12,6 +12,19 @@ require_relative 'dotfiles/private_state'
 
 # Provides the public orchestration API for inspecting and changing machine state.
 module Dotfiles
+    USAGE = <<~USAGE
+        Usage: dotfiles <command> [options]
+
+        Commands:
+          status            Report the runtime and repository context
+          plan              Show the planned actions without applying them
+          apply [--clean]   Apply the plan; --clean replaces conflicting regular files
+          decrypt           Decrypt the private-state archive (alias: unlock)
+          help              Show this message
+
+        Run without a command to show this help.
+    USAGE
+
     module_function
 
     # Dispatches a command through the orchestration workflow and returns its process status.
@@ -20,9 +33,11 @@ module Dotfiles
     # @param private_state [Dotfiles::PrivateState, nil] custom private state instance
     # @return [Integer] process exit status
     def run(arguments = [], private_state: nil)
-        command = arguments.fetch(0, 'status')
+        command = arguments.fetch(0, 'help')
 
         case command
+        when 'help', '-h', '--help'
+            help
         when 'status'
             status
         when 'plan'
@@ -36,6 +51,13 @@ module Dotfiles
         end
 
         0
+    end
+
+    # Prints the command-line usage summary.
+    #
+    # @return [void]
+    def help
+        puts USAGE
     end
 
     # Reports the current runtime and repository context without changing state.

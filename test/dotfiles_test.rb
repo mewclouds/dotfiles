@@ -847,12 +847,36 @@ class DotfilesTest < Minitest::Test
         assert_equal expected_root, Dotfiles.repository_root
     end
 
-    def test_run_defaults_to_status
+    def test_run_defaults_to_help
         output, = capture_io do
             assert_equal 0, Dotfiles.run
         end
 
-        assert_includes output, 'Dotfiles orchestrator'
+        assert_includes output, 'Usage: dotfiles'
+    end
+
+    def test_help_command_lists_every_command
+        output, error = capture_io do
+            assert_equal 0, Dotfiles.run(['help'])
+        end
+
+        assert_empty error
+        assert_includes output, 'Usage: dotfiles'
+        assert_match(/^\s+status\s/, output)
+        assert_match(/^\s+plan\s/, output)
+        assert_match(/^\s+apply \[--clean\]\s/, output)
+        assert_match(/^\s+decrypt\s/, output)
+        assert_match(/^\s+help\s/, output)
+    end
+
+    def test_help_flags_alias_the_help_command
+        ['-h', '--help'].each do |flag|
+            output, = capture_io do
+                assert_equal 0, Dotfiles.run([flag])
+            end
+
+            assert_includes output, 'Usage: dotfiles'
+        end
     end
 
     def test_unknown_commands_raise_an_error
