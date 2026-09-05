@@ -10,6 +10,10 @@ module Dotfiles
         WINDOWS_TERMINAL_TARGET =
             '%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
         RUBY_DEVKIT_BASH = File.join(RbConfig::CONFIG['bindir'], '..', 'msys64', 'usr', 'bin', 'bash.exe')
+        # Kept in step with the pins in .github/workflows/lint.yml and
+        # .gitlab-ci.yml. Analyzer rules change between releases, so an unpinned
+        # local install disagrees with CI about formatting.
+        PSSCRIPTANALYZER_VERSION = '1.25.0'
 
         # @param context [Dotfiles::Context] runtime and repository context
         def initialize(context)
@@ -73,9 +77,14 @@ module Dotfiles
                     name: :run_command,
                     description: 'Install PSScriptAnalyzer PowerShell module',
                     parameters: {
+                        # The guard compares versions rather than checking presence: any
+                        # already-installed version satisfies a presence check, which would
+                        # skip the install and leave the pin unapplied.
                         command: ['pwsh', '-NoProfile', '-Command',
-                                  'if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) ' \
-                                  '{ Install-Module PSScriptAnalyzer -Scope CurrentUser }']
+                                  'if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer | ' \
+                                  "Where-Object { $_.Version -eq '#{PSSCRIPTANALYZER_VERSION}' })) " \
+                                  '{ Install-Module PSScriptAnalyzer -RequiredVersion ' \
+                                  "#{PSSCRIPTANALYZER_VERSION} -Scope CurrentUser -Force }"]
                     }
                 ),
                 Action.new(
