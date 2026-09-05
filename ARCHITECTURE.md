@@ -162,7 +162,7 @@ workflow rather than a final ceremony:
 ```mermaid
 flowchart LR
     CHANGE[Change Something] --> TEST[Run Tests]
-    TEST --> RUBY_CHECK[Run Standard Ruby]
+    TEST --> RUBY_CHECK[Run RuboCop]
     RUBY_CHECK --> PS_CHECK[Run PowerShell Checks]
     PS_CHECK --> REVIEW[Read the Plan and Diff]
     REVIEW --> COMMIT[Commit the Change]

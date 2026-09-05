@@ -10,7 +10,7 @@ It targets Windows and Linux and is intentionally custom rather than built aroun
 
 Ruby is the primary orchestrator. PowerShell, Bash, and external tools may be used where they are the better fit for platform-specific work.
 
-Ruby code is linted and formatted with Standard Ruby. The built-in `ruby -c` syntax check may also be used for a dependency-free syntax check.
+Ruby code is linted and formatted with RuboCop. The built-in `ruby -c` syntax check may also be used for a dependency-free syntax check.
 
 ## Goals
 
