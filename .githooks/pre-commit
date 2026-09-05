@@ -5,6 +5,12 @@ echo "Running pre-commit checks..."
 
 bundle exec rubocop
 bundle exec ruby test/dotfiles_test.rb
-cmd.exe //c ".\lintPS.bat"
+
+if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/PSFormat.ps1 -Check
+    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/PSLint.ps1
+else
+    echo "Skipping PowerShell checks: pwsh not on PATH. CI runs them regardless."
+fi
 
 echo "Pre-commit checks passed!"
