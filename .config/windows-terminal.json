@@ -39,7 +39,9 @@
             {
                 "face": "MesloLGM Nerd Font",
                 "size": 12
-            }
+            },
+            "opacity": 70,
+            "useAcrylic": true
         },
         "list": 
         [
