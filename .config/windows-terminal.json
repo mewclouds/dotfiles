@@ -3,6 +3,7 @@
     "$schema": "https://aka.ms/terminal-profiles-schema",
     "actions": [],
     "copyFormatting": "none",
+    "copyOnSelect": false,
     "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
     "keybindings": 
     [
@@ -33,20 +34,20 @@
     {
         "defaults": 
         {
-            "colorScheme": "Evergarden Spring",
+            "colorScheme": "One Half Dark",
             "font": 
             {
-                "face": "MesloLGS Nerd Font",
-                "size": 13
+                "face": "MesloLGM Nerd Font",
+                "size": 12
             }
         },
         "list": 
         [
             {
-                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
                 "hidden": false,
-                "name": "Windows PowerShell"
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore"
             },
             {
                 "commandline": "%SystemRoot%\\System32\\cmd.exe",
@@ -55,64 +56,13 @@
                 "name": "Command Prompt"
             },
             {
-                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
                 "hidden": false,
-                "name": "PowerShell",
-                "source": "Windows.Terminal.PowershellCore"
+                "name": "Windows PowerShell"
             }
         ]
     },
-    "schemes": 
-    [
-        {
-            "background": "#2B3538",
-            "black": "#2B3538",
-            "blue": "#B2CFED",
-            "brightBlack": "#313B40",
-            "brightBlue": "#B2CFED",
-            "brightCyan": "#ADDEB9",
-            "brightGreen": "#CAE0A7",
-            "brightPurple": "#F3C0E5",
-            "brightRed": "#F57F82",
-            "brightWhite": "#96B4AA",
-            "brightYellow": "#F5D098",
-            "cursorColor": "#ACE0D4",
-            "cyan": "#ADDEB9",
-            "foreground": "#F8F9E8",
-            "green": "#CAE0A7",
-            "name": "Evergarden Spring",
-            "purple": "#F3C0E5",
-            "red": "#F57F82",
-            "selectionBackground": "#3D494D",
-            "white": "#F8F9E8",
-            "yellow": "#F5D098"
-        }
-    ],
-    "theme": "Evergarden Spring",
-    "themes": 
-    [
-        {
-            "name": "Evergarden Spring",
-            "tab": 
-            {
-                "background": "#2B3538FF",
-                "iconStyle": "default",
-                "showCloseButton": "always",
-                "unfocusedBackground": null
-            },
-            "tabRow": 
-            {
-                "background": "#232A2EFF",
-                "unfocusedBackground": "#1C2225FF"
-            },
-            "window": 
-            {
-                "applicationTheme": "dark",
-                "experimental.rainbowFrame": false,
-                "frame": null,
-                "unfocusedFrame": null,
-                "useMica": true
-            }
-        }
-    ]
+    "schemes": [],
+    "themes": []
 }
