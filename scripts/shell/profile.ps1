@@ -34,23 +34,7 @@ if (Test-Path $privateExtensionsPath -PathType Leaf) {
     . $privateExtensionsPath
 }
 
-if ((CommandExists gsudo) -and (Get-Module -ListAvailable -Name 'gsudoModule')) {
-    Import-Module 'gsudoModule'
-}
-
-if (CommandExists mise) {
-    (& mise activate pwsh) | Out-String | Invoke-Expression
-}
-
-if (CommandExists fastfetch) {
-    fastfetch
-}
-
-function Initialize-PSReadLine {
-    if (-not (Get-Module -ListAvailable PSReadLine)) {
-        return
-    }
-
+if (Get-Module -ListAvailable PSReadLine) {
     # Set basic options via splatting to avoid whitespace line continuation errors
     $psReadLineSettings = @{
         EditMode = 'Windows'
@@ -62,20 +46,6 @@ function Initialize-PSReadLine {
         MaximumHistoryCount = 10000
     }
     Set-PSReadLineOption @psReadLineSettings
-
-    # Colors mapped to Evergarden Skye palette
-    Set-PSReadLineOption -Colors @{
-        Command = '#B2CFED'
-        Parameter = '#ADDEB9'
-        Operator = '#F8F9E8'
-        Variable = '#F3C0E5'
-        String = '#CAE0A7'
-        Number = '#F5D098'
-        Type = '#B2CFED'
-        Comment = '#96B4AA'
-        Keyword = '#F3C0E5'
-        Error = '#F57F82'
-    }
 
     # Key Handlers for navigation and history search
     Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
@@ -90,22 +60,59 @@ function Initialize-PSReadLine {
     }
 }
 
+if (CommandExists mise) {
+    (& mise activate pwsh --shims) | Out-String | Invoke-Expression
+}
+
+if (CommandExists gsudo) {
+    Import-Module 'gsudoModule' -ErrorAction SilentlyContinue
+}
+
 function prompt {
+    $exitCode = $global:LASTEXITCODE
+
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]$identity
     $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     $userPart = if ($isAdmin) { '&red@ADMIN' } else { "&sand@$($env:USERNAME)" }
 
-    $gitPart = ''
-    $insideGit = git rev-parse --is-inside-work-tree 2>$null
-    if ($LASTEXITCODE -eq 0 -and $insideGit -eq 'true') {
-        $branch = git rev-parse --abbrev-ref HEAD 2>$null
-        if ($branch) {
-            $isDirty = [bool](git status --porcelain 2>$null)
-            $gitColor = if ($isDirty) { '&red' } else { '&leaf' }
-            $gitPart = " $gitColor($branch)"
+    # .git is a directory in a clone and a file in a worktree or submodule.
+    $inGit = $false
+    if ($PWD.Provider.Name -eq 'FileSystem') {
+        $directory = [IO.DirectoryInfo]$PWD.ProviderPath
+        while ($directory) {
+            $dotGit = Join-Path $directory.FullName '.git'
+            if ([IO.Directory]::Exists($dotGit) -or [IO.File]::Exists($dotGit)) {
+                $inGit = $true
+                break
+            }
+            $directory = $directory.Parent
         }
     }
+
+    $gitPart = ''
+    if ($inGit) {
+        $branchPrefix = '# branch.head '
+        $status = git status --porcelain=v2 --branch 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $branch = $null
+            $isDirty = $false
+            foreach ($line in $status) {
+                if ($line.StartsWith($branchPrefix)) {
+                    $branch = $line.Substring($branchPrefix.Length)
+                } elseif (-not $line.StartsWith('#')) {
+                    $isDirty = $true
+                    break
+                }
+            }
+            if ($branch) {
+                $gitColor = if ($isDirty) { '&red' } else { '&leaf' }
+                $gitPart = " $gitColor($branch)"
+            }
+        }
+    }
+
+    $global:LASTEXITCODE = $exitCode
 
     mccoloring ("&n" +
         "&sun$(Get-Date -UFormat '%a %m-%d %H:%M') &sky$($env:COMPUTERNAME)" +
@@ -113,14 +120,11 @@ function prompt {
         '&coral> &r')
 }
 
-if ($null -ne $PSStyle) {
-    # This ensures that directories and parameters stay visible due to the theme applied
-    $PSStyle.FileInfo.Directory = "`e[34;1m"
-    $PSStyle.FileInfo.SymbolicLink = "`e[36;1m"
-}
-
-Initialize-PSReadLine
-
+# zoxide wraps $function:prompt, so it has to come after the definition above.
 if (CommandExists zoxide) {
     Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
+
+if (CommandExists fastfetch) {
+    fastfetch
 }
