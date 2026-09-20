@@ -9,7 +9,6 @@ module Dotfiles
         WINDOWS_POWERSHELL = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
         WINDOWS_TERMINAL_TARGET =
             '%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
-        RUBY_DEVKIT_BASH = File.join(RbConfig::CONFIG['bindir'], '..', 'msys64', 'usr', 'bin', 'bash.exe')
         # Kept in step with the pins in .github/workflows/lint.yml and
         # .gitlab-ci.yml. Analyzer rules change between releases, so an unpinned
         # local install disagrees with CI about formatting.
@@ -31,21 +30,6 @@ module Dotfiles
 
         def public_actions
             [
-                # RubyInstaller's bundled MSYS2 ships with no pacman keyring, so pacman
-                # cannot install anything (including libyaml, needed by psych) until the
-                # keyring is initialized once.
-                Action.new(
-                    id: 'ruby_devkit_libyaml',
-                    name: :run_command,
-                    description: 'Install libyaml headers for the Ruby DevKit via pacman',
-                    platform: :windows,
-                    elevation: :admin,
-                    parameters: {
-                        command: [RUBY_DEVKIT_BASH, '-lc',
-                                  'pacman-key --init && pacman-key --populate msys2 && ' \
-                                  'pacman -Sy --noconfirm mingw-w64-ucrt-x86_64-libyaml']
-                    }
-                ),
                 Action.new(
                     id: 'install_ruby_gems',
                     name: :run_command,

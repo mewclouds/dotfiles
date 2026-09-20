@@ -230,6 +230,31 @@ function Invoke-SystemOnlySetup {
     Install-BootstrapPackage -Manager WinGet -Id 'GitHub.cli'
     Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.CLI'
     Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
+
+    # RubyInstaller's bundled MSYS2 ships with no pacman keyring, so pacman
+    # cannot install anything (including libyaml, needed by psych) until the
+    # keyring is initialized once.
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = "$machinePath;$userPath"
+
+    $rubyCommand = Get-Command ruby -ErrorAction SilentlyContinue
+    if (-not $rubyCommand) {
+        throw 'Ruby was installed through WinGet but was not found on PATH.'
+    }
+
+    $rubyDirectory = Split-Path -Parent $rubyCommand.Source
+    $devKitBash = Join-Path (Split-Path -Parent $rubyDirectory) 'msys64\usr\bin\bash.exe'
+    if (-not (Test-Path -LiteralPath $devKitBash)) {
+        throw "Ruby DevKit bash was not found at $devKitBash."
+    }
+
+    Write-Host 'Installing libyaml headers for the Ruby DevKit...' -ForegroundColor Cyan
+    $pacmanScript = 'pacman-key --init && pacman-key --populate msys2 && ' +
+    'pacman -Sy --noconfirm mingw-w64-ucrt-x86_64-libyaml'
+    Invoke-CheckedCommand -Name $devKitBash -Arguments @('-lc', $pacmanScript) `
+        -Description 'Ruby DevKit libyaml setup' | Out-Host
+
     Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
     Install-BootstrapPackage -Manager WinGet -Id 'Fastfetch-cli.Fastfetch'
     Install-BootstrapPackage -Manager WinGet -Id 'gerardog.gsudo'

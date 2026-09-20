@@ -353,7 +353,7 @@ class DotfilesTest < Minitest::Test
             shared_ids.each { |id| assert_includes action_ids, id }
 
             windows_only_ids = %w[
-                ruby_devkit_libyaml windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
+                windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
                 powershell_profile powershell_profile_extensions
             ]
             windows_only_ids.each { |id| refute_includes action_ids, id }
