@@ -124,6 +124,17 @@ module Dotfiles
                     }
                 ),
                 Action.new(
+                    id: 'windows_wsl_config',
+                    name: :link_file,
+                    description: 'Apply Windows WSL configuration',
+                    platform: :windows,
+                    parameters: {
+                        source: '.config/.wslconfig',
+                        target: '~/.wslconfig'
+                    },
+                    elevation: :admin
+                ),
+                Action.new(
                     id: 'powershell_profile',
                     name: :link_file,
                     description: 'Apply PowerShell profile',

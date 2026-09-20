@@ -204,6 +204,12 @@ class DotfilesTest < Minitest::Test
         assert_equal '%LOCALAPPDATA%/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json',
                      terminal_config.parameters[:target]
 
+        wsl_config = actions_by_id.fetch('windows_wsl_config')
+        assert_equal :link_file, wsl_config.name
+        assert_equal :windows, wsl_config.platform
+        assert_equal '.config/.wslconfig', wsl_config.parameters[:source]
+        assert_equal '~/.wslconfig', wsl_config.parameters[:target]
+
         profile = actions_by_id.fetch('powershell_profile')
         assert_equal :link_file, profile.name
         assert_equal 'scripts/shell/profile.ps1', profile.parameters[:source]
@@ -354,7 +360,7 @@ class DotfilesTest < Minitest::Test
 
             windows_only_ids = %w[
                 windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
-                powershell_profile powershell_profile_extensions
+                windows_wsl_config powershell_profile powershell_profile_extensions
             ]
             windows_only_ids.each { |id| refute_includes action_ids, id }
         end
