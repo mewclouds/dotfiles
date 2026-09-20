@@ -6,17 +6,25 @@ Creates the encrypted private-state archive when its source content changes.
 The source directory is hashed before encryption so unchanged private state does
 not produce a new encrypted archive. The temporary ZIP archive and encrypted
 output and Bitwarden identity file are removed if the operation fails.
+.PARAMETER RepositoryRoot
+Repository root directory. Defaults to the repository containing this script.
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [Parameter()]
+    [string]$RepositoryRoot
+)
 
 $ErrorActionPreference = 'Stop'
 
-$repositoryRoot = Split-Path -Path $PSScriptRoot -Parent | Split-Path -Parent
-$privatePath = Join-Path $repositoryRoot 'private'
-$archivePath = Join-Path $repositoryRoot 'private.age'
-$hashPath = Join-Path $repositoryRoot 'private.age.hash'
+if (-not $RepositoryRoot) {
+    $RepositoryRoot = Split-Path -Path $PSScriptRoot -Parent | Split-Path -Parent
+}
+
+$privatePath = Join-Path $RepositoryRoot 'private'
+$archivePath = Join-Path $RepositoryRoot 'private.age'
+$hashPath = Join-Path $RepositoryRoot 'private.age.hash'
 $temporaryArchivePath = Join-Path $env:TEMP "dotfiles-private-$PID.zip"
 $temporaryEncryptedPath = "$archivePath.tmp.$PID"
 $temporaryIdentityPath = Join-Path $env:TEMP "dotfiles-age-identity-$PID.txt"

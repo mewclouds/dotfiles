@@ -67,7 +67,10 @@ Private state must never be committed as plaintext.
 
 Private files are stored as an encrypted archive in `private.age` in the repository root.
 
-Decryption uses `age` with an identity key stored outside Git in Bitwarden under the note `dotfiles-age-keys`. The decrypted archive is extracted into `private/`.
+`dotfiles encrypt` (alias: `lock`) creates the encrypted archive from `private/`.
+`dotfiles decrypt` (alias: `unlock`) extracts the archive into `private/`.
+
+Decryption uses `age` with an identity key stored outside Git in Bitwarden under the note `dotfiles-age-keys`.
 
 ```text
 private workspace -> archive -> encrypt -> Git

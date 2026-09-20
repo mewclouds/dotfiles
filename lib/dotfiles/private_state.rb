@@ -17,13 +17,15 @@ module Dotfiles
         # @param runner [#capture, #interactive] command execution dependency
         # @param private_directory [String] destination directory for private state
         # @param archive_path [String] path to the encrypted private archive
+        # @param encrypt_script [String] path to the private state encryption script
         def initialize(
             repository_root:,
             input: $stdin,
             output: $stdout,
             runner: CommandRunner.new,
             private_directory: File.join(repository_root, 'private'),
-            archive_path: File.join(repository_root, 'private.age')
+            archive_path: File.join(repository_root, 'private.age'),
+            encrypt_script: File.join(repository_root, 'scripts', 'system', 'Encrypt-Private.ps1')
         )
             @repository_root = repository_root
             @input = input
@@ -31,6 +33,7 @@ module Dotfiles
             @runner = runner
             @private_directory = private_directory
             @archive_path = archive_path
+            @encrypt_script = encrypt_script
             @session_key = ENV.fetch('BW_SESSION', nil)
         end
 
@@ -46,6 +49,33 @@ module Dotfiles
         # @return [Boolean]
         def archive_exist?
             File.file?(@archive_path)
+        end
+
+        # Reports whether the private state encryption script exists in the repository.
+        #
+        # @return [Boolean]
+        def encrypt_script_exist?
+            File.file?(@encrypt_script)
+        end
+
+        # Encrypts the private-state archive using the PowerShell encryption script.
+        #
+        # @return [Symbol] :missing_script or :encrypted
+        def encrypt
+            return :missing_script unless encrypt_script_exist?
+
+            command = [
+                powershell_command,
+                '-NoProfile',
+                '-ExecutionPolicy',
+                'Bypass',
+                '-File',
+                @encrypt_script,
+                '-RepositoryRoot',
+                @repository_root
+            ]
+            @runner.interactive(command)
+            :encrypted
         end
 
         # Decrypts and extracts the private archive if not already present.
@@ -178,6 +208,26 @@ module Dotfiles
                 else
                     FileUtils.cp_r(File.join(temp_dir, '.'), @private_directory)
                 end
+            end
+        end
+
+        # Resolves the PowerShell executable available on the host system.
+        #
+        # @return [String]
+        def powershell_command
+            return 'pwsh' if command_available?('pwsh')
+
+            'powershell'
+        end
+
+        # Reports whether a command is present on the system PATH.
+        #
+        # @param command [String] executable name to search for
+        # @return [Boolean]
+        def command_available?(command)
+            ENV['PATH'].to_s.split(File::PATH_SEPARATOR).any? do |directory|
+                candidate = File.join(directory, command)
+                File.file?(candidate) || File.file?("#{candidate}.exe")
             end
         end
     end

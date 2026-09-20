@@ -1109,6 +1109,66 @@ class DotfilesTest < Minitest::Test
         end
     end
 
+    def test_private_state_returns_missing_script_when_encrypt_script_is_absent
+        Dir.mktmpdir do |repo_root|
+            runner = FakeCommandRunner.new
+            output = StringIO.new
+
+            result = Dotfiles::PrivateState.new(
+                repository_root: repo_root,
+                output: output,
+                runner: runner
+            ).encrypt
+
+            assert_equal :missing_script, result
+            assert_empty runner.commands
+        end
+    end
+
+    def test_private_state_runs_encryption_script_when_present
+        Dir.mktmpdir do |repo_root|
+            script_path = File.join(repo_root, 'scripts', 'system', 'Encrypt-Private.ps1')
+            FileUtils.mkdir_p(File.dirname(script_path))
+            File.write(script_path, '# dummy')
+            runner = FakeCommandRunner.new
+            output = StringIO.new
+
+            result = Dotfiles::PrivateState.new(
+                repository_root: repo_root,
+                output: output,
+                runner: runner
+            ).encrypt
+
+            assert_equal :encrypted, result
+            assert_equal 1, runner.commands.length
+            command = runner.commands.first
+            assert_includes %w[pwsh powershell], File.basename(command.first, '.*')
+            assert_includes command, script_path
+            assert_includes command, '-RepositoryRoot'
+            assert_includes command, repo_root
+        end
+    end
+
+    def test_encrypt_command_dispatches_successfully
+        Dir.mktmpdir do |repo_root|
+            runner = FakeCommandRunner.new
+            output = StringIO.new
+            private_state = Dotfiles::PrivateState.new(repository_root: repo_root, output: output, runner: runner)
+
+            assert_equal 0, Dotfiles.run(['encrypt'], private_state: private_state)
+        end
+    end
+
+    def test_lock_command_alias_dispatches_successfully
+        Dir.mktmpdir do |repo_root|
+            runner = FakeCommandRunner.new
+            output = StringIO.new
+            private_state = Dotfiles::PrivateState.new(repository_root: repo_root, output: output, runner: runner)
+
+            assert_equal 0, Dotfiles.run(['lock'], private_state: private_state)
+        end
+    end
+
     def test_command_runner_captures_successful_output
         runner = Dotfiles::CommandRunner.new
         output = runner.capture([RbConfig.ruby, '-e', "puts 'runner test'"])

@@ -20,6 +20,7 @@ module Dotfiles
           plan              Show the planned actions without applying them
           apply [--clean]   Apply the plan; --clean replaces conflicting regular files
           decrypt           Decrypt the private-state archive (alias: unlock)
+          encrypt           Encrypt the private-state archive (alias: lock)
           help              Show this message
 
         Run without a command to show this help.
@@ -46,6 +47,8 @@ module Dotfiles
             apply(clean: clean_option(arguments.drop(1)), private_state: private_state)
         when 'decrypt', 'unlock'
             decrypt_private_state(private_state: private_state)
+        when 'encrypt', 'lock'
+            encrypt_private_state(private_state: private_state)
         else
             raise "Unknown command: #{command}"
         end
@@ -112,6 +115,14 @@ module Dotfiles
     # @return [Symbol] result of the decryption attempt
     def decrypt_private_state(private_state: nil)
         (private_state || PrivateState.new(repository_root: repository_root)).decrypt
+    end
+
+    # Encrypts the private-state archive using the repository encryption script.
+    #
+    # @param private_state [Dotfiles::PrivateState, nil] custom private state instance
+    # @return [Symbol] result of the encryption attempt
+    def encrypt_private_state(private_state: nil)
+        (private_state || PrivateState.new(repository_root: repository_root)).encrypt
     end
 
     # Validates the apply options and reports whether cleanup was explicitly requested.
