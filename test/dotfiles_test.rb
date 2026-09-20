@@ -215,18 +215,6 @@ class DotfilesTest < Minitest::Test
         assert_equal 'scripts/shell/ProfileExtensions.ps1', profile_extensions.parameters[:source]
         assert_equal '%USERPROFILE%/Documents/PowerShell/ProfileExtensions.ps1',
                      profile_extensions.parameters[:target]
-
-        zed_settings = actions_by_id.fetch('zed_settings')
-        assert_equal :link_file, zed_settings.name
-        assert_equal :windows, zed_settings.platform
-        assert_equal '.config/zed/settings.json', zed_settings.parameters[:source]
-        assert_equal '%APPDATA%/Zed/settings.json', zed_settings.parameters[:target]
-
-        zed_theme = actions_by_id.fetch('zed_evergarden_theme')
-        assert_equal :link_file, zed_theme.name
-        assert_equal :windows, zed_theme.platform
-        assert_equal '.config/zed/themes/evergarden.json', zed_theme.parameters[:source]
-        assert_equal '%APPDATA%/Zed/themes/evergarden.json', zed_theme.parameters[:target]
     end
 
     def test_plan_contains_the_install_ruby_gems_command
@@ -366,7 +354,7 @@ class DotfilesTest < Minitest::Test
 
             windows_only_ids = %w[
                 ruby_devkit_libyaml windows_appx_bloat_removal windows_fastfetch_config windows_terminal_config
-                powershell_profile powershell_profile_extensions zed_settings zed_evergarden_theme
+                powershell_profile powershell_profile_extensions
             ]
             windows_only_ids.each { |id| refute_includes action_ids, id }
         end
