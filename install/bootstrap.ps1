@@ -1,11 +1,11 @@
 <#
     .SYNOPSIS
-    Bootstraps the tools required to start the Ruby dotfiles orchestrator.
+    Bootstraps the tools required to start the Python dotfiles orchestrator.
 
     .DESCRIPTION
     Runs administrator-required setup through WinGet in a separate elevated
     process, then installs user-level tools through Scoop, clones the dotfiles
-    repository, and hands off to the Ruby orchestrator.
+    repository, and hands off to the Python orchestrator through uv.
 
     .PARAMETER SystemOnly
     Runs only administrator-required setup. This is used internally by the
@@ -33,8 +33,8 @@ function Invoke-ElevatedProcess {
     Runs a process with administrator privileges and waits for completion.
 
     .DESCRIPTION
-    Centralizes UAC process handling so elevated setup and future elevated Ruby
-    operations use the same exit-code and working-directory behavior.
+    Centralizes UAC process handling so elevated setup and future elevated
+    orchestration operations use the same exit-code and working-directory behavior.
 
     .PARAMETER FilePath
     The executable to run with administrator privileges.
@@ -229,31 +229,11 @@ function Invoke-SystemOnlySetup {
     Install-BootstrapPackage -Manager WinGet -Id 'Git.Git'
     Install-BootstrapPackage -Manager WinGet -Id 'GitHub.cli'
     Install-BootstrapPackage -Manager WinGet -Id 'Bitwarden.CLI'
-    Install-BootstrapPackage -Manager WinGet -Id 'RubyInstallerTeam.RubyWithDevKit.4.0'
+    Install-BootstrapPackage -Manager WinGet -Id 'astral-sh.uv'
 
-    # RubyInstaller's bundled MSYS2 ships with no pacman keyring, so pacman
-    # cannot install anything (including libyaml, needed by psych) until the
-    # keyring is initialized once.
     $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = "$machinePath;$userPath"
-
-    $rubyCommand = Get-Command ruby -ErrorAction SilentlyContinue
-    if (-not $rubyCommand) {
-        throw 'Ruby was installed through WinGet but was not found on PATH.'
-    }
-
-    $rubyDirectory = Split-Path -Parent $rubyCommand.Source
-    $devKitBash = Join-Path (Split-Path -Parent $rubyDirectory) 'msys64\usr\bin\bash.exe'
-    if (-not (Test-Path -LiteralPath $devKitBash)) {
-        throw "Ruby DevKit bash was not found at $devKitBash."
-    }
-
-    Write-Host 'Installing libyaml headers for the Ruby DevKit...' -ForegroundColor Cyan
-    $pacmanScript = 'pacman-key --init && pacman-key --populate msys2 && ' +
-    'pacman -Sy --noconfirm mingw-w64-ucrt-x86_64-libyaml'
-    Invoke-CheckedCommand -Name $devKitBash -Arguments @('-lc', $pacmanScript) `
-        -Description 'Ruby DevKit libyaml setup' | Out-Host
 
     Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
     Install-BootstrapPackage -Manager WinGet -Id 'Fastfetch-cli.Fastfetch'
@@ -336,8 +316,8 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw 'GitHub CLI was installed but is not available on PATH.'
 }
 
-if (-not (Get-Command ruby -ErrorAction SilentlyContinue)) {
-    throw 'Ruby was installed but is not available on PATH.'
+if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+    throw 'uv was installed but is not available on PATH.'
 }
 
 $null = gh auth status --hostname github.com 2>$null
@@ -364,15 +344,13 @@ if (Test-Path $repositoryPath) {
     }
 }
 
-$rubyEntrypoint = Join-Path $repositoryPath 'bin\dotfiles'
-if (-not (Test-Path $rubyEntrypoint -PathType Leaf)) {
-    throw "Ruby entry point was not found at $rubyEntrypoint."
-}
-
-Write-Host 'Starting Ruby orchestrator...' -ForegroundColor Cyan
-& ruby $rubyEntrypoint status
-if ($LASTEXITCODE -ne 0) {
-    throw "Ruby orchestrator failed with exit code $LASTEXITCODE."
+Write-Host 'Checking Python through uv...' -ForegroundColor Cyan
+Push-Location $repositoryPath
+try {
+    Invoke-CheckedCommand -Name 'uv' -Arguments @('run', 'python', '--version') `
+        -Description 'uv Python check' | Out-Host
+} finally {
+    Pop-Location
 }
 
 Write-Host 'Bootstrap complete.' -ForegroundColor Green
