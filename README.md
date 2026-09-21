@@ -1,81 +1,74 @@
 # Dotfiles
 
-This is my attempt to stop rebuilding my computers from memory.
+This repository defines repeatable setup for Windows and Linux machines.
 
-I have maintained dotfiles and setup scripts manually for a long time. They
-work, but every new machine still involves remembering which scripts to run,
-which files to copy, and which things are meant to be shared. This repository is
-where I am turning that process into something more deliberate.
+The Python orchestrator reads public actions from `actions.yml`. It also reads
+machine-specific actions from the decrypted `private/actions.yml` file.
 
-The fun part is that I am building the orchestrator in Ruby. I want to learn
-the language, so this is both a useful tool and a small project to learn from.
-PowerShell, Bash, and other tools are still welcome when they are the better
-way to do something on a particular platform.
+## Commands
 
-Windows is getting most of the attention right now. Linux is part of the plan,
-but I am adding it a piece at a time.
-
-## What this is becoming
-
-The general idea is:
-
-```text
-bootstrap the machine
-        ↓
-start Ruby
-        ↓
-figure out the machine context
-        ↓
-resolve the desired state
-        ↓
-build a plan
-        ↓
-apply and verify it
-```
-
-The current commands are intentionally small:
+Run commands through `uv`:
 
 ```powershell
-ruby .\bin\dotfiles help
-ruby .\bin\dotfiles status
-ruby .\bin\dotfiles plan
-ruby .\bin\dotfiles apply
-ruby .\bin\dotfiles decrypt
+uv run dotfiles help
+uv run dotfiles status
+uv run dotfiles plan
+uv run dotfiles apply
+uv run dotfiles decrypt
 ```
 
-## Documentation
+Run these commands from the repository root. From another directory, put
+`--repository-root PATH` before the subcommand.
 
-- [SPEC.md](SPEC.md) contains the project boundaries and decisions that are
-  still being worked out.
-- [ARCHITECTURE.md](ARCHITECTURE.md) explains how Ruby directs the setup and
-  why different actions can use different tools.
-- [AGENTS.md](AGENTS.md) contains the rules for working in this repository.
+Use `uv run dotfiles apply --clean` only when managed files may replace regular
+files at their target paths.
+
+## Action manifests
+
+Each manifest contains an `actions` list. Each action has an `id`, `name`, and
+`description`. It can also set `platform`, `elevation`, and `parameters`.
+
+The public manifest contains reusable setup. The private manifest can contain
+machine-specific setup. A `machine` field limits an action to hostnames that
+match the current machine.
+
+Supported action names are:
+
+- `link_file` for managed symlinks.
+- `copy_file` for applications that do not support symlinks.
+- `run_command` for external tools and platform scripts.
 
 ## Repository layout
 
 ```text
+actions.yml    Public action manifest
 install/       Platform bootstrap scripts
-bin/           User-facing entrypoints
-lib/           Ruby orchestration code
-scripts/       Platform utilities and validation scripts
-.config/       Public configuration files
 private/       Decrypted private state, ignored by Git
-test/          Ruby tests
+scripts/       Platform utilities and validation scripts
+src/dotfiles/  Python orchestrator package
+tests/         Focused Python tests
+.config/       Public configuration files
 ```
 
-The repository is public on purpose. `.gitconfig` is public configuration by
-design. Private keys, credentials, decrypted private state, and machine-specific
-secrets do not belong in the public part of the repository.
+The repository is public on purpose. Private keys, credentials, decrypted
+private state, and machine-specific secrets do not belong in Git.
 
 ## Development
 
-Install the dependencies, then run the tests and Ruby checks:
+Install the project and run the checks:
 
-```text
-bundle install
-bundle exec ruby -Itest test/dotfiles_test.rb
-bundle exec rubocop
+```powershell
+uv sync
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
 ```
 
-This is a work in progress. The structure will probably change as I learn more
-Ruby and as I find the next piece of setup worth automating.
+PowerShell checks remain available through `scripts/PSFormat.ps1` and
+`scripts/PSLint.ps1`.
+
+Enable the repository pre-commit hook with:
+
+```powershell
+git config core.hooksPath .githooks
+```

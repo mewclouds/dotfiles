@@ -12,17 +12,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1.321.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          ruby-version: '4.0'
-          bundler-cache: true
+          enable-cache: true
 
-      - name: Lint Ruby
-        run: bundle exec rubocop
+      - name: Install Python project
+        run: uv sync --locked
 
-      - name: Run Ruby tests
-        run: bundle exec ruby test/dotfiles_test.rb
+      - name: Lint Python
+        run: uv run ruff check .
+
+      - name: Check Python formatting
+        run: uv run ruff format --check .
+
+      - name: Run Python tests
+        run: uv run pytest
       
       # ubuntu-latest ships PowerShell 7 OOTB; pin PSScriptAnalyzer explicitly so
       # CI doesn't silently drift onto whatever version the runner image bakes in.

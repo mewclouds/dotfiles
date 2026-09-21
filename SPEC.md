@@ -4,13 +4,12 @@
 
 ## Overview
 
-This repository contains my personal cross-platform dotfiles and machine setup system.
+This repository contains custom cross-platform dotfiles and machine setup for
+Windows and Linux.
 
-It targets Windows and Linux and is intentionally custom rather than built around a full dotfiles framework.
-
-Ruby is the primary orchestrator. PowerShell, Bash, and external tools may be used where they are the better fit for platform-specific work.
-
-Ruby code is linted and formatted with RuboCop. The built-in `ruby -c` syntax check may also be used for a dependency-free syntax check.
+Python is the primary orchestrator. `uv` is installed as a standalone tool and
+manages the Python project environment. PowerShell, Bash, and external tools
+remain valid for platform-specific work.
 
 ## Goals
 
@@ -18,107 +17,62 @@ Ruby code is linted and formatted with RuboCop. The built-in `ruby -c` syntax ch
 - Share common setup logic across platforms.
 - Keep platform-specific behavior isolated where useful.
 - Keep private configuration encrypted in the public repository.
-- Keep machine-specific information private.
-- Remain small, understandable, and fun to work on.
+- Let others reuse the public action manifest.
+- Keep the code small and understandable.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    %% Ruby is the primary orchestrator.
-    %% Individual actions may be implemented in Ruby, PowerShell, Bash,
-    %% or external tools depending on what fits best.
+The bootstrap prepares uv and starts the package with `uv run`. The Python
+package loads `actions.yml`, loads applicable private actions, filters by
+platform, and executes the resulting plan.
 
-    START([Fresh Machine]) --> BOOT[Run Platform Bootstrap]
-    BOOT --> PREP[Prepare Runtime and Required Tools]
-    PREP --> REPO[Acquire Dotfiles Repository]
-    REPO --> RUBY[Start Ruby Orchestrator]
+The public action manifest is the extension point. It contains an `actions`
+list. Each action requires `id`, `name`, and `description` fields. It can also
+set `platform`, `elevation`, `machine`, and `parameters`.
 
-    RUBY --> PUBLIC[Apply Public State]
-    PUBLIC --> PRIVATE{Private State Available?}
+Supported action names are `link_file`, `copy_file`, and `run_command`.
+Administrator actions use UAC on Windows and `sudo` on Linux.
 
-    PRIVATE -->|Yes| AUTH[Authenticate]
-    AUTH --> UNLOCK[Decrypt Private State]
-    UNLOCK --> CONFIG[Load Configuration]
-
-    PRIVATE -->|No| CONFIG
-
-    CONFIG --> MACHINE[Determine Machine Context]
-    MACHINE --> PLAN[Determine Required Actions]
-    PLAN --> EXECUTE[Execute Actions]
-
-    EXECUTE --> VERIFY[Verify Result]
-    VERIFY --> DONE([Machine Ready])
-```
-
-## Public and private state
-
-The repository is assumed to be public.
-
-Public state may include dotfiles, orchestration code, platform scripts, bootstrap scripts, documentation, and encrypted private data.
-
-Private state may include machine definitions, hostnames, private configuration, private scripts, and sensitive machine-specific information.
-
-When decrypted, private configuration can declare additional state changes in `private/actions.yml`. These actions use the same schema as public actions and support optional machine hostname targeting.
-
-Private state must never be committed as plaintext.
+Private actions use the same schema in `private/actions.yml`. A `machine` value
+or list limits an action to matching hostnames. Private plaintext must never be
+committed.
 
 ## Encryption
 
-Private files are stored as an encrypted archive in `private.age` in the repository root.
+Private files are stored in an encrypted `private.age` archive at the repository
+root.
 
-`dotfiles encrypt` (alias: `lock`) creates the encrypted archive from `private/`.
-`dotfiles decrypt` (alias: `unlock`) extracts the archive into `private/`.
+`uv run dotfiles encrypt` creates the archive from `private/`.
+`uv run dotfiles decrypt` extracts the archive into `private/`.
 
-Decryption uses `age` with an identity key stored outside Git in Bitwarden under the note `dotfiles-age-keys`.
-
-```text
-private workspace -> archive -> encrypt -> Git
-
-Git -> decrypt -> extract -> private workspace
-```
+The age identity is stored outside Git in Bitwarden under `dotfiles-age-keys`.
 
 ## Bootstrap
 
-Platform bootstrap scripts should stay small.
-
-Their job is to prepare enough of the environment to start the Ruby orchestrator.
+Bootstrap scripts must stay small. Their job is to install uv, acquire the
+repository, and start the Python orchestrator.
 
 ## SSH signing
 
-`dotfiles apply` may interactively prepare a machine-specific SSH signing key.
-The setup may generate a local key, upload its public key to GitHub as a signing
-key, and add the private key to the SSH agent. It must never delete existing
-GitHub keys or store private keys in the repository.
-
-## Platform behavior
-
-Ruby owns shared orchestration and decides what needs to happen.
-
-Individual actions may be implemented in Ruby, PowerShell, Bash, or external utilities depending on what is clearest.
+`dotfiles apply` can prepare a machine-specific SSH signing key. The setup can
+generate a local key and upload its public key to GitHub. It must not delete
+existing GitHub keys or store private keys in the repository.
 
 ## Safety
 
-- Do not silently overwrite unrelated user files.
-- Keep private plaintext, keys, secrets, and temporary decrypted data out of Git.
-- Report failures clearly instead of presenting partial setup as success.
+- Do not replace unrelated user files without `--clean`.
+- Keep private plaintext, keys, credentials, and temporary decrypted data out of Git.
+- Report failures instead of presenting partial setup as success.
 
-## Ruby tooling
+## Tooling
 
-RuboCop is the project's Ruby linter and formatter.
+Ruff provides Python linting and formatting. Pytest runs the focused tests in
+`tests/`. The `.githooks/pre-commit` hook runs these checks before a commit.
+PowerShell checks use the repository scripts.
 
-```text
-bundle exec rubocop
-bundle exec rubocop -a
+```powershell
+uv sync
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
 ```
-
-Rules live in `.rubocop.yml` and stay small: the defaults plus a short list of
-explicit project choices (tabs, line length, etc.). Individual exceptions
-should remain local and justified.
-
-## Deferred decisions
-
-- Final repository layout.
-- Ruby installation strategy on each platform.
-- Meaning of `elevation: :admin` on Linux. Symlinks no longer need it, but
-  `run_command` still routes it through Windows PowerShell.

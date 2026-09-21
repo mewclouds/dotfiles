@@ -1,13 +1,10 @@
-# Local Ruby dependencies and tooling
-.bundle/
-vendor/bundle/
-.ruby-lsp/
-coverage/
-
 # Local Python environment and bytecode
 .venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.ruff_cache
+bin/
 
 # Local editor and operating system files
 .vscode/

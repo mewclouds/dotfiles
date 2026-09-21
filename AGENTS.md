@@ -17,9 +17,9 @@ Read `SPEC.md` for the project architecture and boundaries. Treat it as the sour
 
 ## Architecture
 
-- Ruby is the primary orchestrator.
+- Python is the primary orchestrator.
 - PowerShell, Bash, and external tools are valid where they fit better.
-- Do not move working platform-specific code into Ruby merely for consistency.
+- Do not move working platform-specific code into Python merely for consistency.
 - Keep bootstrap scripts small.
 
 ## Privacy and secrets
