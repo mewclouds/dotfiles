@@ -26,8 +26,13 @@ if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
 Import-Module PSScriptAnalyzer -ErrorAction Stop
 
 $settingsPath = Join-Path $resolvedPath 'PSScriptAnalyzerSettings.psd1'
+$virtualEnvironmentPath = Join-Path $repositoryRoot '.venv'
+$virtualEnvironmentPrefix = "$virtualEnvironmentPath$([IO.Path]::DirectorySeparatorChar)"
 $files = Get-ChildItem -Path $resolvedPath -Recurse -Include *.ps1, *.psm1, *.psd1 |
-    Where-Object { $_.Name -ne 'PSScriptAnalyzerSettings.psd1' }
+    Where-Object {
+        $_.Name -ne 'PSScriptAnalyzerSettings.psd1' -and
+        -not $_.FullName.StartsWith($virtualEnvironmentPrefix, [StringComparison]::OrdinalIgnoreCase)
+    }
 
 if (-not $files) {
     exit 0

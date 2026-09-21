@@ -344,11 +344,11 @@ if (Test-Path $repositoryPath) {
     }
 }
 
-Write-Host 'Checking Python through uv...' -ForegroundColor Cyan
+Write-Host 'Starting Python orchestrator...' -ForegroundColor Cyan
 Push-Location $repositoryPath
 try {
-    Invoke-CheckedCommand -Name 'uv' -Arguments @('run', 'python', '--version') `
-        -Description 'uv Python check' | Out-Host
+    Invoke-CheckedCommand -Name 'uv' -Arguments @('run', 'python', '-m', 'dotfiles', 'status') `
+        -Description 'Python orchestrator' | Out-Host
 } finally {
     Pop-Location
 }

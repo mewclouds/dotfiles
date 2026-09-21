@@ -40,8 +40,13 @@ if (-not (Test-Path $settingsPath -PathType Leaf)) {
 }
 
 $resolvedSettingsPath = (Resolve-Path $settingsPath).Path
+$virtualEnvironmentPath = Join-Path $repositoryRoot '.venv'
+$virtualEnvironmentPrefix = "$virtualEnvironmentPath$([IO.Path]::DirectorySeparatorChar)"
 $files = Get-ChildItem -Path $resolvedPath -Recurse -Include *.ps1, *.psm1, *.psd1 |
-    Where-Object { $_.FullName -ne $resolvedSettingsPath }
+    Where-Object {
+        $_.FullName -ne $resolvedSettingsPath -and
+        -not $_.FullName.StartsWith($virtualEnvironmentPrefix, [StringComparison]::OrdinalIgnoreCase)
+    }
 $checkFailed = $false
 
 foreach ($file in $files) {
