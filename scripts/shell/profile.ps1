@@ -121,10 +121,4 @@ function prompt {
 }
 
 # zoxide wraps $function:prompt, so it has to come after the definition above.
-if (CommandExists zoxide) {
-    Invoke-Expression (& { (zoxide init powershell | Out-String) })
-}
-
-if (CommandExists fastfetch) {
-    fastfetch
-}
+Invoke-Expression (& { (zoxide init powershell | Out-String) })

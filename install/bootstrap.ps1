@@ -236,7 +236,6 @@ function Invoke-SystemOnlySetup {
     $env:Path = "$machinePath;$userPath"
 
     Install-BootstrapPackage -Manager WinGet -Id 'FiloSottile.age'
-    Install-BootstrapPackage -Manager WinGet -Id 'Fastfetch-cli.Fastfetch'
     Install-BootstrapPackage -Manager WinGet -Id 'gerardog.gsudo'
 
     return $true
