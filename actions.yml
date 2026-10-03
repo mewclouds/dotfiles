@@ -35,21 +35,6 @@ actions:
           Where-Object { $_.Version -eq '1.25.0' })) { Install-Module
           PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force }
 
-  - id: mise_config
-    name: link_file
-    description: Apply mise toolchain configuration
-    parameters:
-      source: .config/mise/config.toml
-      target: '~/.config/mise/config.toml'
-    elevation: admin
-
-  - id: mise_install
-    name: run_command
-    description: Install mise tools
-    parameters:
-      command: [mise, install]
-      inputs: [.config/mise/config.toml]
-
   # Windows actions apply only when the runtime platform is Windows.
   - id: windows_appx_bloat_removal
     name: run_command

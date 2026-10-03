@@ -105,10 +105,7 @@ function Install-ChocoApp {
 function Install-NpmApp {
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    # npm is mise-managed, not on PATH directly. `mise exec --` still parses
-    # `-g` as its own flag even after the separator, so the command has to
-    # go through -c as one string instead.
-    & mise exec -c "npm install -g $Name"
+    & npm install -g $Name
     if ($LASTEXITCODE -ne 0) {
         throw "npm install exited with code $LASTEXITCODE for '$Name'."
     }

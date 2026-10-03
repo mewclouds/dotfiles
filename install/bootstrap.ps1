@@ -277,8 +277,6 @@ function Install-ScoopTooling {
     }
 
     Install-BootstrapPackage -Manager Scoop -Id 'extras/vcredist2022'
-    Install-BootstrapPackage -Manager Scoop -Id 'mise'
-
     # Scoop prints this as a manual follow-up step after installing 7zip; the
     # target registry key is under HKEY_CURRENT_USER, so no elevation is needed.
     $sevenZipAppDirectory = Join-Path $HOME 'scoop\\apps\\7zip\\current'

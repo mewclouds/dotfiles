@@ -60,10 +60,6 @@ if (Get-Module -ListAvailable PSReadLine) {
     }
 }
 
-if (CommandExists mise) {
-    (& mise activate pwsh --shims) | Out-String | Invoke-Expression
-}
-
 if (CommandExists gsudo) {
     Import-Module 'gsudoModule' -ErrorAction SilentlyContinue
 }
