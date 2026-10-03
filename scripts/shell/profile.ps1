@@ -116,5 +116,7 @@ function prompt {
         '&coral> &r')
 }
 
+fnm env --use-on-cd | Out-String | Invoke-Expression
+
 # zoxide wraps $function:prompt, so it has to come after the definition above.
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
