@@ -37,12 +37,21 @@ function Test-IsAdministrator {
 }
 
 function Install-WingetApp {
-    param([Parameter(Mandatory = $true)][string]$Id)
+    param(
+        [Parameter(Mandatory = $true)][string]$Id,
+        [string]$Version
+    )
 
-    # No --exact: winget's exact match is case-sensitive, and manifest IDs
-    # are hand-typed.
-    & winget install --id $Id --accept-package-agreements --accept-source-agreements `
-        --disable-interactivity --silent
+    # No --exact by default: winget's exact match is case-sensitive, and
+    # manifest IDs are hand-typed. A pinned version requires --exact for
+    # winget to honor --version.
+    $wingetArgs = @('install', '--id', $Id)
+    if ($Version) {
+        $wingetArgs += @('--version', $Version, '--exact')
+    }
+    $wingetArgs += @('--accept-package-agreements', '--accept-source-agreements',
+        '--disable-interactivity', '--silent')
+    & winget @wingetArgs
     if ($LASTEXITCODE -ne 0) {
         throw "winget install exited with code $LASTEXITCODE for '$Id'."
     }
@@ -133,7 +142,9 @@ $issueCount = 0
 
 foreach ($app in $apps) {
     $label = switch ($app.type) {
-        'winget' { $app.id }
+        'winget' {
+            if ($app.version) { "$($app.id) $($app.version)" } else { $app.id }
+        }
         'script' { $app.command }
         default { $app.name }
     }
@@ -142,7 +153,7 @@ foreach ($app in $apps) {
 
     try {
         switch ($app.type) {
-            'winget' { Install-WingetApp -Id $app.id }
+            'winget' { Install-WingetApp -Id $app.id -Version $app.version }
             'scoop' { Install-ScoopApp -Name $app.name }
             'choco' { Install-ChocoApp -Name $app.name }
             'npm' { Install-NpmApp -Name $app.name }
