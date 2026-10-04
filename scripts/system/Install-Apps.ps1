@@ -39,7 +39,8 @@ function Test-IsAdministrator {
 function Install-WingetApp {
     param(
         [Parameter(Mandatory = $true)][string]$Id,
-        [string]$Version
+        [string]$Version,
+        [string]$Override
     )
 
     # No --exact by default: winget's exact match is case-sensitive, and
@@ -51,6 +52,9 @@ function Install-WingetApp {
     }
     $wingetArgs += @('--accept-package-agreements', '--accept-source-agreements',
         '--disable-interactivity', '--silent')
+    if ($Override) {
+        $wingetArgs += @('--override', $Override)
+    }
     & winget @wingetArgs
     if ($LASTEXITCODE -ne 0) {
         throw "winget install exited with code $LASTEXITCODE for '$Id'."
@@ -153,7 +157,7 @@ foreach ($app in $apps) {
 
     try {
         switch ($app.type) {
-            'winget' { Install-WingetApp -Id $app.id -Version $app.version }
+            'winget' { Install-WingetApp -Id $app.id -Version $app.version -Override $app.override }
             'scoop' { Install-ScoopApp -Name $app.name }
             'choco' { Install-ChocoApp -Name $app.name }
             'npm' { Install-NpmApp -Name $app.name }
