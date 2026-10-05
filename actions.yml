@@ -36,21 +36,6 @@ actions:
           PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force }
 
   # Windows actions apply only when the runtime platform is Windows.
-  - id: windows_appx_bloat_removal
-    name: run_command
-    description: Remove Windows AppX bloat
-    platform: windows
-    parameters:
-      command:
-        - C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-        - -NoProfile
-        - -ExecutionPolicy
-        - Bypass
-        - -File
-        - .\scripts\system\Remove-AppxBloat.ps1
-      inputs: [scripts/system/Remove-AppxBloat.ps1]
-    elevation: admin
-
   - id: windows_terminal_config
     name: copy_file
     description: Apply Windows Terminal configuration
