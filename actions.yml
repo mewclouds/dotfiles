@@ -51,15 +51,6 @@ actions:
       inputs: [scripts/system/Remove-AppxBloat.ps1]
     elevation: admin
 
-  - id: windows_fastfetch_config
-    name: link_file
-    description: Apply Windows Fastfetch configuration
-    platform: windows
-    parameters:
-      source: .config/fastfetch-win.jsonc
-      target: '%USERPROFILE%/.config/fastfetch/config.jsonc'
-    elevation: admin
-
   - id: windows_terminal_config
     name: copy_file
     description: Apply Windows Terminal configuration
