@@ -8,6 +8,13 @@ actions:
       command: [uv, sync]
       inputs: [pyproject.toml, uv.lock]
 
+  - id: install_pouch
+    name: run_command
+    description: Clone pouch and link AI instructions
+    parameters:
+      command: [uv, run, scripts/system/install_pouch.py]
+      inputs: [scripts/system/install_pouch.py]
+
   - id: shared_git_config
     name: link_file
     description: Apply shared Git configuration
