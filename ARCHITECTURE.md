@@ -89,6 +89,10 @@ manifest is loaded only after the private workspace is available.
 
 ## Verification
 
+The pre-commit hook runs the Python checks in full and limits the PowerShell
+checks to staged `.ps1`, `.psm1`, and `.psd1` files through
+`scripts/PSCheck.ps1`. CI scans the whole repository.
+
 Run the Python tests, Ruff checks, and PowerShell checks before committing:
 
 ```powershell

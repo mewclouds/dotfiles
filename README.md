@@ -65,7 +65,8 @@ uv run ruff format --check .
 ```
 
 PowerShell checks remain available through `scripts/PSFormat.ps1` and
-`scripts/PSLint.ps1`.
+`scripts/PSLint.ps1`. The pre-commit hook runs them through `scripts/PSCheck.ps1`
+against staged PowerShell files only; CI scans the whole repository.
 
 Enable the repository pre-commit hook with:
 

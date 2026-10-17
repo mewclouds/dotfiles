@@ -8,8 +8,13 @@ uv run ruff format --check .
 uv run pytest
 
 if command -v pwsh >/dev/null 2>&1; then
-    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/PSFormat.ps1 -Check
-    pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/PSLint.ps1
+    # Cheap gate: starting pwsh costs ~0.4s, so only start it when the commit
+    # touches PowerShell. CI scans the whole repository in .github/workflows/lint.yml.
+    if git diff --cached --quiet --diff-filter=ACMR -- '*.ps1' '*.psm1' '*.psd1'; then
+        echo "No staged PowerShell files; skipping PowerShell checks."
+    else
+        pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/PSCheck.ps1 -Changed
+    fi
 else
     echo "Skipping PowerShell checks: pwsh not on PATH. CI runs them regardless."
 fi

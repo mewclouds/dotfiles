@@ -68,7 +68,8 @@ existing GitHub keys or store private keys in the repository.
 
 Ruff provides Python linting and formatting. Pytest runs the focused tests in
 `tests/`. The `.githooks/pre-commit` hook runs these checks before a commit.
-PowerShell checks use the repository scripts.
+It limits the PowerShell checks to staged `.ps1`, `.psm1`, and `.psd1` files;
+CI scans the whole repository. PowerShell checks use the repository scripts.
 
 ```powershell
 uv sync

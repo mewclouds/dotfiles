@@ -3,32 +3,37 @@
 Runs PSScriptAnalyzer against PowerShell files in this repository.
 
 .PARAMETER Path
-The directory to search. Relative paths are resolved from the repository root.
+Files or directories to analyze. Relative paths are resolved from the repository
+root. The default is the whole repository.
 #>
 [CmdletBinding()]
 param(
-    [string]$Path = '.'
+    [string[]]$Path = '.'
 )
 
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$resolvedPath = if ([IO.Path]::IsPathRooted($Path)) {
-    $Path
-} else {
-    Join-Path $repositoryRoot $Path
-}
-$resolvedPath = (Resolve-Path $resolvedPath).Path
+$resolvedPaths = @(
+    foreach ($item in $Path) {
+        $candidate = if ([IO.Path]::IsPathRooted($item)) {
+            $item
+        } else {
+            Join-Path $repositoryRoot $item
+        }
+        (Resolve-Path $candidate).Path
+    }
+)
 
 if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
     throw 'PSScriptAnalyzer is required. Install it with: Install-Module PSScriptAnalyzer -Scope CurrentUser'
 }
 Import-Module PSScriptAnalyzer -ErrorAction Stop
 
-$settingsPath = Join-Path $resolvedPath 'PSScriptAnalyzerSettings.psd1'
+$settingsPath = Join-Path $repositoryRoot 'PSScriptAnalyzerSettings.psd1'
 $virtualEnvironmentPath = Join-Path $repositoryRoot '.venv'
 $virtualEnvironmentPrefix = "$virtualEnvironmentPath$([IO.Path]::DirectorySeparatorChar)"
-$files = Get-ChildItem -Path $resolvedPath -Recurse -Include *.ps1, *.psm1, *.psd1 |
+$files = Get-ChildItem -Path $resolvedPaths -Recurse -Include *.ps1, *.psm1, *.psd1 |
     Where-Object {
         $_.Name -ne 'PSScriptAnalyzerSettings.psd1' -and
         -not $_.FullName.StartsWith($virtualEnvironmentPrefix, [StringComparison]::OrdinalIgnoreCase)
@@ -49,3 +54,5 @@ if ($diagnostics) {
     $diagnostics | Format-Table -AutoSize | Out-Host
     exit 1
 }
+
+exit 0
